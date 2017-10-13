@@ -14,12 +14,8 @@ endif (CUDA_FOUND)
 find_package(CUDA REQUIRED)
 find_package(OpenMP REQUIRED)
 
-set (EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin/")
+set (EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/exec/")
 
-# compared to class settings, we let NVidia's FindCUDA CMake detect 
-# whether to build x64.  We tell it to support most devices, though, 
-# to make sure more people can easily run class code without knowing 
-# about this compiler argument
 set(CUDA_NVCC_FLAGS
   "-gencode;arch=compute_30,code=sm_30;  
   -gencode;arch=compute_35,code=sm_35;
@@ -27,7 +23,7 @@ set(CUDA_NVCC_FLAGS
 
 # add -Wextra compiler flag for gcc compilations
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-Xcompiler -Wextra")
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-Xcompiler -Wall -Xcompiler -Wextra")
 endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
 
@@ -35,9 +31,10 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -O3")
 
 
-# add debugging to CUDA NVCC flags.  For NVidia's NSight tools.
+# Add debugging to CUDA NVCC flags for NVidia's NSight tools.
 # set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG} "-G")
 
+file(GLOB scr *.cpp *.c )
 file(GLOB hdr *.hpp *.h )
 file(GLOB cu  *.cu )
 

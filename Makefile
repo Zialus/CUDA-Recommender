@@ -2,17 +2,25 @@ VERSION=0.1
 
 CUDA_VERSION=6.5
 
+CUDA_ARCH=-arch=compute_20 -code=sm_20
+LIBPATH=/usr/local/cuda-$(CUDA_VERSION)/lib64/
+INCLUDEPATH=/usr/local/cuda-$(CUDA_VERSION)/include/
+
+# WARNING_LVL=-Wall -Wextra
+# CUDA_WARNING_LVL=-Xcompiler -Wall -Xcompiler -Wextra
+
 CXX=g++
-CXXFLAGS=-fopenmp -g -O3 -lgomp -lcuda -lcudart -L /usr/local/cuda-$(CUDA_VERSION)/targets/x86_64-linux/lib/ -I /usr/local/cuda-$(CUDA_VERSION)/targets/x86_64-linux/include/
+CXXFLAGS=$(WARNING_LVL) -fopenmp -g -O3 -lgomp -lcuda -lcudart -L /usr/local/cuda-$(CUDA_VERSION)/lib64/ -I /usr/local/cuda-$(CUDA_VERSION)/include/
 
 nvcc=/usr/local/cuda-$(CUDA_VERSION)/bin/nvcc
-nvccflags=-c -arch=compute_20 -code=sm_20 -Xcompiler -Wextra -Xcompiler -fopenmp -Xcompiler -g -Xcompiler -O3 -lgomp -lcudart -L /usr/local/cuda-$(CUDA_VERSION)/targets/x86_64-linux/lib/ -I /usr/local/cuda-$(CUDA_VERSION)/targets/x86_64-linux/include/
+nvccflags= $(CUDA_ARCH) $(CUDA_WARNING_LVL) -Xcompiler -fopenmp -Xcompiler -g -Xcompiler -O3 -lgomp -lcudart -L $(LIBPATH) -I $(INCLUDEPATH)
 
 SOURCES = $(wildcard *.cpp)
+CUDASOURCES = $(wildcard *.cu)
 OBJECTS = $(SOURCES:.cpp=.o)
+CUDAOBJECTS = $(CUDASOURCES:.cu=.o)
 
-#CXXFLAGS=-fopenmp -static -O3
-#CXXFLAGS=-Xcompiler -fopenmp -fPIC -pipe -g -O3
+#CXXFLAGS=-fopenmp -static -fPIC -pipe -g -O3 ??????
 
 all: cuda-or-omp-pmf-train omp-pmf-predict
 
@@ -22,17 +30,14 @@ cuda-or-omp-pmf-train: CCDPP_onCUDA.o ALS_onCUDA.o pmf-train.o ccd-r1.o util.o c
 omp-pmf-predict: pmf-predict.o util_original.o
 	${CXX} $(CXXFLAGS) -o omp-pmf-predict pmf-predict.o util_original.o
 
+%.o: %.cu
+	${nvcc} $(nvccflags) -c $< -o $@
+
 %.o: %.cpp
 	${CXX} $(CXXFLAGS) -c $< -o $@
-
-CCDPP_onCUDA.o: CCDPP_onCUDA.cu
-	${nvcc} $(nvccflags) CCDPP_onCUDA.cu
-
-ALS_onCUDA.o: ALS_onCUDA.cu
-	${nvcc} $(nvccflags) ALS_onCUDA.cu
 
 tar: 
 	make clean; cd ../;  tar cvzf pmf_cuda-${VERSION}.tgz pmf_CUDA/
 
 clean:
-	rm -f $(OBJECTS) cuda-or-omp-pmf-train omp-pmf-predict
+	rm -f $(OBJECTS) $(CUDAOBJECTS) cuda-or-omp-pmf-train omp-pmf-predict
