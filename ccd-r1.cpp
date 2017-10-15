@@ -1,8 +1,8 @@
 #include "pmf.h"
 #include "ccd_headerToC.h"
-//#include <cuda.h>
 
 #define kind dynamic,500
+
 extern "C"  void kernel_wrapper_ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters);
 
 // CCD rank-one 

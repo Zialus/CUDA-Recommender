@@ -6,15 +6,11 @@
 #include <device_launch_parameters.h>
 #include <device_functions.h>
 
-
-#include <stdio.h>
+#include <cstdio>
 #include <cstdlib>
-#include "ALS_headerToC.h"
-
 #include <cmath>
 
-
-
+#include "ALS_headerToC.h"
 
 //__device__ void Mt_byM_multiply_k(int i, int j, float**M, float**Result);
 __device__ void Mt_byM_multiply_k(int i, int j, float*H, float**Result, const long ptr, const unsigned *idx);

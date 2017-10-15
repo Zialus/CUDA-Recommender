@@ -1,18 +1,21 @@
 #ifndef MATUTILORIGINAL
 #define MATUTILORIGINAL
+
 #include <iostream>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <algorithm>
 #include <utility>
 #include <map>
 #include <queue>
 #include <set>
 #include <vector>
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <cmath>
+#include <cassert>
+
 #include <omp.h>
-#include <assert.h>
 
 #define MALLOC(type, size) (type*)malloc(sizeof(type)*(size))
 

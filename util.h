@@ -1,18 +1,21 @@
 #ifndef MATUTIL
 #define MATUTIL
+
 #include <iostream>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <algorithm>
 #include <utility>
 #include <map>
 #include <queue>
 #include <set>
 #include <vector>
+
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cassert>
+
 #include <omp.h>
-#include <assert.h>
 
 #define MALLOC(type, size) (type*)malloc(sizeof(type)*(size))
 #define SIZEBITS(type, size) sizeof(type)*(size)
