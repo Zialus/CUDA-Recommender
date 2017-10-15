@@ -28,7 +28,7 @@ void load(const char* srcdir, smat_t_Double &R, testset_t_Double &T, bool with_w
 // row_major = true: A is stored in row_major order,
 // row_major = false: A is stored in col_major order.
 void save_mat_t(mat_t_Double A, FILE *fp, bool row_major){
-	if (fp == NULL)
+	if (fp == nullptr)
 		fprintf(stderr, "output stream is not valid.\n");
 	long m = row_major ? A.size() : A[0].size();
 	long n = row_major ? A[0].size() : A.size();
@@ -55,7 +55,7 @@ void save_mat_t(mat_t_Double A, FILE *fp, bool row_major){
 // row_major = true: the returned A is stored in row_major order,
 // row_major = false: the returened A  is stored in col_major order.
 mat_t_Double load_mat_t_Double(FILE *fp, bool row_major){
-	if (fp == NULL)
+	if (fp == nullptr)
 		fprintf(stderr, "input stream is not valid.\n");
 	long m, n;
 	fread(&m, sizeof(long), 1, fp);

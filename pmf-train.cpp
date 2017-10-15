@@ -197,7 +197,7 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
 		while (*p == '/') 
 			*p-- = 0;
 		p = strrchr(argv[i],'/');
-		if(p==NULL)
+		if(p == nullptr)
 			p = argv[i];
 		else
 			++p;
@@ -207,18 +207,18 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
 }
 
 
-void run_ccdr1(parameter &param, const char* input_file_name, const char* model_file_name=NULL){
+void run_ccdr1(parameter &param, const char* input_file_name, const char* model_file_name = nullptr){
 	smat_t R;
 	mat_t W,H;
 	testset_t T;
 	//input_file_name="/home/Andre/Documents/_pmf_CUDA_finalFinal_toProfile/toy-example";
 	//model_file_name="/home/Andre/Documents/_pmf_CUDA_finalFinal_toProfile/model";
-	FILE *model_fp = NULL;
+	FILE *model_fp = nullptr;
 	//fprintf(stdout, "fName: %s\n",input_file_name);
 	//fprintf(stdout, "ModelName: %s\n",model_file_name);
 	if(model_file_name) {
 		model_fp = fopen(model_file_name, "wb");
-		if(model_fp == NULL)
+		if(model_fp == nullptr)
 		{
 			fprintf(stderr,"can't open output file %s\n",model_file_name);
 			exit(1);
@@ -245,17 +245,17 @@ void run_ccdr1(parameter &param, const char* input_file_name, const char* model_
 	return ;
 }
 
-void run_ALS(parameter &param, const char* input_file_name, const char* model_file_name = NULL){
+void run_ALS(parameter &param, const char* input_file_name, const char* model_file_name = nullptr){
 	smat_t R;
 	mat_t W, H;
 	testset_t T;
 
-	FILE *model_fp = NULL;
+	FILE *model_fp = nullptr;
 
 	if (model_file_name) {
 		//printf("model_file_name: %s\n", model_file_name);
 		model_fp = fopen(model_file_name, "wb");
-		if (model_fp == NULL)
+		if (model_fp == nullptr)
 		{
 			fprintf(stderr, "can't open output file %s\n", model_file_name);
 			exit(1);
@@ -292,7 +292,7 @@ void run_ALS(parameter &param, const char* input_file_name, const char* model_fi
 	return;
 }
 
-void run_ccdr1_Double(parameter &param, const char* input_file_name, const char* model_file_name = NULL){
+void run_ccdr1_Double(parameter &param, const char* input_file_name, const char* model_file_name = nullptr){
 	smat_t_Double R;
 	mat_t_Double W, H;
 	testset_t_Double T;
@@ -315,11 +315,11 @@ void run_ccdr1_Double(parameter &param, const char* input_file_name, const char*
 	param_Double.verbose = param.verbose;
 
 
-	FILE *model_fp = NULL;
+	FILE *model_fp = nullptr;
 
 	if (model_file_name) {
 		model_fp = fopen(model_file_name, "wb");
-		if (model_fp == NULL)
+		if (model_fp == nullptr)
 		{
 			fprintf(stderr, "can't open output file %s\n", model_file_name);
 			exit(1);

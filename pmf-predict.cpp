@@ -19,11 +19,11 @@ int main(int argc, char* argv[]){
 	char *test_file = argv[1];
 	char *model_file = argv[2];
 	char *output_file = argv[3];
-	FILE *test_fp = NULL, *model_fp=NULL, *output_fp=NULL;
+	FILE *test_fp = nullptr, *model_fp = nullptr, *output_fp = nullptr;
 
 	if(test_file) {
 		test_fp = fopen(test_file, "r");
-		if(test_fp == NULL)
+		if(test_fp == nullptr)
 		{
 			fprintf(stderr,"can't open test file %s\n",test_file);
 			exit(1);
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]){
 	}
 	if(output_file) {
 		output_fp = fopen(output_file, "wb");
-		if(output_fp == NULL)
+		if(output_fp == nullptr)
 		{
 			fprintf(stderr,"can't open output file %s\n",output_file);
 			exit(1);
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){
 	}
 	if(model_file) {
 		model_fp = fopen(model_file, "rb");
-		if(model_fp == NULL)
+		if(model_fp == nullptr)
 		{
 			fprintf(stderr,"can't open model file %s\n",model_file);
 			exit(1);
