@@ -1,5 +1,3 @@
-#include "stdafx.h"
-
 #include "util_original.h"
 
 

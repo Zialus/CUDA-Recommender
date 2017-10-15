@@ -1,6 +1,5 @@
 // pmf-train.cpp : main project file.
 
-#include "stdafx.h"
 #include "util.h"
 #include "pmf.h"
 #include "pmf_original.h"
