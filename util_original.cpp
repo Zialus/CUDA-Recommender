@@ -1,8 +1,6 @@
 #include "util_original.h"
 
-
 #define MALLOC(type, size) (type*)malloc(sizeof(type)*(size))
-
 
 // load utility for CCS RCS
 void load(const char* srcdir, smat_t_Double &R, testset_t_Double &T, bool with_weights){

@@ -1,7 +1,6 @@
 #ifndef ALS_C_HEADER
 #define ALS_C_HEADER
 
-
 struct params_als {
 	int nBlocks;
 	int nThreadsPerBlock;
