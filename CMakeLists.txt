@@ -3,6 +3,8 @@ project(andre_cuda)
 
 find_package(CUDA QUIET)
 
+set(CMAKE_CXX_STANDARD 11)
+
 if (CUDA_FOUND)
 message("Cuda was found!")
 else()
@@ -23,7 +25,7 @@ set(CUDA_NVCC_FLAGS
 
 # add -Wextra compiler flag for gcc compilations
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-Xcompiler -Wall -Xcompiler -Wextra")
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-Xcompiler -Wall,-Wextra")
 endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
 
