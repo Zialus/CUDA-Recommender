@@ -356,7 +356,7 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 
 		//optimize W over H
 		//updateW_overH_HOST(R_C.rows, R_C.row_ptr, R_C.col_idx, R_C.colMajored_sparse_idx, R_C.val, lambda, k, W_, H_);
-		updateW_overH_kernel << <nBlocks, nThreadsPerBlock >> >(R_C.rows, dev_row_ptr, dev_col_idx, dev_colMajored_sparse_idx, dev_val, lambda, k, dev_W_, dev_H_);
+		updateW_overH_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.rows, dev_row_ptr, dev_col_idx, dev_colMajored_sparse_idx, dev_val, lambda, k, dev_W_, dev_H_);
 		// Check for any errors launching the kernel
 		cudaStatus = cudaGetLastError();
 		if (cudaStatus != cudaSuccess) {
@@ -372,7 +372,7 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 
 		//optimize H over W
 		//updateH_overW_HOST(R_C.cols, R_C.col_ptr, R_C.row_idx, R_C.val, lambda, k, W_, H_);
-		updateH_overW_kernel << <nBlocks, nThreadsPerBlock >> >(R_C.cols, dev_col_ptr, dev_row_idx, dev_val, lambda, k, dev_W_, dev_H_);
+		updateH_overW_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_col_ptr, dev_row_idx, dev_val, lambda, k, dev_W_, dev_H_);
 		// Check for any errors launching the kernel
 		cudaStatus = cudaGetLastError();
 		if (cudaStatus != cudaSuccess) {

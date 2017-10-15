@@ -295,7 +295,7 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
 				goto Error;
 			}
 			if (oiter > 1) {
-				UpdateRating_DUAL_kernel_NoLoss << <nBlocks, nThreadsPerBlock >> >(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, true, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, true);
+				UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, true, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, true);
 				cudaStatus = cudaDeviceSynchronize();
 				if (cudaStatus != cudaSuccess) {
 					fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching Kernel!\n", cudaStatus);
@@ -309,7 +309,7 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
 			for (int iter = 1; iter <= maxit; ++iter){
 				innerfundec_cur = 0;
 
-				RankOneUpdate_DUAL_kernel << <nBlocks, nThreadsPerBlock >> >(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, dev_return, parameters.do_nmf, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, dev_return2);
+				RankOneUpdate_DUAL_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, dev_return, parameters.do_nmf, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, dev_return2);
 
 				cudaStatus = cudaDeviceSynchronize();
 				if (cudaStatus != cudaSuccess) {
@@ -363,7 +363,7 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
 			}
 
 
-			UpdateRating_DUAL_kernel_NoLoss << <nBlocks, nThreadsPerBlock >> >(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, false, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, false);
+			UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, false, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, false);
 
 			cudaStatus = cudaDeviceSynchronize();
 			if (cudaStatus != cudaSuccess) {
