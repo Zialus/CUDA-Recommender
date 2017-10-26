@@ -1,8 +1,11 @@
 VERSION=0.1
 
 CUDA_VERSION=6.5
+# CUDA_VERSION=9.0
 
 CUDA_ARCH=-arch=compute_20 -code=sm_20
+# CUDA_ARCH=-arch=compute_35 -code=sm_35
+
 LIBPATH=/usr/local/cuda-$(CUDA_VERSION)/lib64/
 INCLUDEPATH=/usr/local/cuda-$(CUDA_VERSION)/include/
 
@@ -19,8 +22,6 @@ SOURCES = $(wildcard *.cpp)
 CUDASOURCES = $(wildcard *.cu)
 OBJECTS = $(SOURCES:.cpp=.o)
 CUDAOBJECTS = $(CUDASOURCES:.cu=.o)
-
-#CXXFLAGS=-fopenmp -static -fPIC -pipe -g -O3 ??????
 
 all: cuda-or-omp-pmf-train omp-pmf-predict
 

@@ -29,12 +29,13 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} -O3 -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -O3 -g")
 
 
 # Add debugging to CUDA NVCC flags for NVidia's NSight tools.
-# set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG} "-G")
+set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG} "-G")
+
 
 file(GLOB scr *.cpp *.c )
 file(GLOB hdr *.hpp *.h )
