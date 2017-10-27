@@ -119,6 +119,9 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols, //are the iter
 
 extern "C" void kernel_wrapper_ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters){
 	cudaError_t cudaStatus = ccdpp_NV(R_C, W, H, parameters);
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "ALS FAILED: %s\n", cudaGetErrorString(cudaStatus));
+	}
 	cudaStatus = cudaDeviceReset();
 }
 
