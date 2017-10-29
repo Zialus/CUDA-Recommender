@@ -44,11 +44,9 @@ file(GLOB cuda_hdr "${PROJECT_SOURCE_DIR}/cuda_src/*.h" )
 set(predict_files "${PROJECT_SOURCE_DIR}/predict_src/pmf-predict.cpp"
 	"${PROJECT_SOURCE_DIR}/src/pmf_original.h" "${PROJECT_SOURCE_DIR}/src/util_original.cpp")
 
-add_executable(omp-pmf-predict ${predict_files})
-
 include_directories("${PROJECT_SOURCE_DIR}/cuda_src/")
 CUDA_ADD_EXECUTABLE(cuda-or-omp-pmf-train ${src} ${hdr} ${cuda_cu} ${cuda_hdr})
-
 target_link_libraries(cuda-or-omp-pmf-train gomp)
 
-
+include_directories("${PROJECT_SOURCE_DIR}/src/")
+add_executable(omp-pmf-predict ${predict_files})
