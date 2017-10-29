@@ -24,7 +24,7 @@ set(CUDA_NVCC_FLAGS
 
 # add -Wextra compiler flag for gcc compilations
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-Xcompiler -Wall,-Wextra")
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-Xcompiler -Wall,-Wextra,-g")
 endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
 
