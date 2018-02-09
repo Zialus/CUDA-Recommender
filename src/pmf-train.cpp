@@ -1,13 +1,8 @@
-// pmf-train.cpp : main project file.
-
 #include "util.h"
 #include "pmf.h"
 #include "pmf_original.h"
 
 #include <cstring>
-
-
-//using namespace System;
 
 
 bool with_weights;
@@ -33,14 +28,12 @@ void exit_with_help()
 	"    -nBlocks: Number of blocks on cuda (default 16)\n"
 	"    -nThreadsPerBlock: Number of threads per block on cuda (default 32)\n"
 	"    -ALS: Flag to enable ALS algorithm, if not present CCD++ is used\n"
-
 	);
-	//Console::WriteLine(L"Finish_Andre");
-	//Console::ReadLine();
+
 	exit(1);
 }
 
-parameter parse_command_line(int argc, char **argv, char *input_file_name, char *model_file_name)
+parameter parse_command_line(int argc, char **argv, char *input_file_name, char *model_file_name, char *test_file_name, char* output_file_name)
 {
 	parameter param;   // default values have been set by the constructor 
 	with_weights = false;
@@ -169,40 +162,14 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
 	}
 
 
+	sprintf(input_file_name, argv[i]);
 
-	char src[5120], dest[5120];
+	sprintf(model_file_name, argv[i+1]);
 	
-	strcpy(src,  argv[0]);
-	//strcpy(dest, "");
+	sprintf(test_file_name, argv[i+2]);
 
-	//strncat(dest, src, 15);
+	sprintf(output_file_name, argv[i+3]);
 
-	//printf("Final destination string : |%s|", dest);
-
-
-	src[strlen(argv[0]) - toCut+1] = '\0';
-	argv[0] = src;
-	//end remove exe____ Andre
-
-
-	sprintf(input_file_name, "%s%s",argv[0],argv[i]);//Andre
-	//sprintf(input_file_name, argv[i]);
-
-	if(i<argc-1)
-		sprintf(model_file_name, "%s%s",argv[0],argv[i+1]);//Andre
-		//strcpy(model_file_name,argv[i+1]);
-	else
-	{
-		char *p = argv[i]+ strlen(argv[i])-1;
-		while (*p == '/') 
-			*p-- = 0;
-		p = strrchr(argv[i],'/');
-		if(p == nullptr)
-			p = argv[i];
-		else
-			++p;
-		sprintf(model_file_name,"%s.model",p);
-	}
 	return param;
 }
 
@@ -355,9 +322,12 @@ int main(int argc, char* argv[]){
 	//argv[0]="/home/Andre/Documents/_pmf_CUDA_finalFinal_toProfile/cuda-or-omp-pmf-train";
 	char input_file_name[1024];
 	char model_file_name[1024];
+	char test_file_name[1024];
+	char output_file_name[1024];
+
 	//fprintf(stdout, "%s\n",argv[0]);
 	//fprintf(stdout, "%s\n",inputArguments[0]);
-	parameter param = parse_command_line(argc, argv, input_file_name, model_file_name); 
+	parameter param = parse_command_line(argc, argv, input_file_name, model_file_name, test_file_name, output_file_name);
 
 	switch (param.solver_type){
 	case CCDR1:
@@ -375,8 +345,59 @@ int main(int argc, char* argv[]){
 		fprintf(stderr, "Error: wrong solver type (%d)!\n", param.solver_type);
 		break;
 	}
-	//Console::WriteLine(L"Finish_Andre");
-	//Console::ReadLine();
+
+	printf("-----------\n");
+	printf("%s\n",input_file_name);
+	printf("%s\n",model_file_name);
+	printf("%s\n",test_file_name);
+	printf("%s\n",output_file_name);
+	printf("-----------\n");
+
+	FILE *test_fp = nullptr, *model_fp = nullptr, *output_fp = nullptr;
+
+	if(test_file_name) {
+		test_fp = fopen(test_file_name, "r");
+		if(test_fp == nullptr) {
+			fprintf(stderr,"can't open test file %s\n",test_file_name);
+			exit(1);
+		}
+	}
+	if(output_file_name) {
+		output_fp = fopen(output_file_name, "wb");
+		if(output_fp == nullptr) {
+			fprintf(stderr,"can't open output file %s\n",output_file_name);
+			exit(1);
+		}
+	}
+	if(model_file_name) {
+		model_fp = fopen(model_file_name, "rb");
+		if(model_fp == nullptr) {
+			fprintf(stderr,"can't open model file %s\n",model_file_name);
+			exit(1);
+		}
+	}
+
+	mat_t_Double W = load_mat_t_Double(model_fp, true);
+	mat_t_Double H = load_mat_t_Double(model_fp, true);
+
+	int rank = W[0].size();
+
+	int i, j;
+	double v, rmse = 0;
+	size_t num_insts = 0;
+	while(fscanf(test_fp, "%d %d %lf", &i, &j, &v) != EOF) {
+		double pred_v = 0;
+#pragma omp parallel for  reduction(+:pred_v)
+		for(int t = 0; t < rank; t++) {
+			pred_v += W[i-1][t] * H[j-1][t];
+		}
+		num_insts ++;
+		rmse += (pred_v - v)*(pred_v - v);
+		fprintf(output_fp, "%lf\n", pred_v);
+	}
+	rmse = sqrt(rmse/num_insts);
+	printf("Test RMSE = %g\n", rmse);
+	
 	return 0;
 }
 
