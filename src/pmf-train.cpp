@@ -148,7 +148,6 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
 	if(i>=argc)
 		exit_with_help();
 
-
 	sprintf(input_file_name, argv[i]);
 
 	sprintf(model_file_name, argv[i+1]);
@@ -179,11 +178,11 @@ void run_ccdr1(parameter &param, const char* input_file_name, const char* model_
 		}
 	}
 
-	puts("Loading the input...!");
-	double time1 = omp_get_wtime();
+	// puts("Loading the input...!");
+	// double time1 = omp_get_wtime();
 	load(input_file_name,R,T, with_weights);
-	printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
-	printf("-----------\n");
+	// printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
+	// printf("-----------\n");
 
 
 	// W, H  here are k*m, k*n
@@ -292,8 +291,8 @@ void run_ccdr1_Double(parameter &param, const char* input_file_name, const char*
 	initial_col(W, param.k, R.rows);
 	initial_col(H, param.k, R.cols);
 
-	//printf("global mean %g\n", R.get_global_mean());
-	//printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
+	printf("global mean %g\n", R.get_global_mean());
+	printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
 	puts("starts!");
 	float time = omp_get_wtime();
 	ccdr1_Double(R, W, H, T, param_Double);
@@ -309,36 +308,36 @@ void run_ccdr1_Double(parameter &param, const char* input_file_name, const char*
 
 int main(int argc, char* argv[]){
 
-	char input_file_name[1024];
-	char model_file_name[1024];
-	char test_file_name[1024];
-	char output_file_name[1024];
+    char input_file_name[1024];
+    char model_file_name[1024];
+    char test_file_name[1024];
+    char output_file_name[1024];
 
-	parameter param = parse_command_line(argc, argv, input_file_name, model_file_name, test_file_name, output_file_name);
+    parameter param = parse_command_line(argc, argv, input_file_name, model_file_name, test_file_name, output_file_name);
 
-	switch (param.solver_type){
-	case CCDR1:
-		run_ccdr1(param, input_file_name, model_file_name);
-		break;
-	case 1:
-		fprintf(stdout, "Original OMP Double Implementation\n");
-		run_ccdr1_Double(param, input_file_name, model_file_name);
-		break;
-	case 2:
-		fprintf(stdout, "ALS\n");
-		run_ALS(param, input_file_name, model_file_name);
-		break;
-	default:
-		fprintf(stderr, "Error: wrong solver type (%d)!\n", param.solver_type);
-		break;
-	}
+    switch (param.solver_type) {
+        case CCDR1:
+            run_ccdr1(param, input_file_name, model_file_name);
+            break;
+        case 1:
+            fprintf(stdout, "Original OMP Double Implementation\n");
+            run_ccdr1_Double(param, input_file_name, model_file_name);
+            break;
+        case 2:
+            fprintf(stdout, "ALS\n");
+            run_ALS(param, input_file_name, model_file_name);
+            break;
+        default:
+            fprintf(stderr, "Error: wrong solver type (%d)!\n", param.solver_type);
+            break;
+    }
 
-	printf("-----------\n");
-	printf("input: %s\n",input_file_name);
-	printf("model: %s\n",model_file_name);
-	printf("test: %s\n",test_file_name);
-	printf("output: %s\n",output_file_name);
-	printf("-----------\n");
+	// printf("-----------\n");
+	// printf("input: %s\n",input_file_name);
+	// printf("model: %s\n",model_file_name);
+	// printf("test: %s\n",test_file_name);
+	// printf("output: %s\n",output_file_name);
+	// printf("-----------\n");
 
 	FILE *test_fp = nullptr, *model_fp = nullptr, *output_fp = nullptr;
 
