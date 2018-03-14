@@ -1,8 +1,7 @@
 #include "pmf.h"
-#include "ALS_headerToC.h"
+#include "ALS_onCUDA.h"
 
 #define kind dynamic,500
-extern "C"  void kernel_wrapper_als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &parameters);
 
 void choldc1(int n, float** a, float* p) {
 	unsigned i, j;

@@ -211,7 +211,7 @@ __global__ void updateH_overW_kernel(const long cols, const long *col_ptr, const
 	}
 }
 
-extern "C" void kernel_wrapper_als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &parameters){
+void kernel_wrapper_als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &parameters){
 	cudaError_t cudaStatus = als_NV(R_C, W, H, parameters);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "ALS FAILED: %s\n", cudaGetErrorString(cudaStatus));

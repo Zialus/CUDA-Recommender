@@ -1,5 +1,5 @@
 #include "pmf.h"
-#include "ccd_headerToC.h"
+#include "CCDPP_onCUDA.h"
 
 #define kind dynamic,500
 
