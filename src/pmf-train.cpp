@@ -306,14 +306,15 @@ void run_ccdr1_Double(parameter &param, const char* input_file_name, const char*
     return;
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 
     char input_file_name[1024];
     char model_file_name[1024];
     char test_file_name[1024];
     char output_file_name[1024];
 
-    parameter param = parse_command_line(argc, argv, input_file_name, model_file_name, test_file_name, output_file_name);
+    parameter param = parse_command_line(argc, argv, input_file_name, model_file_name, test_file_name,
+                                         output_file_name);
 
     switch (param.solver_type) {
         case CCDR1:
@@ -339,26 +340,26 @@ int main(int argc, char* argv[]){
     // printf("output: %s\n",output_file_name);
     // printf("-----------\n");
 
-    FILE *test_fp = nullptr, *model_fp = nullptr, *output_fp = nullptr;
+    FILE* test_fp = nullptr, * model_fp = nullptr, * output_fp = nullptr;
 
-    if(test_file_name) {
+    if (test_file_name) {
         test_fp = fopen(test_file_name, "r");
-        if(test_fp == nullptr) {
-            fprintf(stderr,"can't open test file %s\n",test_file_name);
+        if (test_fp == nullptr) {
+            fprintf(stderr, "can't open test file %s\n", test_file_name);
             exit(1);
         }
     }
-    if(output_file_name) {
+    if (output_file_name) {
         output_fp = fopen(output_file_name, "wb");
-        if(output_fp == nullptr) {
-            fprintf(stderr,"can't open output file %s\n",output_file_name);
+        if (output_fp == nullptr) {
+            fprintf(stderr, "can't open output file %s\n", output_file_name);
             exit(1);
         }
     }
-    if(model_file_name) {
+    if (model_file_name) {
         model_fp = fopen(model_file_name, "rb");
-        if(model_fp == nullptr) {
-            fprintf(stderr,"can't open model file %s\n",model_file_name);
+        if (model_fp == nullptr) {
+            fprintf(stderr, "can't open model file %s\n", model_file_name);
             exit(1);
         }
     }
@@ -371,17 +372,17 @@ int main(int argc, char* argv[]){
     int i, j;
     double v, rmse = 0;
     size_t num_insts = 0;
-    while(fscanf(test_fp, "%d %d %lf", &i, &j, &v) != EOF) {
+    while (fscanf(test_fp, "%d %d %lf", &i, &j, &v) != EOF) {
         double pred_v = 0;
 #pragma omp parallel for  reduction(+:pred_v)
-        for(int t = 0; t < rank; t++) {
-            pred_v += W[i-1][t] * H[j-1][t];
+        for (int t = 0; t < rank; t++) {
+            pred_v += W[i - 1][t] * H[j - 1][t];
         }
-        num_insts ++;
-        rmse += (pred_v - v)*(pred_v - v);
+        num_insts++;
+        rmse += (pred_v - v) * (pred_v - v);
         fprintf(output_fp, "%lf\n", pred_v);
     }
-    rmse = sqrt(rmse/num_insts);
+    rmse = sqrt(rmse / num_insts);
     printf("Test RMSE = %g\n", rmse);
 
     return 0;
