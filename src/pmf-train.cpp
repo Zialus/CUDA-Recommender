@@ -3,6 +3,8 @@
 
 bool with_weights;
 
+void calculate_rmse(FILE* test_fp, FILE* output_fp, const mat_t_Double& W, const mat_t_Double& H, int rank);
+
 void exit_with_help()
 {
     printf(
@@ -369,6 +371,12 @@ int main(int argc, char* argv[]) {
 
     int rank = W[0].size();
 
+    calculate_rmse(test_fp, output_fp, W, H, rank);
+
+    return 0;
+}
+
+void calculate_rmse(FILE* test_fp, FILE* output_fp, const mat_t_Double& W, const mat_t_Double& H, int rank) {
     int i, j;
     double v, rmse = 0;
     size_t num_insts = 0;
@@ -384,6 +392,4 @@ int main(int argc, char* argv[]) {
     }
     rmse = sqrt(rmse / num_insts);
     printf("Test RMSE = %g\n", rmse);
-
-    return 0;
 }
