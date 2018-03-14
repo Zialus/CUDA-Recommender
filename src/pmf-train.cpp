@@ -1,9 +1,5 @@
-#include "util.h"
 #include "pmf.h"
 #include "pmf_original.h"
-
-#include <cstring>
-
 
 bool with_weights;
 
@@ -149,17 +145,8 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
 	if (param.do_predict!=0) 
 		param.verbose = 1;
 
-	// determine filenames
 	if(i>=argc)
 		exit_with_help();
-
-	int toCut = 0;//begin remove exe____ Andre
-	for (int index=strlen(argv[0])-1;index>0;index--){
-		toCut++;
-		if (argv[0][index]=='\\'|| argv[0][index]=='/'){
-			index = 0;
-		}
-	}
 
 
 	sprintf(input_file_name, argv[i]);
@@ -192,17 +179,24 @@ void run_ccdr1(parameter &param, const char* input_file_name, const char* model_
 		}
 	}
 
+	puts("Loading the input...!");
+	double time1 = omp_get_wtime();
 	load(input_file_name,R,T, with_weights);
+	printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
+	printf("-----------\n");
+
+
 	// W, H  here are k*m, k*n
 	initial_col(W, param.k, R.rows);
 	initial_col(H, param.k, R.cols);
 
 	//printf("global mean %g\n", R.get_global_mean());
 	//printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
-	puts("starts!");
-	double time = omp_get_wtime();
+	
+	puts("CCDR1 starting...!");
+	double time2 = omp_get_wtime();
 	ccdr1(R, W, H, T, param);
-	printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
+	printf("Wall-time: %lg secs\n", omp_get_wtime() - time2);
 
 	if(model_fp) {
 		save_mat_t(W,model_fp,false);
@@ -314,19 +308,12 @@ void run_ccdr1_Double(parameter &param, const char* input_file_name, const char*
 }
 
 int main(int argc, char* argv[]){
-	///home/Andre/Documents/_pmf_CUDA_finalFinal_toProfile/cuda-or-omp-pmf-train
-	//char*  inputArguments[] = { "/home/Andre/Documents/_pmf_CUDA_finalFinal_toProfile/", "-n", "1", "-k", "40", "-Cuda", "-nBlocks", "16", "-nThreadsPerBlock", "512", "toy-example", "model" };//Andre
-	//argc = sizeof(inputArguments)/sizeof(*inputArguments);//Andre
-	//argv = inputArguments;
-	//fprintf(stdout, "%s\n",argv[0]);
-	//argv[0]="/home/Andre/Documents/_pmf_CUDA_finalFinal_toProfile/cuda-or-omp-pmf-train";
+
 	char input_file_name[1024];
 	char model_file_name[1024];
 	char test_file_name[1024];
 	char output_file_name[1024];
 
-	//fprintf(stdout, "%s\n",argv[0]);
-	//fprintf(stdout, "%s\n",inputArguments[0]);
 	parameter param = parse_command_line(argc, argv, input_file_name, model_file_name, test_file_name, output_file_name);
 
 	switch (param.solver_type){
@@ -347,10 +334,10 @@ int main(int argc, char* argv[]){
 	}
 
 	printf("-----------\n");
-	printf("%s\n",input_file_name);
-	printf("%s\n",model_file_name);
-	printf("%s\n",test_file_name);
-	printf("%s\n",output_file_name);
+	printf("input: %s\n",input_file_name);
+	printf("model: %s\n",model_file_name);
+	printf("test: %s\n",test_file_name);
+	printf("output: %s\n",output_file_name);
 	printf("-----------\n");
 
 	FILE *test_fp = nullptr, *model_fp = nullptr, *output_fp = nullptr;
@@ -400,4 +387,3 @@ int main(int argc, char* argv[]){
 	
 	return 0;
 }
-

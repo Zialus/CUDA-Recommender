@@ -23,6 +23,7 @@ extern "C" {
 		float eps;
 		bool enable_cuda;
 	};
+	
 	struct smat_t_C {
 		long rows, cols;
 		long nnz, max_row_nnz, max_col_nnz;
@@ -72,7 +73,6 @@ __device__ float RankOneUpdate_dev(const long *Rcol_ptr,
 	const float vj,
 	float *redvar,
 	const int do_nmf);
-
 
 __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols, //are the iterations on for
 	const long *Rcol_ptr,
