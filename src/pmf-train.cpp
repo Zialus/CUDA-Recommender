@@ -5,9 +5,7 @@ bool with_weights;
 
 void calculate_rmse();
 
-void read_input(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T);
-
-void read_input2(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T);
+void read_input(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T, bool ifALS);
 
 FILE* test_fp = nullptr;
 FILE* model_fp = nullptr;
@@ -176,7 +174,7 @@ void run_ccdr1(parameter &param, const char* input_file_name){
     mat_t H;
     testset_t T;
 
-    read_input(param, input_file_name, R, W, H, T);
+    read_input(param, input_file_name, R, W, H, T, false);
 
 //    printf("global mean %g\n", R.get_global_mean());
 //    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
@@ -203,7 +201,7 @@ void run_ALS(parameter &param, const char* input_file_name){
     mat_t H;
     testset_t T;
 
-    read_input2(param, input_file_name, R, W, H, T);
+    read_input(param, input_file_name, R, W, H, T, true);
 
     //printf("global mean %g\n", R.get_global_mean());
     //printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
@@ -231,30 +229,22 @@ void run_ALS(parameter &param, const char* input_file_name){
     return;
 }
 
-void read_input(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
+void read_input(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T, bool ifALS) {
     puts("----------=INPUT START=------");
     puts("Starting to read inout...");
     double time1 = omp_get_wtime();
-    load(input_file_name,R,T, false, with_weights);
+    load(input_file_name,R,T, ifALS, with_weights);
     printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
     puts("----------=INPUT END=--------");
 
     // W, H  here are k*m, k*n
-    initial_col(W, param.k, R.rows);
-    initial_col(H, param.k, R.cols);
-}
-
-void read_input2(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
-    puts("----------=INPUT START=------");
-    puts("Starting to read inout...");
-    double time1 = omp_get_wtime();
-    load(input_file_name, R, T, true, with_weights);
-    printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
-    puts("----------=INPUT END=--------");
-
-    // W, H  here are k*m, k*n
-    initial_col(W, R.rows, param.k);
-    initial_col(H, R.cols, param.k);
+    if (ifALS){
+        initial_col(W, R.rows, param.k);
+        initial_col(H, R.cols, param.k);
+    } else { // CDDR1 for now
+        initial_col(W, param.k, R.rows);
+        initial_col(H, param.k, R.cols);
+    }
 }
 
 void run_ccdr1_Double(parameter &param, const char* input_file_name){
