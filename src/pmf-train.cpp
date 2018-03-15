@@ -202,22 +202,11 @@ void run_ccdr1(parameter &param, const char* input_file_name){
 
 }
 
-void run_ALS(parameter &param, const char* input_file_name, const char* model_file_name){
+void run_ALS(parameter &param, const char* input_file_name){
     smat_t R;
-    mat_t W, H;
+    mat_t W;
+    mat_t H;
     testset_t T;
-
-    FILE *model_fp = nullptr;
-
-    if (model_file_name) {
-        //printf("model_file_name: %s\n", model_file_name);
-        model_fp = fopen(model_file_name, "wb");
-        if (model_fp == nullptr)
-        {
-            fprintf(stderr, "can't open output file %s\n", model_file_name);
-            exit(1);
-        }
-    }
 
     load(input_file_name, R, T, true, with_weights);
     // W, H  here are k*m, k*n
@@ -226,10 +215,12 @@ void run_ALS(parameter &param, const char* input_file_name, const char* model_fi
 
     //printf("global mean %g\n", R.get_global_mean());
     //printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
+
     puts("starts!");
     float time = omp_get_wtime();
     ALS(R, W, H, T, param);
     printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
+
     //int s = W[0].size();
     //int ss = W.size();
 
@@ -244,16 +235,18 @@ void run_ALS(parameter &param, const char* input_file_name, const char* model_fi
     if (model_fp) {
         save_mat_t(W, model_fp, true);
         save_mat_t(H, model_fp, true);
-        fclose(model_fp);
     }
     return;
 }
 
-void run_ccdr1_Double(parameter &param, const char* input_file_name, const char* model_file_name){
+void run_ccdr1_Double(parameter &param, const char* input_file_name){
+
     smat_t_Double R;
-    mat_t_Double W, H;
+    mat_t_Double W;
+    mat_t_Double H;
     testset_t_Double T;
     parameter_Double param_Double;
+
     param_Double.betadown = param.betadown;
     param_Double.betaup = param.betaup;
     param_Double.do_nmf = param.do_nmf;
@@ -271,25 +264,14 @@ void run_ccdr1_Double(parameter &param, const char* input_file_name, const char*
     param_Double.threads = param.threads;
     param_Double.verbose = param.verbose;
 
-
-    FILE *model_fp = nullptr;
-
-    if (model_file_name) {
-        model_fp = fopen(model_file_name, "wb");
-        if (model_fp == nullptr)
-        {
-            fprintf(stderr, "can't open output file %s\n", model_file_name);
-            exit(1);
-        }
-    }
-
     load(input_file_name, R, T, with_weights);
     // W, H  here are k*m, k*n
     initial_col(W, param.k, R.rows);
     initial_col(H, param.k, R.cols);
 
-    printf("global mean %g\n", R.get_global_mean());
-    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
+//    printf("global mean %g\n", R.get_global_mean());
+//    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
+
     puts("starts!");
     float time = omp_get_wtime();
     ccdr1_Double(R, W, H, T, param_Double);
@@ -298,9 +280,8 @@ void run_ccdr1_Double(parameter &param, const char* input_file_name, const char*
     if (model_fp) {
         save_mat_t(W, model_fp, false);
         save_mat_t(H, model_fp, false);
-        fclose(model_fp);
     }
-    return;
+
 }
 
 int main(int argc, char* argv[]) {
@@ -349,11 +330,11 @@ int main(int argc, char* argv[]) {
             break;
         case 1:
             fprintf(stdout, "Original OMP Double Implementation\n");
-            run_ccdr1_Double(param, input_file_name,model_file_name);
+            run_ccdr1_Double(param, input_file_name);
             break;
         case 2:
             fprintf(stdout, "ALS\n");
-            run_ALS(param, input_file_name,model_file_name);
+            run_ALS(param, input_file_name);
             break;
         default:
             fprintf(stderr, "Error: wrong solver type (%d)!\n", param.solver_type);
