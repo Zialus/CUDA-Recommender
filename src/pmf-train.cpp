@@ -5,7 +5,9 @@ bool with_weights;
 
 void calculate_rmse();
 
-void read_input(const char* input_file_name, smat_t& R, testset_t& T);
+void read_input(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T);
+
+void read_input2(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T);
 
 FILE* test_fp = nullptr;
 FILE* model_fp = nullptr;
@@ -174,11 +176,7 @@ void run_ccdr1(parameter &param, const char* input_file_name){
     mat_t H;
     testset_t T;
 
-    read_input(input_file_name, R, T);
-
-    // W, H  here are k*m, k*n
-    initial_col(W, param.k, R.rows);
-    initial_col(H, param.k, R.cols);
+    read_input(param, input_file_name, R, W, H, T);
 
 //    printf("global mean %g\n", R.get_global_mean());
 //    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
@@ -199,13 +197,17 @@ void run_ccdr1(parameter &param, const char* input_file_name){
 
 }
 
-void read_input(const char* input_file_name, smat_t& R, testset_t& T) {
+void read_input(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
     puts("----------=INPUT START=------");
     puts("Starting to read inout...");
     double time1 = omp_get_wtime();
     load(input_file_name,R,T, with_weights);
     printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
     puts("----------=INPUT END=--------");
+
+    // W, H  here are k*m, k*n
+    initial_col(W, param.k, R.rows);
+    initial_col(H, param.k, R.cols);
 }
 
 void run_ALS(parameter &param, const char* input_file_name){
@@ -214,10 +216,7 @@ void run_ALS(parameter &param, const char* input_file_name){
     mat_t H;
     testset_t T;
 
-    load(input_file_name, R, T, true, with_weights);
-    // W, H  here are k*m, k*n
-    initial_col(W, R.rows, param.k);
-    initial_col(H, R.cols, param.k);
+    read_input2(param, input_file_name, R, W, H, T);
 
     //printf("global mean %g\n", R.get_global_mean());
     //printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
@@ -243,6 +242,13 @@ void run_ALS(parameter &param, const char* input_file_name){
         save_mat_t(H, model_fp, true);
     }
     return;
+}
+
+void read_input2(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
+    load(input_file_name, R, T, true, with_weights);
+    // W, H  here are k*m, k*n
+    initial_col(W, R.rows, param.k);
+    initial_col(H, R.cols, param.k);
 }
 
 void run_ccdr1_Double(parameter &param, const char* input_file_name){
