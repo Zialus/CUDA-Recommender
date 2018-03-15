@@ -201,7 +201,7 @@ void read_input(const parameter& param, const char* input_file_name, smat_t& R, 
     puts("----------=INPUT START=------");
     puts("Starting to read inout...");
     double time1 = omp_get_wtime();
-    load(input_file_name,R,T, with_weights);
+    load(input_file_name,R,T, false, with_weights);
     printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
     puts("----------=INPUT END=--------");
 
