@@ -5,6 +5,8 @@ bool with_weights;
 
 void calculate_rmse();
 
+void read_input(const char* input_file_name, smat_t& R, testset_t& T);
+
 FILE* test_fp = nullptr;
 FILE* model_fp = nullptr;
 FILE* output_fp = nullptr;
@@ -168,16 +170,11 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
 
 void run_ccdr1(parameter &param, const char* input_file_name){
     smat_t R;
-    mat_t W,H;
+    mat_t W;
+    mat_t H;
     testset_t T;
 
-    puts("----------=INPUT START=------");
-    puts("Starting to read inout...");
-    double time1 = omp_get_wtime();
-    load(input_file_name,R,T, with_weights);
-    printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
-    puts("----------=INPUT END=--------");
-
+    read_input(input_file_name, R, T);
 
     // W, H  here are k*m, k*n
     initial_col(W, param.k, R.rows);
@@ -200,6 +197,15 @@ void run_ccdr1(parameter &param, const char* input_file_name){
 
     calculate_rmse();
 
+}
+
+void read_input(const char* input_file_name, smat_t& R, testset_t& T) {
+    puts("----------=INPUT START=------");
+    puts("Starting to read inout...");
+    double time1 = omp_get_wtime();
+    load(input_file_name,R,T, with_weights);
+    printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
+    puts("----------=INPUT END=--------");
 }
 
 void run_ALS(parameter &param, const char* input_file_name){
