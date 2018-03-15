@@ -3,7 +3,7 @@
 
 bool with_weights;
 
-void calculate_rmse(FILE* test_fp, FILE* output_fp, const mat_t_Double& W, const mat_t_Double& H, int rank);
+void calculate_rmse(FILE* test_fp, FILE* output_fp, const mat_t_Double& W, const mat_t_Double& H);
 
 void exit_with_help()
 {
@@ -369,14 +369,13 @@ int main(int argc, char* argv[]) {
     mat_t_Double W = load_mat_t_Double(model_fp, true);
     mat_t_Double H = load_mat_t_Double(model_fp, true);
 
-    int rank = W[0].size();
-
-    calculate_rmse(test_fp, output_fp, W, H, rank);
+    calculate_rmse(test_fp, output_fp, W, H);
 
     return 0;
 }
 
-void calculate_rmse(FILE* test_fp, FILE* output_fp, const mat_t_Double& W, const mat_t_Double& H, int rank) {
+void calculate_rmse(FILE* test_fp, FILE* output_fp, const mat_t_Double& W, const mat_t_Double& H) {
+	int rank = W[0].size();
     int i, j;
     double v, rmse = 0;
     size_t num_insts = 0;
