@@ -166,7 +166,7 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
 }
 
 
-void run_ccdr1(parameter &param, const char* input_file_name, const char* model_file_name = nullptr){
+void run_ccdr1(parameter &param, const char* input_file_name, const char* model_file_name){
     smat_t R;
     mat_t W,H;
     testset_t T;
@@ -211,7 +211,7 @@ void run_ccdr1(parameter &param, const char* input_file_name, const char* model_
     return ;
 }
 
-void run_ALS(parameter &param, const char* input_file_name, const char* model_file_name = nullptr){
+void run_ALS(parameter &param, const char* input_file_name, const char* model_file_name){
     smat_t R;
     mat_t W, H;
     testset_t T;
@@ -258,7 +258,7 @@ void run_ALS(parameter &param, const char* input_file_name, const char* model_fi
     return;
 }
 
-void run_ccdr1_Double(parameter &param, const char* input_file_name, const char* model_file_name = nullptr){
+void run_ccdr1_Double(parameter &param, const char* input_file_name, const char* model_file_name){
     smat_t_Double R;
     mat_t_Double W, H;
     testset_t_Double T;
