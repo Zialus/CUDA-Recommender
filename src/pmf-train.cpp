@@ -3,7 +3,11 @@
 
 bool with_weights;
 
-void calculate_rmse(FILE* test_fp, FILE* output_fp, const mat_t_Double& W, const mat_t_Double& H);
+void calculate_rmse(const mat_t_Double& W, const mat_t_Double& H);
+
+FILE* test_fp = nullptr;
+FILE* model_fp = nullptr;
+FILE* output_fp = nullptr;
 
 void exit_with_help()
 {
@@ -318,23 +322,6 @@ int main(int argc, char* argv[]) {
     parameter param = parse_command_line(argc, argv, input_file_name, model_file_name, test_file_name,
                                          output_file_name);
 
-    switch (param.solver_type) {
-        case CCDR1:
-            run_ccdr1(param, input_file_name, model_file_name);
-            break;
-        case 1:
-            fprintf(stdout, "Original OMP Double Implementation\n");
-            run_ccdr1_Double(param, input_file_name, model_file_name);
-            break;
-        case 2:
-            fprintf(stdout, "ALS\n");
-            run_ALS(param, input_file_name, model_file_name);
-            break;
-        default:
-            fprintf(stderr, "Error: wrong solver type (%d)!\n", param.solver_type);
-            break;
-    }
-
     // printf("-----------\n");
     // printf("input: %s\n",input_file_name);
     // printf("model: %s\n",model_file_name);
@@ -342,7 +329,6 @@ int main(int argc, char* argv[]) {
     // printf("output: %s\n",output_file_name);
     // printf("-----------\n");
 
-    FILE* test_fp = nullptr, * model_fp = nullptr, * output_fp = nullptr;
 
     if (test_file_name) {
         test_fp = fopen(test_file_name, "r");
@@ -352,29 +338,49 @@ int main(int argc, char* argv[]) {
         }
     }
     if (output_file_name) {
-        output_fp = fopen(output_file_name, "wb");
+        output_fp = fopen(output_file_name, "w+b");
         if (output_fp == nullptr) {
             fprintf(stderr, "can't open output file %s\n", output_file_name);
             exit(1);
         }
     }
     if (model_file_name) {
-        model_fp = fopen(model_file_name, "rb");
+        model_fp = fopen(model_file_name, "w+b");
         if (model_fp == nullptr) {
             fprintf(stderr, "can't open model file %s\n", model_file_name);
             exit(1);
         }
     }
 
+    switch (param.solver_type) {
+        case CCDR1:
+            run_ccdr1(param, input_file_name,model_file_name);
+            break;
+        case 1:
+            fprintf(stdout, "Original OMP Double Implementation\n");
+            run_ccdr1_Double(param, input_file_name,model_file_name);
+            break;
+        case 2:
+            fprintf(stdout, "ALS\n");
+            run_ALS(param, input_file_name,model_file_name);
+            break;
+        default:
+            fprintf(stderr, "Error: wrong solver type (%d)!\n", param.solver_type);
+            break;
+    }
+
     mat_t_Double W = load_mat_t_Double(model_fp, true);
     mat_t_Double H = load_mat_t_Double(model_fp, true);
 
-    calculate_rmse(test_fp, output_fp, W, H);
+    calculate_rmse(W, H);
 
+    fclose(model_fp);
+    fclose(output_fp);
+    fclose(test_fp);
     return 0;
 }
 
-void calculate_rmse(FILE* test_fp, FILE* output_fp, const mat_t_Double& W, const mat_t_Double& H) {
+void calculate_rmse(const mat_t_Double& W, const mat_t_Double& H) {
 	int rank = W[0].size();
     int i, j;
     double v, rmse = 0;
