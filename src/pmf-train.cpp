@@ -3,7 +3,7 @@
 
 bool with_weights;
 
-void calculate_rmse(const mat_t_Double& W, const mat_t_Double& H);
+void calculate_rmse();
 
 FILE* test_fp = nullptr;
 FILE* model_fp = nullptr;
@@ -166,49 +166,40 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
 }
 
 
-void run_ccdr1(parameter &param, const char* input_file_name, const char* model_file_name){
+void run_ccdr1(parameter &param, const char* input_file_name){
     smat_t R;
     mat_t W,H;
     testset_t T;
-    //input_file_name="/home/Andre/Documents/_pmf_CUDA_finalFinal_toProfile/toy-example";
-    //model_file_name="/home/Andre/Documents/_pmf_CUDA_finalFinal_toProfile/model";
-    FILE *model_fp = nullptr;
-    //fprintf(stdout, "fName: %s\n",input_file_name);
-    //fprintf(stdout, "ModelName: %s\n",model_file_name);
-    if(model_file_name) {
-        model_fp = fopen(model_file_name, "wb");
-        if(model_fp == nullptr)
-        {
-            fprintf(stderr,"can't open output file %s\n",model_file_name);
-            exit(1);
-        }
-    }
 
-    // puts("Loading the input...!");
-    // double time1 = omp_get_wtime();
+    puts("----------=INPUT START=------");
+    puts("Starting to read inout...");
+    double time1 = omp_get_wtime();
     load(input_file_name,R,T, with_weights);
-    // printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
-    // printf("-----------\n");
+    printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
+    puts("----------=INPUT END=--------");
 
 
     // W, H  here are k*m, k*n
     initial_col(W, param.k, R.rows);
     initial_col(H, param.k, R.cols);
 
-    //printf("global mean %g\n", R.get_global_mean());
-    //printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
+//    printf("global mean %g\n", R.get_global_mean());
+//    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
 
-    puts("CCDR1 starting...!");
+    puts("----------=CCDR1 START=------");
+    puts("CCDR1 starting...");
     double time2 = omp_get_wtime();
     ccdr1(R, W, H, T, param);
     printf("Wall-time: %lg secs\n", omp_get_wtime() - time2);
+    puts("----------=CCDR1 END=--------");
 
     if(model_fp) {
         save_mat_t(W,model_fp,false);
         save_mat_t(H,model_fp,false);
-        fclose(model_fp);
     }
-    return ;
+
+    calculate_rmse();
+
 }
 
 void run_ALS(parameter &param, const char* input_file_name, const char* model_file_name){
@@ -354,7 +345,7 @@ int main(int argc, char* argv[]) {
 
     switch (param.solver_type) {
         case CCDR1:
-            run_ccdr1(param, input_file_name,model_file_name);
+            run_ccdr1(param, input_file_name);
             break;
         case 1:
             fprintf(stdout, "Original OMP Double Implementation\n");
@@ -369,10 +360,8 @@ int main(int argc, char* argv[]) {
             break;
     }
 
-    mat_t_Double W = load_mat_t_Double(model_fp, true);
-    mat_t_Double H = load_mat_t_Double(model_fp, true);
-
-    calculate_rmse(W, H);
+    puts("Final RMSE Calculation");
+    calculate_rmse();
 
     fclose(model_fp);
     fclose(output_fp);
@@ -380,11 +369,27 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-void calculate_rmse(const mat_t_Double& W, const mat_t_Double& H) {
-	int rank = W[0].size();
-    int i, j;
-    double v, rmse = 0;
+void calculate_rmse() {
+
+    double time = omp_get_wtime();
+
+    mat_t_Double W = load_mat_t_Double(model_fp, true);
+    mat_t_Double H = load_mat_t_Double(model_fp, true);
+
+    unsigned long rank = W[0].size();
+    if (rank == 0){
+        fprintf(stderr, "Matrix is emty!\n");
+        exit(1);
+    }
+    int i;
+    int j;
+    double v;
+    double rmse = 0;
     size_t num_insts = 0;
+
+    rewind(test_fp);
+    rewind(output_fp);
+
     while (fscanf(test_fp, "%d %d %lf", &i, &j, &v) != EOF) {
         double pred_v = 0;
 #pragma omp parallel for  reduction(+:pred_v)
@@ -395,6 +400,7 @@ void calculate_rmse(const mat_t_Double& W, const mat_t_Double& H) {
         rmse += (pred_v - v) * (pred_v - v);
         fprintf(output_fp, "%lf\n", pred_v);
     }
+
     rmse = sqrt(rmse / num_insts);
-    printf("Test RMSE = %g\n", rmse);
+    printf("Test RMSE = %g, calculated in %lgs\n", rmse, omp_get_wtime() - time);
 }

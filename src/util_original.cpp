@@ -55,6 +55,7 @@ void save_mat_t(mat_t_Double A, FILE *fp, bool row_major){
 // row_major = true: the returned A is stored in row_major order,
 // row_major = false: the returened A  is stored in col_major order.
 mat_t_Double load_mat_t_Double(FILE *fp, bool row_major){
+    rewind(fp);
 	if (fp == nullptr)
 		fprintf(stderr, "input stream is not valid.\n");
 	long m, n;
