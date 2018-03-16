@@ -1,5 +1,5 @@
-#ifndef MATUTILORIGINAL
-#define MATUTILORIGINAL
+#ifndef _UTIL_ORIGINAL_H
+#define _UTIL_ORIGINAL_H
 
 #include <iostream>
 #include <algorithm>

@@ -1,10 +1,11 @@
-#ifndef _PMF_H_ORIGINAL
-#define _PMF_H_ORIGINAL
+#ifndef _PMF_ORIGINAL_H
+#define _PMF_ORIGINAL_H
 
 #include "util_original.h"
 
 enum { CCDR1_Double };
 enum { BOLDDRIVER_Double, EXPDECAY_Double };
+
 
 class parameter_Double {
 public:
@@ -14,11 +15,12 @@ public:
     int maxiter, maxinneriter;
     double lambda;
     double rho;
-    double eps;                        // for the fundec stop-cond in ccdr1
+    double eps;  // for the fundec stop-cond in ccdr1
     double eta0, betaup, betadown;  // learning rate parameters used in DSGD
     int lrate_method, num_blocks;
     int do_predict, verbose;
     int do_nmf;  // non-negative matrix factorization
+
     parameter_Double() {
         solver_type = CCDR1_Double;
         k = 10;

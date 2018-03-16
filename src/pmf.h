@@ -15,7 +15,7 @@ public:
     int maxiter, maxinneriter;
     float lambda;
     float rho;
-    float eps;                        // for the fundec stop-cond in ccdr1
+    float eps;   // for the fundec stop-cond in ccdr1
     float eta0, betaup, betadown;  // learning rate parameters used in DSGD
     int lrate_method, num_blocks;
     int do_predict, verbose;
@@ -33,7 +33,7 @@ public:
         lambda = 0.1f;
         threads = 4;
         eps = 1e-3f;
-        eta0 = 1e-3f; // initial eta0
+        eta0 = 1e-3f;     // initial eta0
         betaup = 1.05f;
         betadown = 0.5f;
         num_blocks = 30;  // number of blocks used in dsgd
