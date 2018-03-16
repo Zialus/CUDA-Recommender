@@ -39,5 +39,5 @@ file(GLOB cuda_cu "${PROJECT_SOURCE_DIR}/cuda_src/*.cu" )
 file(GLOB cuda_hdr "${PROJECT_SOURCE_DIR}/cuda_src/*.h" )
 
 include_directories("${PROJECT_SOURCE_DIR}/cuda_src/")
-CUDA_ADD_EXECUTABLE(cuda-or-omp-pmf-train ${src} ${hdr} ${cuda_cu} ${cuda_hdr})
-target_link_libraries(cuda-or-omp-pmf-train ${OpenMP_CXX_LIB_NAMES})
+CUDA_ADD_EXECUTABLE(cuda_andre ${src} ${hdr} ${cuda_cu} ${cuda_hdr})
+target_link_libraries(cuda_andre ${OpenMP_CXX_LIB_NAMES})
