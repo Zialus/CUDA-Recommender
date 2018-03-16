@@ -121,9 +121,9 @@ public:
 
 	// For matlab (Almost deprecated)
 	smat_t_Double(long m, long n, unsigned *ir, long *jc, double *v, unsigned *ir_t, long *jc_t, double *v_t) :
-		//smat_t_Double(long m, long n, unsigned long *ir, long *jc, double *v, unsigned long *ir_t, long *jc_t, double *v_t):
-		rows(m), cols(n), mem_alloc_by_me(false),
-		row_idx(ir), col_ptr(jc), val(v), col_idx(ir_t), row_ptr(jc_t), val_t(v_t) {
+	//smat_t_Double(long m, long n, unsigned long *ir, long *jc, double *v, unsigned long *ir_t, long *jc_t, double *v_t):
+			rows(m), cols(n), mem_alloc_by_me(false),
+			row_idx(ir), col_ptr(jc), val(v), col_idx(ir_t), row_ptr(jc_t), val_t(v_t) {
 		if (col_ptr[n] != row_ptr[m])
 			fprintf(stderr, "Error occurs! two nnz do not match (%ld, %ld)\n", col_ptr[n], row_ptr[n]);
 		nnz = col_ptr[n];
@@ -142,8 +142,8 @@ public:
 	}
 	void print_mat(int host){
 		for (int c = 0; c < cols; ++c) if (col_ptr[c + 1]>col_ptr[c]){
-			printf("%d: %ld at host %d\n", c, col_ptr[c + 1] - col_ptr[c], host);
-		}
+				printf("%d: %ld at host %d\n", c, col_ptr[c + 1] - col_ptr[c], host);
+			}
 	}
 	void load(long _rows, long _cols, long _nnz, const char* filename, bool with_weights = false){
 		entry_iterator_t_Double entry_it(_nnz, filename, with_weights);
