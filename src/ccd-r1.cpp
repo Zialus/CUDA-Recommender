@@ -275,4 +275,3 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
 	}
 	omp_set_num_threads(num_threads_old);
 }
-

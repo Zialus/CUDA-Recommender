@@ -199,4 +199,3 @@ void ccdr1_Double(smat_t_Double &R, mat_t_Double &W, mat_t_Double &H, testset_t_
 	}
 	omp_set_num_threads(num_threads_old);
 }
-

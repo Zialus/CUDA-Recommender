@@ -234,5 +234,3 @@ calrmse_r1(testset_t_Double& testset, vec_t_Double& Wt, vec_t_Double& Ht, vec_t_
     }
     return sqrt(rmse / nnz);
 }
-
-

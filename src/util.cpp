@@ -206,5 +206,3 @@ float calrmse_r1(testset_t &testset, vec_t &Wt, vec_t &Ht, vec_t &oldWt, vec_t &
 	}
 	return sqrt(rmse/nnz);
 }
-
-
