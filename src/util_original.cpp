@@ -39,14 +39,14 @@ void save_mat_t(mat_t_Double A, FILE *fp, bool row_major){
 	if (row_major) {
 		size_t idx = 0;
 		for (size_t i = 0; i < m; ++i)
-		for (size_t j = 0; j < n; ++j)
-			buf[idx++] = A[i][j];
+			for (size_t j = 0; j < n; ++j)
+				buf[idx++] = A[i][j];
 	}
 	else {
 		size_t idx = 0;
 		for (size_t i = 0; i < m; ++i)
-		for (size_t j = 0; j < n; ++j)
-			buf[idx++] = A[j][i];
+			for (size_t j = 0; j < n; ++j)
+				buf[idx++] = A[j][i];
 	}
 	fwrite(&buf[0], sizeof(double), m*n, fp);
 }
@@ -55,7 +55,7 @@ void save_mat_t(mat_t_Double A, FILE *fp, bool row_major){
 // row_major = true: the returned A is stored in row_major order,
 // row_major = false: the returened A  is stored in col_major order.
 mat_t_Double load_mat_t_Double(FILE *fp, bool row_major){
-    rewind(fp);
+	rewind(fp);
 	if (fp == nullptr)
 		fprintf(stderr, "input stream is not valid.\n");
 	long m, n;
@@ -68,15 +68,15 @@ mat_t_Double load_mat_t_Double(FILE *fp, bool row_major){
 		A = mat_t_Double(m, vec_t_Double(n));
 		size_t idx = 0;
 		for (size_t i = 0; i < m; ++i)
-		for (size_t j = 0; j < n; ++j)
-			A[i][j] = buf[idx++];
+			for (size_t j = 0; j < n; ++j)
+				A[i][j] = buf[idx++];
 	}
 	else {
 		A = mat_t_Double(n, vec_t_Double(m));
 		size_t idx = 0;
 		for (size_t i = 0; i < m; ++i)
-		for (size_t j = 0; j < n; ++j)
-			A[j][i] = buf[idx++];
+			for (size_t j = 0; j < n; ++j)
+				A[j][i] = buf[idx++];
 	}
 	return A;
 }
@@ -94,13 +94,13 @@ void initial_col(mat_t_Double &X, long k, long n){
 	X = mat_t_Double(k, vec_t_Double(n));
 	srand(0L);//srand48(0L);//########################################################################################################################################
 	for (long i = 0; i < n; ++i)
-	for (long j = 0; j < k; ++j)
-		X[j][i] = 0.1*(double(rand()) / RAND_MAX);//X[j][i] = 0.1*drand48();
+		for (long j = 0; j < k; ++j)
+			X[j][i] = 0.1*(double(rand()) / RAND_MAX);//X[j][i] = 0.1*drand48();
 }
 
 double dot(const vec_t_Double &a, const vec_t_Double &b){
 	double ret = 0;
-#pragma omp parallel for 
+#pragma omp parallel for
 	for (int i = a.size() - 1; i >= 0; --i)
 		ret += a[i] * b[i];
 	return ret;
@@ -148,7 +148,7 @@ double calobj(const smat_t_Double &R, const mat_t_Double &W, const mat_t_Double 
 	vec_t_Double Hc(k);
 	for (long c = 0; c < R.cols; ++c){
 		if (iscol)
-		for (int t = 0; t<k; ++t) Hc[t] = H[t][c];
+			for (int t = 0; t<k; ++t) Hc[t] = H[t][c];
 		for (long idx = R.col_ptr[c]; idx < R.col_ptr[c + 1]; ++idx){
 			double diff = -R.val[idx];
 			if (iscol)
