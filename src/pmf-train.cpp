@@ -203,8 +203,8 @@ void run_ALS(parameter &param, const char* input_file_name){
 
     read_input(param, input_file_name, R, W, H, T, true);
 
-    //printf("global mean %g\n", R.get_global_mean());
-    //printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
+//    printf("global mean %g\n", R.get_global_mean());
+//    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
 
     puts("starts!");
     float time = omp_get_wtime();
@@ -226,7 +226,6 @@ void run_ALS(parameter &param, const char* input_file_name){
         save_mat_t(W, model_fp, true);
         save_mat_t(H, model_fp, true);
     }
-    return;
 }
 
 void read_input(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T, bool ifALS) {
