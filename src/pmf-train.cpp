@@ -359,6 +359,10 @@ int main(int argc, char* argv[]) {
 
 void calculate_rmse() {
 
+	rewind(model_fp);
+	rewind(test_fp);
+    rewind(output_fp);
+
     double time = omp_get_wtime();
 
     mat_t_Double W = load_mat_t_Double(model_fp, true);
@@ -374,9 +378,6 @@ void calculate_rmse() {
     double v;
     double rmse = 0;
     size_t num_insts = 0;
-
-    rewind(test_fp);
-    rewind(output_fp);
 
     while (fscanf(test_fp, "%d %d %lf", &i, &j, &v) != EOF) {
         double pred_v = 0;
