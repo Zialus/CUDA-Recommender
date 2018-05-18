@@ -3,27 +3,20 @@ project(andre_cuda)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(CUDA_SEPARABLE_COMPILATION ON)
+#set(CMAKE_VERBOSE_MAKEFILE ON)
 
-# find_package(CUDA QUIET)
-# if (CUDA_FOUND)
-# message("Cuda was found!")
-# else()
-# 	message("Cuda was NOT found!")
-# 	set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda-6.5")
-# 	message("CUDA_TOOLKIT_ROOT_DIR was set manually!")
-# endif (CUDA_FOUND)
+set(CUDA_SEPARABLE_COMPILATION ON)
 
 find_package(CUDA REQUIRED)
 find_package(OpenMP REQUIRED)
 
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/exec/")
 
-# set(CUDA_NVCC_FLAGS "-gencode;arch=compute_30,code=sm_30;-gencode;arch=compute_35,code=sm_35;")
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_35 -rdc=true -Xptxas -dlcm=ca --std=c++11)
 
 # # add -Wextra compiler flag for gcc compilations
 # if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-#   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-Xcompiler)
+#   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "-Xcompiler -Wall, -Wextra")
 # endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
 set(WARNINGS "-Wno-format -Wno-unused-value -Wno-pointer-bool-conversion")
