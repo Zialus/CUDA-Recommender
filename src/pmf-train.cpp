@@ -180,7 +180,6 @@ void run_ccdr1(parameter &param, const char* input_file_name){
 //    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
 
     puts("----------=CCDR1 START=------");
-    puts("CCDR1 starting...");
     double time2 = omp_get_wtime();
     ccdr1(R, W, H, T, param);
     printf("Wall-time: %lg secs\n", omp_get_wtime() - time2);
@@ -206,10 +205,11 @@ void run_ALS(parameter &param, const char* input_file_name){
 //    printf("global mean %g\n", R.get_global_mean());
 //    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
 
-    puts("starts!");
-    float time = omp_get_wtime();
+    puts("----------=ALS START=------");
+    double time = omp_get_wtime();
     ALS(R, W, H, T, param);
     printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
+    puts("----------=ALS END=--------");
 
     //int s = W[0].size();
     //int ss = W.size();
@@ -280,7 +280,7 @@ void run_ccdr1_Double(parameter &param, const char* input_file_name){
 //    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
 
     puts("starts!");
-    float time = omp_get_wtime();
+    double time = omp_get_wtime();
     ccdr1_Double(R, W, H, T, param_Double);
     printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
 
