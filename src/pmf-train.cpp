@@ -359,8 +359,8 @@ int main(int argc, char* argv[]) {
 
 void calculate_rmse() {
 
-	rewind(model_fp);
-	rewind(test_fp);
+    rewind(model_fp);
+    rewind(test_fp);
     rewind(output_fp);
 
     double time = omp_get_wtime();
@@ -369,7 +369,7 @@ void calculate_rmse() {
     mat_t_Double H = load_mat_t_Double(model_fp, true);
 
     unsigned long rank = W[0].size();
-    if (rank == 0){
+    if (rank == 0) {
         fprintf(stderr, "Matrix is emty!\n");
         exit(1);
     }
