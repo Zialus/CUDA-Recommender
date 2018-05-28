@@ -5,14 +5,14 @@ set(CMAKE_CXX_STANDARD 11)
 
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(CUDA_SEPARABLE_COMPILATION ON)
+#set(CUDA_SEPARABLE_COMPILATION ON)
 
 find_package(CUDA REQUIRED)
 find_package(OpenMP REQUIRED)
 
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/exec/")
 
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_35 -rdc=true -Xptxas -dlcm=ca --std=c++11)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_35 -Xptxas -dlcm=ca --std=c++11)
 
 # # add -Wextra compiler flag for gcc compilations
 # if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
