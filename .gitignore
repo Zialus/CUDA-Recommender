@@ -1,6 +1,6 @@
 .idea/
-cmake-build-debug/
-cmake-build-release/
+cmake-*
 exec/
 build/
 sftp-config.json
+results/

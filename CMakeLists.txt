@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.9)
 project(andre_cuda)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -20,7 +20,7 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_35 -Xptxas -dlcm=ca --std=c++11)
 # endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
 set(WARNINGS "-Wno-format -Wno-unused-value -Wno-pointer-bool-conversion")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} ${WARNINGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS}")
 
 # Add debugging to CUDA NVCC flags for NVidia's NSight tools.
 # set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG} "-G")
@@ -33,4 +33,4 @@ file(GLOB cuda_hdr "${PROJECT_SOURCE_DIR}/cuda_src/*.h" )
 
 include_directories("${PROJECT_SOURCE_DIR}/cuda_src/")
 CUDA_ADD_EXECUTABLE(cuda_andre ${src} ${hdr} ${cuda_cu} ${cuda_hdr})
-target_link_libraries(cuda_andre ${OpenMP_CXX_LIB_NAMES})
+target_link_libraries(cuda_andre OpenMP::OpenMP_CXX)
