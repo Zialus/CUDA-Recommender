@@ -4,10 +4,54 @@ sudo: required
 
 matrix:
   include:
-    - env: CUDA=6.5-19
-    - env: CUDA=7.0-28
-    - env: CUDA=7.5-18
-    - env: CUDA=8.0.61-1
+    - os: linux
+      env: CUDA=6.5-19
+    - os: linux
+      env: CUDA=7.0-28
+    - os: linux
+      env: CUDA=7.5-18
+    - os: linux
+      env: CUDA=8.0.61-1
+    - os : osx
+      osx_image: xcode9
+      env: CUDA=8.0.61
+      before_install:
+        - brew update
+        - brew cask uninstall oclint
+        - brew install llvm@3.7 && brew link --overwrite llvm@3.7 --force
+        - export CC=clang-3.7
+        - export CXX=clang++
+        - source ./.travis.osx.sh
+    - os : osx
+      osx_image: xcode9
+      env: CUDA=9.0.176
+      before_install:
+        - brew update
+        - brew cask uninstall oclint
+        - brew install llvm@3.9 && brew link --overwrite llvm@3.9 --force
+        - export CC=clang-3.9
+        - export CXX=clang++
+        - source ./.travis.osx.sh
+    - os : osx
+      osx_image: xcode9
+      env: CUDA=9.1.128
+      before_install:
+        - brew update
+        - brew cask uninstall oclint
+        - brew install llvm@4 && brew link --overwrite llvm@4 --force
+        - export CC=clang-4.0
+        - export CXX=clang++
+        - source ./.travis.osx.sh
+    - os : osx
+      osx_image: xcode9
+      env: CUDA=9.2.64
+      before_install:
+        - brew update
+        - brew cask uninstall oclint
+        - brew install llvm@5 && brew link --overwrite llvm@5 --force
+        - export CC=clang-5.0
+        - export CXX=clang++
+        - source ./.travis.osx.sh
 
 before_install:
   ##### INSTALL CMAKE 3.11.3 #####
