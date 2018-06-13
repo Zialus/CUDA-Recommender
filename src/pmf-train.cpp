@@ -156,13 +156,13 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
     if(i>=argc)
         exit_with_help();
 
-    sprintf(input_file_name, argv[i]);
+    sprintf(input_file_name, "%s", argv[i]);
 
-    sprintf(model_file_name, argv[i+1]);
+    sprintf(model_file_name, "%s", argv[i+1]);
 
-    sprintf(test_file_name, argv[i+2]);
+    sprintf(test_file_name, "%s", argv[i+2]);
 
-    sprintf(output_file_name, argv[i+3]);
+    sprintf(output_file_name, "%s", argv[i+3]);
 
     return param;
 }
@@ -299,34 +299,29 @@ int main(int argc, char* argv[]) {
     parameter param = parse_command_line(argc, argv, input_file_name, model_file_name, test_file_name,
                                          output_file_name);
 
-    // printf("-----------\n");
-    // printf("input: %s\n",input_file_name);
-    // printf("model: %s\n",model_file_name);
-    // printf("test: %s\n",test_file_name);
-    // printf("output: %s\n",output_file_name);
-    // printf("-----------\n");
+//     printf("-----------\n");
+//     printf("input: %s\n",input_file_name);
+//     printf("model: %s\n",model_file_name);
+//     printf("test: %s\n",test_file_name);
+//     printf("output: %s\n",output_file_name);
+//     printf("-----------\n");
 
 
-    if (test_file_name) {
-        test_fp = fopen(test_file_name, "r");
-        if (test_fp == nullptr) {
-            fprintf(stderr, "can't open test file %s\n", test_file_name);
-            exit(1);
-        }
+    test_fp = fopen(test_file_name, "r");
+    if (test_fp == nullptr) {
+        fprintf(stderr, "can't open test file %s\n", test_file_name);
+        exit(1);
     }
-    if (output_file_name) {
-        output_fp = fopen(output_file_name, "w+b");
-        if (output_fp == nullptr) {
-            fprintf(stderr, "can't open output file %s\n", output_file_name);
-            exit(1);
-        }
+
+    output_fp = fopen(output_file_name, "w+b");
+    if (output_fp == nullptr) {
+        fprintf(stderr, "can't open output file %s\n", output_file_name);
+        exit(1);
     }
-    if (model_file_name) {
-        model_fp = fopen(model_file_name, "w+b");
-        if (model_fp == nullptr) {
-            fprintf(stderr, "can't open model file %s\n", model_file_name);
-            exit(1);
-        }
+    model_fp = fopen(model_file_name, "w+b");
+    if (model_fp == nullptr) {
+        fprintf(stderr, "can't open model file %s\n", model_file_name);
+        exit(1);
     }
 
     switch (param.solver_type) {

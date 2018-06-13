@@ -17,7 +17,7 @@ inline double RankOneUpdate(const smat_t_Double &R, const int j, const vec_t_Dou
 	if (do_nmf>0 & newvj < 0) {
 		newvj = 0;
 		delta = vj; // old - new
-		fundec = -2 * g*vj; +h*vj*vj;
+		fundec = -2 * g*vj; //+h*vj*vj;
 	}
 	else {
 		delta = vj - newvj;
