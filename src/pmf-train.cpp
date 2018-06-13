@@ -190,8 +190,6 @@ void run_ccdr1(parameter &param, const char* input_file_name){
         save_mat_t(H,model_fp,false);
     }
 
-    calculate_rmse();
-
 }
 
 void run_ALS(parameter &param, const char* input_file_name){
@@ -381,7 +379,7 @@ void calculate_rmse() {
 
     while (fscanf(test_fp, "%d %d %lf", &i, &j, &v) != EOF) {
         double pred_v = 0;
-#pragma omp parallel for  reduction(+:pred_v)
+//#pragma omp parallel for  reduction(+:pred_v)
         for (int t = 0; t < rank; t++) {
             pred_v += W[i - 1][t] * H[j - 1][t];
         }
@@ -391,5 +389,5 @@ void calculate_rmse() {
     }
 
     rmse = sqrt(rmse / num_insts);
-    printf("Test RMSE = %g, calculated in %lgs\n", rmse, omp_get_wtime() - time);
+    printf("Test RMSE = %g , calculated in %lgs\n", rmse, omp_get_wtime() - time);
 }
