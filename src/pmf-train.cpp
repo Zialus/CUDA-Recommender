@@ -3,10 +3,6 @@
 
 bool with_weights;
 
-void calculate_rmse();
-
-void read_input(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T, bool ifALS);
-
 FILE* test_fp = nullptr;
 FILE* model_fp = nullptr;
 FILE* output_fp = nullptr;
@@ -385,4 +381,32 @@ void calculate_rmse() {
 
     rmse = sqrt(rmse / num_insts);
     printf("Test RMSE = %g , calculated in %lgs\n", rmse, omp_get_wtime() - time);
+}
+
+void calculate_rmse_directly(float** W, float** H, int iter, int rank) {
+
+    double time = omp_get_wtime();
+
+    if (rank == 0) {
+        fprintf(stderr, "Matrix is emty!\n");
+        exit(1);
+    }
+    int i;
+    int j;
+    double v;
+    double rmse = 0;
+    size_t num_insts = 0;
+
+    while (fscanf(test_fp, "%d %d %lf", &i, &j, &v) != EOF) {
+        double pred_v = 0;
+//#pragma omp parallel for  reduction(+:pred_v)
+        for (int t = 0; t < rank; t++) {
+            pred_v += W[i - 1][t] * H[j - 1][t];
+        }
+        num_insts++;
+        rmse += (pred_v - v) * (pred_v - v);
+    }
+
+    rmse = sqrt(rmse / num_insts);
+    printf("Test RMSE = %g , for iter %d, calculated in %lgs\n", rmse, iter, omp_get_wtime() - time);
 }
