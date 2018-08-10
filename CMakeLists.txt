@@ -22,7 +22,7 @@ set(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/exec/")
 # Add debugging to CUDA NVCC flags for NVidia's NSight tools.
 set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG} "-G")
 
-set(EXTRA_NVCC_FLAGS -arch=sm_35 -Xptxas -dlcm=ca --std=c++11)
+set(EXTRA_NVCC_FLAGS -arch=sm_35 -Xptxas -dlcm=ca --std=c++11 -Xcompiler -rdynamic -lineinfo)
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} ${EXTRA_NVCC_FLAGS})
 
@@ -42,6 +42,6 @@ file(GLOB hdr "${PROJECT_SOURCE_DIR}/src/*.hpp" "${PROJECT_SOURCE_DIR}/src/*.h")
 file(GLOB cuda_cu "${PROJECT_SOURCE_DIR}/cuda_src/*.cu")
 file(GLOB cuda_hdr "${PROJECT_SOURCE_DIR}/cuda_src/*.h")
 
-include_directories("${PROJECT_SOURCE_DIR}/cuda_src/")
+include_directories("${PROJECT_SOURCE_DIR}/cuda_src/" "${PROJECT_SOURCE_DIR}/src/")
 CUDA_ADD_EXECUTABLE(cuda_andre ${src} ${hdr} ${cuda_cu} ${cuda_hdr})
 target_link_libraries(cuda_andre OpenMP::OpenMP_CXX)

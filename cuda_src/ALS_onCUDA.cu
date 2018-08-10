@@ -1,4 +1,15 @@
 #include "ALS_onCUDA.h"
+#include <assert.h>
+
+// CUDA kernel to pause for at least num_cycle cycles
+__device__ void sleep(int64_t num_cycles)
+{
+	int64_t cycles = 0;
+	int64_t start = clock64();
+	while(cycles < num_cycles) {
+		cycles = clock64() - start;
+	}
+}
 
 __device__ void choldc1_k(int n, float** a, float* p) {
 	unsigned i, j;
@@ -90,6 +101,18 @@ __device__ void Mt_byM_multiply_k(int i, int j, float*H, float**Result, const lo
 }
 
 __global__ void updateW_overH_kernel(const long rows, const long *row_ptr, const unsigned *col_idx, const unsigned *colMajored_sparse_idx, const float *val, const float lambda, const int k, float *W, float *H){
+	assert(row_ptr);
+	assert(colMajored_sparse_idx);
+	assert(val);
+	assert(W);
+	assert(H);
+
+	int tid = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if(tid == 0){
+		printf("OLA 1\n");
+	}
+
 	//optimize W over H
 	int ii = threadIdx.x + blockIdx.x * blockDim.x;
 	for (int Rw = ii; Rw < rows; Rw += blockDim.x*gridDim.x){
@@ -104,10 +127,27 @@ __global__ void updateW_overH_kernel(const long rows, const long *row_ptr, const
 		if (omegaSize>0){
 			subVector = (float *)malloc(k * sizeof(float));
 			subMatrix = (float **)malloc(k * sizeof(float *));
-			for (unsigned i = 0; i < k; ++i){
-				subMatrix[i] = (float *)malloc(k * sizeof(float));
+
+			if(tid == 0){
+				printf("OLA 2\n");
 			}
 
+			assert(subVector);
+			assert(subMatrix);
+			for (unsigned i = 0; i < k; ++i){
+				if(tid == 0){
+					printf("OLA 3.1,i=%d\n",i);
+				} //else { sleep(1000000000);}
+				subMatrix[i] = (float *)malloc(k * sizeof(float));
+				if(tid == 0){
+					printf("OLA 3.2,i=%d\n",i);
+				}
+				assert(subMatrix);
+			}
+
+			if(tid == 0){
+				printf("OLA 4\n");
+			}
 
 			Mt_byM_multiply_k(omegaSize, k, H, subMatrix, row_ptr[Rw], col_idx);
 
@@ -118,6 +158,7 @@ __global__ void updateW_overH_kernel(const long rows, const long *row_ptr, const
 
 			//invert sub-matrix
 			inverseMatrix_CholeskyMethod_k(k, subMatrix);
+
 
 
 			//sparse multiplication
