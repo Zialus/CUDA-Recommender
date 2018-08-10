@@ -13,7 +13,7 @@ void exit_with_help()
             "Usage: omp-pmf-train [options] data_dir [model_filename]\n"
             "options:\n"
             "    -s type : set type of solver (default 0)\n"
-            "    	 0 -- CCDR1 with fundec stopping condition\n"
+            "        0 -- CCDR1 with fundec stopping condition\n"
             "    -k rank : set the rank (default 10)\n"
             "    -n threads : set the number of threads (default 4)\n"
             "    -l lambda : set the regularization parameter lambda (default 0.1)\n"
@@ -292,8 +292,7 @@ int main(int argc, char* argv[]) {
     char test_file_name[1024];
     char output_file_name[1024];
 
-    parameter param = parse_command_line(argc, argv, input_file_name, model_file_name, test_file_name,
-                                         output_file_name);
+    parameter param = parse_command_line(argc, argv, input_file_name, model_file_name, test_file_name, output_file_name);
 
 //     printf("-----------\n");
 //     printf("input: %s\n",input_file_name);
@@ -314,6 +313,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "can't open output file %s\n", output_file_name);
         exit(1);
     }
+
     model_fp = fopen(model_file_name, "w+b");
     if (model_fp == nullptr) {
         fprintf(stderr, "can't open model file %s\n", model_file_name);
