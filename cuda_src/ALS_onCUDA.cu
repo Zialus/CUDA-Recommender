@@ -2,14 +2,14 @@
 #include <assert.h>
 
 // CUDA kernel to pause for at least num_cycle cycles
-__device__ void sleep(int64_t num_cycles)
-{
-	int64_t cycles = 0;
-	int64_t start = clock64();
-	while(cycles < num_cycles) {
-		cycles = clock64() - start;
-	}
-}
+//__device__ void sleep(int64_t num_cycles)
+//{
+//	int64_t cycles = 0;
+//	int64_t start = clock64();
+//	while(cycles < num_cycles) {
+//		cycles = clock64() - start;
+//	}
+//}
 
 __device__ void choldc1_k(int n, float** a, float* p) {
 	unsigned i, j;
