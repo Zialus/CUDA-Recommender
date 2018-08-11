@@ -3,8 +3,6 @@
 
 #define kind dynamic,500
 
-extern "C"  void kernel_wrapper_ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters);
-
 // CCD rank-one 
 inline float RankOneUpdate_Original_float(const smat_t &R, const int j, const vec_t &u, const float lambda, const float vj, float *redvar, int do_nmf){
 	float g=0, h=lambda;
