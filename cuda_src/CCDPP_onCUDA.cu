@@ -404,7 +404,7 @@ Error:
 	return cudaStatus;
 }
 
-extern "C" smat_t_C transpose(smat_t_C m){
+smat_t_C transpose(smat_t_C m){
 	smat_t_C mt;
 	mt.cols = m.rows; mt.rows = m.cols; mt.nnz = m.nnz;
 	mt.val = m.val_t; mt.val_t = m.val;
@@ -421,14 +421,14 @@ extern "C" smat_t_C transpose(smat_t_C m){
 }
 
 
-extern "C" long nnz_of_row(int i, const long *row_ptr) {
+long nnz_of_row(int i, const long *row_ptr) {
 	return (row_ptr[i + 1] - row_ptr[i]);
 }
 
-extern "C" long nnz_of_col(int i, const long *col_ptr){
+long nnz_of_col(int i, const long *col_ptr){
 	return (col_ptr[i + 1] - col_ptr[i]);
 }
 
-extern "C" float maxC(float a, float b){
+float maxC(float a, float b){
 	return(a>b ? a : b);
 }
