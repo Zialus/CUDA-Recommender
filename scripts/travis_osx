@@ -1,4 +1,4 @@
-#!/bin/bash -uxe
+set -x
 
 case ${CUDA:0:3} in
 
@@ -10,7 +10,7 @@ case ${CUDA:0:3} in
 
 esac
 
-brew install wget
+brew upgrade wget
 wget -O cuda.dmg "$installer"
 
 brew install p7zip
@@ -18,3 +18,5 @@ brew install p7zip
 
 brew install gnu-tar
 sudo gtar -x --skip-old-files -f CUDAMacOSXInstaller/CUDAMacOSXInstaller.app/Contents/Resources/payload/cuda_mac_installer_tk.tar.gz -C /
+
+set +x

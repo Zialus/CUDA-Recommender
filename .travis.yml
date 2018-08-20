@@ -36,46 +36,30 @@ matrix:
     - os : osx
       osx_image: xcode7.3
       env: CUDA=7.5.27
-      before_install:
+      before_install:  &cuda_install
         - brew update
         - brew upgrade cmake
         - brew install libomp
-        - source ./.travis.osx.sh
+        - source ./scripts/travis_osx
     - os : osx
       osx_image: xcode8
       env: CUDA=8.0.61
-      before_install:
-        - brew update
-        - brew upgrade cmake
-        - brew install libomp
-        - source ./.travis.osx.sh
+      before_install: *cuda_install
     - os : osx
       osx_image: xcode8.3
       env: CUDA=9.0.176
-      before_install:
-        - brew update
-        - brew upgrade cmake
-        - brew install libomp
-        - source ./.travis.osx.sh
+      before_install: *cuda_install
     - os : osx
       osx_image: xcode9.2
       env: CUDA=9.1.128
-      before_install:
-        - brew update
-        - brew upgrade cmake
-        - brew install libomp
-        - source ./.travis.osx.sh
+      before_install: *cuda_install
     - os : osx
       osx_image: xcode9.2
       env: CUDA=9.2.148
-      before_install:
-        - brew update
-        - brew upgrade cmake
-        - brew install libomp
-        - source ./.travis.osx.sh
+      before_install: *cuda_install
 
 before_install:
-  - source ./.travis.linux.sh
+  - source ./scripts/travis_linux
 
 install:
   - export CUDA_HOME=/usr/local/cuda
