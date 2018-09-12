@@ -460,18 +460,10 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 		}
 	}
 
-	cudaFree(dev_colMajored_sparse_idx);
-	cudaFree(dev_col_idx);
-	cudaFree(dev_col_ptr);
-	cudaFree(dev_H_);
-	cudaFree(dev_row_idx);
-	cudaFree(dev_row_ptr);
-	cudaFree(dev_val);
-	cudaFree(dev_W_);
-	free(W_);
-	free(H_);
-
 Error:
+    free(W_);
+    free(H_);
+
 	cudaFree(dev_colMajored_sparse_idx);
 	cudaFree(dev_col_idx);
 	cudaFree(dev_col_ptr);

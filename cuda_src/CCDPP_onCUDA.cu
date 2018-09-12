@@ -376,22 +376,13 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
 
 		}
 	}
+
+Error:
 	free(u);
 	free(v);
 	free(Hostreduction);
 	free(Hostreduction2);
 
-	cudaFree(dev_Rcol_ptr);
-	cudaFree(dev_Rrow_idx);
-	cudaFree(dev_Rcol_ptr_T);
-	cudaFree(dev_Rrow_idx_T);
-	cudaFree(dev_Rval);
-	cudaFree(dev_Rval_t);
-	cudaFree(dev_Wt_vec_t);
-	cudaFree(dev_Ht_vec_t);
-	cudaFree(dev_return);
-
-Error:
 	cudaFree(dev_Rcol_ptr);
 	cudaFree(dev_Rrow_idx);
 	cudaFree(dev_Rcol_ptr_T);
