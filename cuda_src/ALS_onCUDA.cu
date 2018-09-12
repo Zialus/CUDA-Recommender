@@ -258,6 +258,9 @@ void kernel_wrapper_als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_a
 		fprintf(stderr, "ALS FAILED: %s\n", cudaGetErrorString(cudaStatus));
 	}
 	cudaStatus = cudaDeviceReset();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "CUDA RESET FAILED: %s\n", cudaGetErrorString(cudaStatus));
+    }
 }
 
 cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &parameters){
@@ -271,15 +274,14 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 	int nBlocks = parameters.nBlocks;
 
 	cudaError_t cudaStatus;
-	float *W_, *H_;
 	int maxIter = parameters.maxiter;
 	float lambda = parameters.lambda;
-	float k = parameters.k;
+	int k = parameters.k;
 
-	W_ = (float*)malloc(R_C.rows*k*sizeof(float));
-	size_t nbits_W_ = R_C.rows*k*sizeof(float);
-	H_ = (float*)malloc(R_C.cols*k*sizeof(float));
-	size_t nbits_H_ = R_C.cols*k*sizeof(float);
+    float* W_ = (float*) malloc(R_C.rows * k * sizeof(float));
+	size_t nbits_W_ = R_C.rows * k * sizeof(float);
+    float* H_ = (float*) malloc(R_C.cols * k * sizeof(float));
+	size_t nbits_H_ = R_C.cols * k * sizeof(float);
 
 	//Load H and W on vectors
 	int indexPosition = 0;
