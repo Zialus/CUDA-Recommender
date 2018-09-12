@@ -160,7 +160,6 @@ __global__ void updateW_overH_kernel(const long rows, const long *row_ptr, const
 			inverseMatrix_CholeskyMethod_k(k, subMatrix);
 
 
-
 			//sparse multiplication
 			for (unsigned c = 0; c < k; ++c){
 				subVector[c] = 0;
@@ -258,9 +257,9 @@ void kernel_wrapper_als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_a
 		fprintf(stderr, "ALS FAILED: %s\n", cudaGetErrorString(cudaStatus));
 	}
 	cudaStatus = cudaDeviceReset();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "CUDA RESET FAILED: %s\n", cudaGetErrorString(cudaStatus));
-    }
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "CUDA RESET FAILED: %s\n", cudaGetErrorString(cudaStatus));
+	}
 }
 
 cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &parameters){
@@ -285,7 +284,7 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 
 	//Load H and W on vectors
 	int indexPosition = 0;
-	//		float *Wt = &W[t][0], *Ht = &H[t][0];
+	//// float *Wt = &W[t][0], *Ht = &H[t][0];
 	for (int i = 0; i < R_C.rows; ++i){
 		for (int j = 0; j < k; ++j){
 			W_[indexPosition] = W[i][j];
@@ -356,7 +355,6 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 	}
 
 
-
 	cudaStatus = cudaMemcpy(dev_col_ptr, R_C.col_ptr, R_C.nbits_col_ptr, cudaMemcpyHostToDevice);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
@@ -397,6 +395,7 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 		fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
 		goto Error;
 	}
+
 
 	for (unsigned int iter = 0; iter < maxIter; ++iter){
 
@@ -446,7 +445,7 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 	}
 
 	indexPosition = 0;
-	////		float *Wt = &W[t][0], *Ht = &H[t][0];
+	//// float *Wt = &W[t][0], *Ht = &H[t][0];
 	for (int i = 0; i < R_C.rows; ++i){
 		for (int j = 0; j < k; ++j){
 			W[i][j] = W_[indexPosition];
@@ -454,14 +453,12 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 		}
 	}
 	indexPosition = 0;
-
 	for (int i = 0; i < R_C.cols; ++i){
 		for (int j = 0; j < k; ++j){
 			H[i][j] = H_[indexPosition];
 			++indexPosition;
 		}
 	}
-
 
 	cudaFree(dev_colMajored_sparse_idx);
 	cudaFree(dev_col_idx);
