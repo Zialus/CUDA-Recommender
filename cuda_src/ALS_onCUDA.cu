@@ -163,7 +163,7 @@ __global__ void updateW_overH_kernel(const long rows, const long *row_ptr, const
 			//sparse multiplication
 			for (unsigned c = 0; c < k; ++c){
 				subVector[c] = 0;
-				for (unsigned idx = row_ptr[Rw]; idx < row_ptr[Rw + 1]; ++idx){
+				for (long idx = row_ptr[Rw]; idx < row_ptr[Rw + 1]; ++idx){
 					unsigned idx2 = colMajored_sparse_idx[idx];
 					subVector[c] += val[idx2] * H[(col_idx[idx] * k) + c];
 				}
@@ -223,7 +223,7 @@ __global__ void updateH_overW_kernel(const long cols, const long *col_ptr, const
 			//sparse multiplication
 			for (unsigned c = 0; c < k; ++c){
 				subVector[c] = 0;
-				for (unsigned idx = col_ptr[Rh]; idx < col_ptr[Rh + 1]; ++idx){
+				for (long idx = col_ptr[Rh]; idx < col_ptr[Rh + 1]; ++idx){
 					subVector[c] += val[idx] * W[(row_idx[idx] * k) + c];
 				}
 			}

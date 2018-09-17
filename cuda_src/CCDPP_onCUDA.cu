@@ -22,14 +22,14 @@ __global__ void RankOneUpdate_DUAL_kernel(const long Rcols, //are the iterations
 	float dev_innerfundec_cur2 = 0;
 	innerfundec_cur[ii] = 0;
 	innerfundec_cur2[ii] = 0;
-	for (size_t c = ii; c < Rcols; c += blockDim.x*gridDim.x){
+	for (int c = ii; c < Rcols; c += blockDim.x*gridDim.x){
 		v[c] = RankOneUpdate_dev(Rcol_ptr, Rrow_idx, Rval,
 			c, u, lambda*(Rcol_ptr[c + 1] - Rcol_ptr[c]), v[c], &dev_innerfundec_cur, do_nmf);
 
 	}
 	innerfundec_cur[ii] = dev_innerfundec_cur;
 
-	for (size_t c = ii; c < Rcols_t; c += blockDim.x*gridDim.x){
+	for (int c = ii; c < Rcols_t; c += blockDim.x*gridDim.x){
 		u[c] = RankOneUpdate_dev(Rcol_ptr_t, Rrow_idx_t, Rval_t,
 			c, v, lambda*(Rcol_ptr_t[c + 1] - Rcol_ptr_t[c]), u[c], &dev_innerfundec_cur2, do_nmf);
 
@@ -85,33 +85,33 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols, //are the iter
 	const bool add_t
 	){
 	int ii = threadIdx.x + blockIdx.x * blockDim.x;
-	//__threadfence_system();
-	for (size_t i = ii; i < Rcols; i += blockDim.x*gridDim.x){
+
+	for (int i = ii; i < Rcols; i += blockDim.x*gridDim.x){
 		if (add) {
 			float Htc = Ht_vec_t[i];
-			for (size_t idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx){
-				Rval[idx] += Wt_vec_t[Rrow_idx[idx]] * Htc;//change R.val
+			for (long idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx){
+				Rval[idx] += Wt_vec_t[Rrow_idx[idx]] * Htc; //change R.val
 			}
 		}
 		else {
 			float Htc = Ht_vec_t[i];
-			for (size_t idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx){
-				Rval[idx] -= Wt_vec_t[Rrow_idx[idx]] * Htc;//change R.val
+			for (long idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx){
+				Rval[idx] -= Wt_vec_t[Rrow_idx[idx]] * Htc; //change R.val
 			}
 		}
 	}
 
-	for (size_t i = ii; i < Rcols_t; i += blockDim.x*gridDim.x){
+	for (int i = ii; i < Rcols_t; i += blockDim.x*gridDim.x){
 		if (add_t) {
 			float Htc = Wt_vec_t[i];
-			for (size_t idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx){
-				Rval_t[idx] += Ht_vec_t[Rrow_idx_t[idx]] * Htc;//change R.val
+			for (long idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx){
+				Rval_t[idx] += Ht_vec_t[Rrow_idx_t[idx]] * Htc; //change R.val
 			}
 		}
 		else {
 			float Htc = Wt_vec_t[i];
-			for (size_t idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx){
-				Rval_t[idx] -= Ht_vec_t[Rrow_idx_t[idx]] * Htc;//change R.val
+			for (long idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx){
+				Rval_t[idx] -= Ht_vec_t[Rrow_idx_t[idx]] * Htc; //change R.val
 			}
 		}
 	}
