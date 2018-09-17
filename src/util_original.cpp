@@ -11,17 +11,16 @@ void load(const char* srcdir, smat_t_Double& R, testset_t_Double& T, bool with_w
     long m, n, nnz;
     fscanf(fp, "%ld %ld", &m, &n);
 
-    fscanf(fp, "%ld %s", &nnz, buf);
+    fscanf(fp, "%ld %1023s", &nnz, buf);
     sprintf(filename, "%s/%s", srcdir, buf);
     R.load(m, n, nnz, filename, with_weights);
 
-    if (fscanf(fp, "%ld %s", &nnz, buf) != EOF) {
+    if (fscanf(fp, "%ld %1023s", &nnz, buf) != EOF) {
         sprintf(filename, "%s/%s", srcdir, buf);
         T.load(m, n, nnz, filename);
     }
     fclose(fp);
     //double bias = R.get_global_mean(); R.remove_bias(bias); T.remove_bias(bias);
-    return;
 }
 
 // Save a mat_t_Double A to a file in row_major order.

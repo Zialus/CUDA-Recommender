@@ -1,5 +1,6 @@
 #include "pmf.h"
 #include "CCDPP_onCUDA.h"
+#include <assert.h>
 
 #define kind dynamic,500
 
@@ -123,38 +124,25 @@ void ccdr1(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter &param){
 		float **H_c;
 
 		H_c = (float **)malloc(param.k * sizeof(float *));
-		if (H_c == nullptr){
-			fprintf(stderr, "out of memory\n");
-			return;
-		}
+		assert(H_c);
 
 		for (int i = 0; i < param.k; i++){
 			H_c[i] = &H[i][0];
-			if (H_c[i] == nullptr){
-				fprintf(stderr, "out of memory\n");
-				exit(1);
-			}
+			assert(H_c[i]);
 		}
 
 		W_c = (float **)malloc(param.k * sizeof(float *));
-		if (W_c == nullptr){
-			fprintf(stderr, "out of memory\n");
-			return;
-		}
+		assert(W_c);
 
 		for (int i = 0; i < param.k; i++){
 			W_c[i] = &W[i][0];
-			if (W_c[i] == nullptr){
-				fprintf(stderr, "out of memory\n");
-				exit(1);
-			}
+			assert(W_c[i]);
 		}
 
 		kernel_wrapper_ccdpp_NV(R_C, W_c, H_c, parameters);
 
 		free(W_c);
 		free(H_c);
-
 	}
 	else{
 		ccdr1_original_float(R, W, H, T, param);

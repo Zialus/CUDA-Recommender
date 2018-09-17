@@ -1,5 +1,6 @@
 #include "pmf.h"
 #include "ALS_onCUDA.h"
+#include <assert.h>
 
 #define kind dynamic,500
 
@@ -148,29 +149,19 @@ void ALS(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter &param){
 		float **H_c;
 
 		H_c = (float **)malloc(R.cols * sizeof(float *));
-		if (H_c == nullptr){
-			fprintf(stderr, "out of memory\n");
-			return;
-		}
+		assert(H_c);
+
 		for (int i = 0; i < R.cols; i++){
 			H_c[i] = &H[i][0];
-			if (H_c[i] == nullptr){
-				fprintf(stderr, "out of memory\n");
-				return;
-			}
+			assert(H_c[i]);
 		}
 
 		W_c = (float **)malloc(R.rows * sizeof(float *));
-		if (W_c == nullptr){
-			fprintf(stderr, "out of memory\n");
-			return;
-		}
+		assert(W_c);
+
 		for (int i = 0; i < R.rows; i++){
 			W_c[i] = &W[i][0];
-			if (W_c[i] == nullptr){
-				fprintf(stderr, "out of memory\n");
-				return;
-			}
+			assert(W_c[i]);
 		}
 
 		kernel_wrapper_als_NV(R_C, W_c, H_c, parameters);

@@ -11,17 +11,16 @@ void load(const char* srcdir, smat_t &R, testset_t &T, bool ifALS, bool with_wei
 	long m, n, nnz;
 	fscanf(fp, "%ld %ld", &m, &n);
 
-	fscanf(fp, "%ld %s", &nnz, buf);
+	fscanf(fp, "%ld %1023s", &nnz, buf);
 	sprintf(filename,"%s/%s", srcdir, buf);
 	R.load(m, n, nnz, filename, ifALS, with_weights);
 
-	if(fscanf(fp, "%ld %s", &nnz, buf)!= EOF){
+	if(fscanf(fp, "%ld %1023s", &nnz, buf)!= EOF){
 		sprintf(filename,"%s/%s", srcdir, buf);
 		T.load(m, n, nnz, filename);
 	}
 	fclose(fp);
 	//float bias = R.get_global_mean(); R.remove_bias(bias); T.remove_bias(bias);
-	return ;
 }
 
 // Save a mat_t A to a file in row_major order.
