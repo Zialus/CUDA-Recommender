@@ -38,11 +38,6 @@ struct smat_t_C {
 	bool with_weights;
 };
 
-smat_t_C transpose(smat_t_C m);
-long nnz_of_row(int i, const long *row_ptr);
-long nnz_of_col(int i, const long *col_ptr);
-float maxC(float a, float b);
-
 __global__ void RankOneUpdate_DUAL_kernel(const long Rcols, //are the iterations on for
 	const long *Rcol_ptr,
 	const unsigned int *Rrow_idx,
@@ -90,5 +85,9 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols, //are the iter
 cudaError_t ccdpp_NV(smat_t_C& R_C, float**& W, float**& H, params& parameters);
 
 void kernel_wrapper_ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters);
+
+smat_t_C transpose(smat_t_C m);
+
+float maxC(float a, float b);
 
 #endif
