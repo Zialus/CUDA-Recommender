@@ -190,18 +190,17 @@ void ALS_multicore(smat_t &R, mat_t &W, mat_t &H, parameter &param){
 		for (int Rw = 0; Rw < R.rows; ++Rw){
 			float *Wr = &W[Rw][0];
 			unsigned omegaSize = R.row_ptr[Rw + 1] - R.row_ptr[Rw];
-			float ** subMatrix, ** H_Omega;
-			float * subVector;			
+			float ** subMatrix;
 
 			if (omegaSize>0){
-				subVector = (float *)malloc(k * sizeof(float));
+				float * subVector = (float *)malloc(k * sizeof(float));
 				subMatrix = (float **)malloc(k * sizeof(float *));
 				for (unsigned i = 0; i < k; ++i){
 					subMatrix[i] = (float *)malloc(k * sizeof(float));
 				}
 
 				//a trick to avoid malloc
-				H_Omega = (float **)malloc(omegaSize * sizeof(float *));
+				float ** H_Omega = (float **)malloc(omegaSize * sizeof(float *));
 				unsigned i = 0;
 				for (unsigned idx = R.row_ptr[Rw]; idx < R.row_ptr[Rw + 1]; ++idx){
 					H_Omega[i] = &H[R.col_idx[idx]][0];
@@ -258,18 +257,17 @@ void ALS_multicore(smat_t &R, mat_t &W, mat_t &H, parameter &param){
 		for (int Rh = 0; Rh < R.cols; ++Rh){
 			float *Hr = &H[Rh][0];
 			unsigned omegaSize = R.col_ptr[Rh + 1] - R.col_ptr[Rh];
-			float ** subMatrix, ** W_Omega;
-			float * subVector;
+			float ** subMatrix;
 
 			if (omegaSize>0){
-				subVector = (float *)malloc(k * sizeof(float));
+				float * subVector = (float *)malloc(k * sizeof(float));
 				subMatrix = (float **)malloc(k * sizeof(float *));
 				for (unsigned i = 0; i < k; ++i){
 					subMatrix[i] = (float *)malloc(k * sizeof(float));
 				}
 
 				//a trick to avoid malloc
-				W_Omega = (float **)malloc(omegaSize * sizeof(float *));
+				float ** W_Omega = (float **)malloc(omegaSize * sizeof(float *));
 				unsigned i = 0;
 				for (unsigned idx = R.col_ptr[Rh]; idx < R.col_ptr[Rh + 1]; ++idx){
 					W_Omega[i] = &W[R.row_idx[idx]][0];
