@@ -411,15 +411,6 @@ smat_t_C transpose(smat_t_C m){
 	return mt;
 }
 
-
-long nnz_of_row(int i, const long *row_ptr) {
-	return (row_ptr[i + 1] - row_ptr[i]);
-}
-
-long nnz_of_col(int i, const long *col_ptr){
-	return (col_ptr[i + 1] - col_ptr[i]);
-}
-
 float maxC(float a, float b){
 	return(a>b ? a : b);
 }
