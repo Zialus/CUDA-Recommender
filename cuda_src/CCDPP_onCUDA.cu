@@ -118,11 +118,15 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols, //are the iter
 }
 
 void kernel_wrapper_ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters){
-	cudaError_t cudaStatus = ccdpp_NV(R_C, W, H, parameters);
+	cudaError_t cudaStatus;
+	cudaStatus = ccdpp_NV(R_C, W, H, parameters);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "ALS FAILED: %s\n", cudaGetErrorString(cudaStatus));
 	}
 	cudaStatus = cudaDeviceReset();
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "CUDA RESET FAILED: %s\n", cudaGetErrorString(cudaStatus));
+	}
 }
 
 // Helper function for using CUDA.
@@ -185,31 +189,28 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
 		goto Error;
 	}
 
+
 	// Allocate GPU buffers for all vectors.
 	cudaStatus = cudaMalloc((void**)&dev_Rcol_ptr, R_C.nbits_col_ptr);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
 		goto Error;
 	}
-
 	cudaStatus = cudaMalloc((void**)&dev_Rrow_idx, R_C.nbits_row_idx);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
 		goto Error;
 	}
-
 	cudaStatus = cudaMalloc((void**)&dev_Rcol_ptr_T, Rt.nbits_col_ptr);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
 		goto Error;
 	}
-
 	cudaStatus = cudaMalloc((void**)&dev_Rrow_idx_T, Rt.nbits_row_idx);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
 		goto Error;
 	}
-
 	cudaStatus = cudaMalloc((void**)&dev_Rval, R_C.nbits_val);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
@@ -220,19 +221,16 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
 		fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
 		goto Error;
 	}
-
 	cudaStatus = cudaMalloc((void**)&dev_Wt_vec_t, nbits_u);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
 		goto Error;
 	}
-
 	cudaStatus = cudaMalloc((void**)&dev_Ht_vec_t, nbits_v);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
 		goto Error;
 	}
-
 	cudaStatus = cudaMalloc((void**)&dev_return, nThreadsPerBlock*nBlocks * sizeof(float));
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
@@ -256,7 +254,6 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
 		fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
 		goto Error;
 	}
-
 	cudaStatus = cudaMemcpy(dev_Rcol_ptr, R_C.col_ptr, R_C.nbits_col_ptr, cudaMemcpyHostToDevice);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
@@ -267,7 +264,6 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
 		fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
 		goto Error;
 	}
-
 	cudaStatus = cudaMemcpy(dev_Rcol_ptr_T, Rt.col_ptr, Rt.nbits_col_ptr, cudaMemcpyHostToDevice);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
@@ -278,6 +274,7 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
 		fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
 		goto Error;
 	}
+
 
 	for (int oiter = 1; oiter <= maxiter; ++oiter) {
 		float rankfundec = 0;
