@@ -78,7 +78,6 @@ __device__ void inverseMatrix_CholeskyMethod_k(int n, float** A) {
 	}
 }
 
-
 //Multiply matrix M transpose by M 
 __device__ void Mt_byM_multiply_k(int i, int j, float*H, float**Result, const long ptr, const unsigned *idx){
 	float SUM;
@@ -252,7 +251,8 @@ __global__ void updateH_overW_kernel(const long cols, const long *col_ptr, const
 }
 
 void kernel_wrapper_als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &parameters){
-	cudaError_t cudaStatus = als_NV(R_C, W, H, parameters);
+	cudaError_t cudaStatus;
+	cudaStatus = als_NV(R_C, W, H, parameters);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "ALS FAILED: %s\n", cudaGetErrorString(cudaStatus));
 	}
@@ -472,5 +472,6 @@ Error:
 	cudaFree(dev_row_ptr);
 	cudaFree(dev_val);
 	cudaFree(dev_W_);
+
 	return cudaStatus;
 }
