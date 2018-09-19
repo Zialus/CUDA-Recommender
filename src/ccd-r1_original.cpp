@@ -13,7 +13,7 @@ inline double RankOneUpdate(const smat_t_Double &R, const int j, const vec_t_Dou
 		g += u[i] * R.val[idx];
 		h += u[i] * u[i];
 	}
-	double newvj = g / h, tmp = 0, delta = 0, fundec = 0;
+	double newvj = g / h, delta = 0, fundec = 0;
 	if (do_nmf>0 & newvj < 0) {
 		newvj = 0;
 		delta = vj; // old - new
@@ -43,7 +43,7 @@ inline double UpdateRating(smat_t_Double &R, const vec_t_Double &Wt, const vec_t
 		}
 		loss += loss_inner;
 	}
-	int tt = 0;
+//	int tt = 0;
 	return loss;
 }
 inline double UpdateRating(smat_t_Double &R, const vec_t_Double &Wt2, const vec_t_Double &Ht2) {
@@ -112,7 +112,7 @@ void ccdr1_Double(smat_t_Double &R, mat_t_Double &W, mat_t_Double &H, testset_t_
 	vec_t_Double oldWt(R.rows), oldHt(R.cols);
 	vec_t_Double u(R.rows), v(R.cols);
 	for (int oiter = 1; oiter <= maxiter; ++oiter) {
-		double gnorm = 0, initgnorm = 0;
+		double initgnorm = 0;
 		double rankfundec = 0;
 		double fundec_max = 0;
 		int early_stop = 0;
@@ -134,14 +134,14 @@ void ccdr1_Double(smat_t_Double &R, mat_t_Double &W, mat_t_Double &H, testset_t_
 			}
 			Itime += omp_get_wtime() - start;
 
-			gnorm = 0, initgnorm = 0;
+			initgnorm = 0;
 			double innerfundec_cur = 0, innerfundec_max = 0;
 			int maxit = inneriter;
 			//	if(oiter > 1) maxit *= 2;
 			for (int iter = 1; iter <= maxit; ++iter){
 				// Update H[t]
 				start = omp_get_wtime();
-				gnorm = 0;
+//				double gnorm = 0;
 				innerfundec_cur = 0;
 #pragma omp parallel for schedule(kind) shared(u,v) reduction(+:innerfundec_cur)
 				for (long c = 0; c < R.cols; ++c)

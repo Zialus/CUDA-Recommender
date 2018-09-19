@@ -38,7 +38,7 @@ void choldcsl(int n, float** A) {
 			for (int k = i; k < j; ++k) {
 				sum -= A[j][k] * A[k][i];
 			}
-			A[j][i] = sum / p[j];
+			A[j][i] = (float) sum / p[j];
 		}
 	}
 	free(p);
@@ -74,10 +74,10 @@ void inverseMatrix_CholeskyMethod(int n, float** A) {
 //Multiply matrix M transpose by M 
 void Mt_byM_multiply(int i, int j, float**M, float**Result){
 	float SUM;
-	for (unsigned I = 0; I < j; ++I){
-		for (unsigned J = I; J < j; ++J) {
+	for (int I = 0; I < j; ++I){
+		for (int J = I; J < j; ++J) {
 			SUM = 0.0f;
-			for (unsigned K = 0; K < i; ++K){
+			for (int K = 0; K < i; ++K){
 				//printf("%.3f %.3f\n", M[K][I], M[K][J]);
 				SUM += M[K][I] * M[K][J];
 			}
@@ -103,10 +103,10 @@ void Mt_byM_multiply(int i, int j, float**M, float**Result){
 //Multiply matrix M by M tranpose
 void M_byMt_multiply(int i, int j, float**M, float**Result){
 	float SUM;
-	for (unsigned I = 0; I < i; ++I){
-		for (unsigned J = 0; J < i; ++J) {
+	for (int I = 0; I < i; ++I){
+		for (int J = 0; J < i; ++J) {
 			SUM = 0.0;
-			for (unsigned K = 0; K < j; ++K)
+			for (int K = 0; K < j; ++K)
 				SUM += M[I][K] * M[J][K];
 			Result[I][J] = SUM;
 		}
@@ -176,18 +176,18 @@ void ALS(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter &param){
 void ALS_multicore(smat_t &R, mat_t &W, mat_t &H, parameter &param){
 	int maxIter = param.maxiter;
 	float lambda = param.lambda;
-	float k = param.k;
+	int k = param.k;
 	int num_threads_old = omp_get_num_threads();
 
 	omp_set_num_threads(param.threads);
 
-	for (unsigned int iter = 0; iter < maxIter; ++iter){
+	for (int iter = 0; iter < maxIter; ++iter){
 		
 		//optimize W over H
 #pragma omp parallel for schedule(kind)
 		for (int Rw = 0; Rw < R.rows; ++Rw){
 			float *Wr = &W[Rw][0];
-			unsigned omegaSize = R.row_ptr[Rw + 1] - R.row_ptr[Rw];
+			int omegaSize = R.row_ptr[Rw + 1] - R.row_ptr[Rw];
 			float ** subMatrix;
 
 			if (omegaSize>0){

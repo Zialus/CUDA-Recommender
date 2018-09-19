@@ -431,7 +431,7 @@ public:
         while (cur_idx >= row_ptr[cur_row + 1]) { ++cur_row; }
         if (nnz > 0) { --nnz; }
         else { fprintf(stderr, "Error: no more entry to iterate !!\n"); }
-        rate_t ret(cur_row, col_idx[cur_idx], val_t[cur_idx], with_weights ? weight_t[cur_idx] : 1.0);
+        rate_t ret(cur_row, col_idx[cur_idx], val_t[cur_idx], with_weights ? weight_t[cur_idx] : 1.0f);
         cur_idx++;
         return ret;
     }
