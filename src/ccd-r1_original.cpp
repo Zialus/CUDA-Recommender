@@ -112,7 +112,6 @@ void ccdr1_Double(smat_t_Double &R, mat_t_Double &W, mat_t_Double &H, testset_t_
 	vec_t_Double oldWt(R.rows), oldHt(R.cols);
 	vec_t_Double u(R.rows), v(R.cols);
 	for (int oiter = 1; oiter <= maxiter; ++oiter) {
-		double initgnorm = 0;
 		double rankfundec = 0;
 		double fundec_max = 0;
 		int early_stop = 0;
@@ -134,7 +133,7 @@ void ccdr1_Double(smat_t_Double &R, mat_t_Double &W, mat_t_Double &H, testset_t_
 			}
 			Itime += omp_get_wtime() - start;
 
-			initgnorm = 0;
+			double initgnorm = 0;
 			double innerfundec_cur = 0, innerfundec_max = 0;
 			int maxit = inneriter;
 			//	if(oiter > 1) maxit *= 2;

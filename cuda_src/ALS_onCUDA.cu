@@ -35,14 +35,14 @@ __device__ void choldc1_k(int n, float** a, float* p) {
 }
 
 __device__ void choldcsl_k(int n, float** A) {
-	unsigned i, j, k; double sum;
+	unsigned i, j, k;
 	float* p;
 	p = (float *)malloc(n * sizeof(float));
 	choldc1_k(n, A, p);
 	for (i = 0; i < n; ++i) {
 		A[i][i] = 1 / p[i];
 		for (j = i + 1; j < n; ++j) {
-			sum = 0;
+			float sum = 0;
 			for (k = i; k < j; ++k) {
 				sum -= A[j][k] * A[k][i];
 			}
@@ -397,7 +397,7 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 	}
 
 
-	for (unsigned int iter = 0; iter < maxIter; ++iter){
+	for (int iter = 0; iter < maxIter; ++iter){
 
 		//optimize W over H
 		//updateW_overH_HOST(R_C.rows, R_C.row_ptr, R_C.col_idx, R_C.colMajored_sparse_idx, R_C.val, lambda, k, W_, H_);

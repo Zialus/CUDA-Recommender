@@ -193,14 +193,14 @@ void ALS_multicore(smat_t &R, mat_t &W, mat_t &H, parameter &param){
 			if (omegaSize>0){
 				float * subVector = (float *)malloc(k * sizeof(float));
 				subMatrix = (float **)malloc(k * sizeof(float *));
-				for (unsigned i = 0; i < k; ++i){
+				for (int i = 0; i < k; ++i){
 					subMatrix[i] = (float *)malloc(k * sizeof(float));
 				}
 
 				//a trick to avoid malloc
 				float ** H_Omega = (float **)malloc(omegaSize * sizeof(float *));
 				unsigned i = 0;
-				for (unsigned idx = R.row_ptr[Rw]; idx < R.row_ptr[Rw + 1]; ++idx){
+				for (int idx = R.row_ptr[Rw]; idx < R.row_ptr[Rw + 1]; ++idx){
 					H_Omega[i] = &H[R.col_idx[idx]][0];
 					++i;
 				}
@@ -208,7 +208,7 @@ void ALS_multicore(smat_t &R, mat_t &W, mat_t &H, parameter &param){
 				Mt_byM_multiply(omegaSize, k, H_Omega, subMatrix);
 
 				//add lambda to diag of sub-matrix
-				for (unsigned c = 0; c < k; c++){
+				for (int c = 0; c < k; c++){
 					subMatrix[c][c] = subMatrix[c][c] + lambda;
 				}
 
@@ -217,24 +217,24 @@ void ALS_multicore(smat_t &R, mat_t &W, mat_t &H, parameter &param){
 
 
 				//sparse multiplication
-				for (unsigned c=0; c < k; ++c){
+				for (int c=0; c < k; ++c){
 					subVector[c] = 0;
-					for (unsigned idx = R.row_ptr[Rw]; idx < R.row_ptr[Rw + 1]; ++idx){
+					for (int idx = R.row_ptr[Rw]; idx < R.row_ptr[Rw + 1]; ++idx){
 						unsigned idx2 = R.colMajored_sparse_idx[idx];
 						subVector[c] += R.val[idx2] * H[R.col_idx[idx]][c];
 					}
 				}
 
 				//multiply subVector by subMatrix
-				for (unsigned c = 0; c < k; ++c){
+				for (int c = 0; c < k; ++c){
 					Wr[c] = 0;
-					for (unsigned subVid = 0; subVid < k; ++subVid){
+					for (int subVid = 0; subVid < k; ++subVid){
 						Wr[c] += subVector[subVid] * subMatrix[c][subVid];
 					}
 				}
 
 
-				for (unsigned i = 0; i < k; ++i){
+				for (int i = 0; i < k; ++i){
 					free(subMatrix[i]);
 				}
 				free(subMatrix);
@@ -242,7 +242,7 @@ void ALS_multicore(smat_t &R, mat_t &W, mat_t &H, parameter &param){
 				free(H_Omega);
 			}
 			else{
-				for (unsigned c = 0; c < k; ++c){
+				for (int c = 0; c < k; ++c){
 					Wr[c] = 0.0f;
 					//printf("%.3f ", Wr[c]);
 				}
@@ -260,14 +260,14 @@ void ALS_multicore(smat_t &R, mat_t &W, mat_t &H, parameter &param){
 			if (omegaSize>0){
 				float * subVector = (float *)malloc(k * sizeof(float));
 				subMatrix = (float **)malloc(k * sizeof(float *));
-				for (unsigned i = 0; i < k; ++i){
+				for (int i = 0; i < k; ++i){
 					subMatrix[i] = (float *)malloc(k * sizeof(float));
 				}
 
 				//a trick to avoid malloc
 				float ** W_Omega = (float **)malloc(omegaSize * sizeof(float *));
 				unsigned i = 0;
-				for (unsigned idx = R.col_ptr[Rh]; idx < R.col_ptr[Rh + 1]; ++idx){
+				for (long idx = R.col_ptr[Rh]; idx < R.col_ptr[Rh + 1]; ++idx){
 					W_Omega[i] = &W[R.row_idx[idx]][0];
 					++i;
 				}
@@ -275,7 +275,7 @@ void ALS_multicore(smat_t &R, mat_t &W, mat_t &H, parameter &param){
 				Mt_byM_multiply(omegaSize, k, W_Omega, subMatrix);
 
 				//add lambda to diag of sub-matrix
-				for (unsigned c = 0; c < k; c++){
+				for (int c = 0; c < k; c++){
 					subMatrix[c][c] = subMatrix[c][c] + lambda;
 				}
 
@@ -284,23 +284,23 @@ void ALS_multicore(smat_t &R, mat_t &W, mat_t &H, parameter &param){
 
 
 				//sparse multiplication
-				for (unsigned c = 0; c < k; ++c){
+				for (int c = 0; c < k; ++c){
 					subVector[c] = 0;
-					for (unsigned idx = R.col_ptr[Rh]; idx < R.col_ptr[Rh + 1]; ++idx){
+					for (long idx = R.col_ptr[Rh]; idx < R.col_ptr[Rh + 1]; ++idx){
 						subVector[c] += R.val[idx] * W[R.row_idx[idx]][c];
 					}
 				}
 
 				//multiply subVector by subMatrix
-				for (unsigned c = 0; c < k; ++c){
+				for (int c = 0; c < k; ++c){
 					Hr[c] = 0;
-					for (unsigned subVid = 0; subVid < k; ++subVid){
+					for (int subVid = 0; subVid < k; ++subVid){
 						Hr[c] += subVector[subVid] * subMatrix[c][subVid];
 					}
 				}
 
 
-				for (unsigned i = 0; i < k; ++i){
+				for (int i = 0; i < k; ++i){
 					free(subMatrix[i]);
 				}
 				free(subMatrix);
@@ -308,7 +308,7 @@ void ALS_multicore(smat_t &R, mat_t &W, mat_t &H, parameter &param){
 				free(W_Omega);
 			}
 			else{
-				for (unsigned c = 0; c < k; ++c){
+				for (int c = 0; c < k; ++c){
 					Hr[c] = 0.0f;
 				}
 			}

@@ -176,7 +176,6 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
 	vec_t oldWt(R.rows), oldHt(R.cols);
 	vec_t u(R.rows), v(R.cols);
 	for(int oiter = 1; oiter <= maxiter; ++oiter) {
-		float initgnorm=0;
 		float rankfundec = 0;
 		float fundec_max = 0;
 		int early_stop = 0;
@@ -198,7 +197,7 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
 			} 
 			Itime += (float) omp_get_wtime() - start;
 
-			initgnorm=0;
+			float initgnorm=0;
 			float innerfundec_cur = 0, innerfundec_max = 0;
 			int maxit = inneriter; 	
 			//	if(oiter > 1) maxit *= 2;

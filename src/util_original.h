@@ -174,7 +174,9 @@ public:
     }
 
     void load_from_iterator(long _rows, long _cols, long _nnz, entry_iterator_t_Double* entry_it) {
-        rows = _rows, cols = _cols, nnz = _nnz;
+        rows = _rows;
+        cols = _cols;
+        nnz = _nnz;
         mem_alloc_by_me = true;
         with_weights = entry_it->with_weights;
         val = MALLOC(double, nnz);
@@ -350,8 +352,8 @@ public:
     ~smat_iterator_t_Double() {}
 
     rate_t_Double next() {
-        int i = 1, j = 1;
-        double v = 0;
+//        int i = 1, j = 1;
+//        double v = 0;
         while (cur_idx >= row_ptr[cur_row + 1]) { ++cur_row; }
         if (nnz > 0) { --nnz; }
         else { fprintf(stderr, "Error: no more entry to iterate !!\n"); }
@@ -388,7 +390,9 @@ public:
     }
 
     void load_from_iterator(long _rows, long _cols, long _nnz, entry_iterator_t_Double* entry_it) {
-        rows = _rows, cols = _cols, nnz = _nnz;
+        rows = _rows;
+        cols = _cols;
+        nnz = _nnz;
         T = vector<rate_t_Double>(nnz);
         for (size_t idx = 0; idx < nnz; ++idx) {
             T[idx] = entry_it->next();

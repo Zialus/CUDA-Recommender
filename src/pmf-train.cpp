@@ -371,7 +371,7 @@ void calculate_rmse() {
     while (fscanf(test_fp, "%d %d %lf", &i, &j, &v) != EOF) {
         double pred_v = 0;
 //#pragma omp parallel for  reduction(+:pred_v)
-        for (int t = 0; t < rank; t++) {
+        for (unsigned long t = 0; t < rank; t++) {
             pred_v += W[i - 1][t] * H[j - 1][t];
         }
         num_insts++;
