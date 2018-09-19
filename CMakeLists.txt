@@ -36,6 +36,10 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} ${EXTRA_NVCC_FLAGS})
 #set(WARNINGS "-Wno-format -Wno-unused-value -Wno-pointer-bool-conversion")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS}")
 
+# Silence warning C4996 on Microsoft Compilers
+if (MSVC)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif ()
 
 file(GLOB src "${PROJECT_SOURCE_DIR}/src/*.cpp" "${PROJECT_SOURCE_DIR}/src/*.c")
 file(GLOB hdr "${PROJECT_SOURCE_DIR}/src/*.hpp" "${PROJECT_SOURCE_DIR}/src/*.h")

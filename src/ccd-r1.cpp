@@ -67,7 +67,7 @@ inline float UpdateRating_Original_float(smat_t &R, const vec_t &Wt, const vec_t
 			float Htc = Ht[c], loss_inner = 0;
 			for(long idx=R.col_ptr[c]; idx < R.col_ptr[c+1]; ++idx){
 				R.val[idx] +=  Wt[R.row_idx[idx]]*Htc;
-				loss_inner += (R.with_weights? R.weight[idx]: 1.0)*R.val[idx]*R.val[idx];
+				loss_inner += (R.with_weights? R.weight[idx]: 1.0f)*R.val[idx]*R.val[idx];
 			}
 			loss += loss_inner;
 		}
@@ -78,7 +78,7 @@ inline float UpdateRating_Original_float(smat_t &R, const vec_t &Wt, const vec_t
 			float Htc = Ht[c], loss_inner = 0;
 			for(long idx=R.col_ptr[c]; idx < R.col_ptr[c+1]; ++idx){
 				R.val[idx] -=  Wt[R.row_idx[idx]]*Htc;
-				loss_inner += (R.with_weights? R.weight[idx]: 1.0)*R.val[idx]*R.val[idx];
+				loss_inner += (R.with_weights? R.weight[idx]: 1.0f)*R.val[idx]*R.val[idx];
 			}
 			loss += loss_inner;
 		}
@@ -184,7 +184,7 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
 			int t = tt;
 			if(early_stop >= 5) break;
 			//if(oiter>1) { t = rand()%k; }
-			start = omp_get_wtime();
+			start = (float) omp_get_wtime();
 			vec_t &Wt = W[t], &Ht = H[t];
 #pragma omp parallel for
 			for(int i = 0; i < R.rows; ++i) oldWt[i] = u[i]= Wt[i];
@@ -196,7 +196,7 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
 				UpdateRating_Original_float(R, Wt, Ht, true);
 				UpdateRating_Original_float(Rt, Ht, Wt, true);
 			} 
-			Itime += omp_get_wtime() - start;
+			Itime += (float) omp_get_wtime() - start;
 
 			gnorm = 0, initgnorm=0;
 			float innerfundec_cur = 0, innerfundec_max = 0;
@@ -204,16 +204,16 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
 			//	if(oiter > 1) maxit *= 2;
 			for(int iter = 1; iter <= maxit; ++iter){
 				// Update H[t]
-				start = omp_get_wtime();
+				start = (float) omp_get_wtime();
 				gnorm = 0;
 				innerfundec_cur = 0;
 #pragma omp parallel for schedule(kind) shared(u,v) reduction(+:innerfundec_cur)
 				for(long c = 0; c < R.cols; ++c)
 					v[c] = RankOneUpdate_Original_float(R, c, u, lambda*(R.col_ptr[c+1]-R.col_ptr[c]), v[c], &innerfundec_cur, param.do_nmf);
 				num_updates += R.cols;
-				Htime += omp_get_wtime() - start;
+				Htime += (float) omp_get_wtime() - start;
 				// Update W[t]
-				start = omp_get_wtime();
+				start = (float) omp_get_wtime();
 #pragma omp parallel for schedule(kind) shared(u,v) reduction(+:innerfundec_cur)
 				for(long c = 0; c < Rt.cols; ++c)
 					u[c] = RankOneUpdate_Original_float(Rt, c, v, lambda*(Rt.col_ptr[c + 1] - Rt.col_ptr[c]), u[c], &innerfundec_cur, param.do_nmf);
@@ -227,18 +227,18 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
 				// the fundec of the first inner iter of the first rank of the first outer iteration could be too large!!
 				if(!(oiter==1 && t == 0 && iter==1))
 					fundec_max = max(fundec_max, innerfundec_cur);
-				Wtime += omp_get_wtime() - start;
+				Wtime += (float) omp_get_wtime() - start;
 			}
 
 			// Update R and Rt
-			start = omp_get_wtime();
+			start = (float) omp_get_wtime();
 #pragma omp parallel for
 			for(int i = 0; i < R.rows; ++i) Wt[i]= u[i];
 #pragma omp parallel for
 			for(int i = 0; i < R.cols; ++i) Ht[i]= v[i];
 			loss = UpdateRating_Original_float(R, u, v, false);
 			loss = UpdateRating_Original_float(Rt, v, u, false);
-			Rtime += omp_get_wtime() - start;
+			Rtime += (float) omp_get_wtime() - start;
 
 			for(long c = 0; c < R.cols; ++c) {
 				reg += R.nnz_of_col(c)*Ht[c]*Ht[c];

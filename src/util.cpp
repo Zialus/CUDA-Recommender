@@ -94,7 +94,7 @@ void initial(mat_t& X, long n, long k) {
     srand(0L);
     for (long i = 0; i < n; ++i) {
         for (long j = 0; j < k; ++j) {
-            X[i][j] = 0.1 * (float(rand()) / RAND_MAX);
+            X[i][j] = 0.1f * (float(rand()) / RAND_MAX);
         }
     }
 }
@@ -104,7 +104,7 @@ void initial_col(mat_t& X, long k, long n) {
     srand(0L);
     for (long i = 0; i < n; ++i) {
         for (long j = 0; j < k; ++j) {
-            X[j][i] = 0.1 * (float(rand()) / RAND_MAX) + 0.001;
+            X[j][i] = 0.1f * (float(rand()) / RAND_MAX) + 0.001f;
         }
     }
 }
@@ -177,7 +177,7 @@ float calobj(const smat_t& R, const mat_t& W, const mat_t& H, const float lambda
             } else {
                 diff += dot(W[R.row_idx[idx]], H[c]);
             }
-            loss += (R.with_weights ? R.weight[idx] : 1.0) * diff * diff;
+            loss += (R.with_weights ? R.weight[idx] : 1.0f) * diff * diff;
         }
     }
     float reg = 0;

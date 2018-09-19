@@ -84,11 +84,11 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
                     break;
 
                 case 'l':
-                    param.lambda = atof(argv[i]);
+                    param.lambda = (float) atof(argv[i]);
                     break;
 
                 case 'r':
-                    param.rho = atof(argv[i]);
+                    param.rho = (float) atof(argv[i]);
                     break;
 
                 case 't':
@@ -100,8 +100,8 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
                     break;
 
                 case 'e':
-                    param.eps = atof(argv[i]);
-                    param.eta0 = atof(argv[i]);
+                    param.eps = (float) atof(argv[i]);
+                    param.eta0 = (float) atof(argv[i]);
                     break;
 
                 case 'B':
@@ -113,11 +113,11 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
                     break;
 
                 case 'u':
-                    param.betaup = atof(argv[i]);
+                    param.betaup = (float) atof(argv[i]);
                     break;
 
                 case 'd':
-                    param.betadown = atof(argv[i]);
+                    param.betadown = (float) atof(argv[i]);
                     break;
 
                 case 'p':
