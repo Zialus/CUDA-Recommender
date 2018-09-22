@@ -267,7 +267,7 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 	unsigned *dev_row_idx = 0, *dev_col_idx = 0;
 	unsigned *dev_colMajored_sparse_idx = 0;
 	float *dev_val = 0;
-	float *dev_W_, *dev_H_;
+	float *dev_W_ = 0, *dev_H_ = 0;
 
 	int nThreadsPerBlock = parameters.nThreadsPerBlock;
 	int nBlocks = parameters.nBlocks;

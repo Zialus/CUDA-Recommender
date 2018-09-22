@@ -176,8 +176,8 @@ public:
         }
     }
 
-    void load(long _rows, long _cols, long _nnz, const char* filename, bool ifALS, bool with_weights = false) {
-        entry_iterator_t entry_it(_nnz, filename, with_weights);
+    void load(long _rows, long _cols, long _nnz, const char* filename, bool ifALS, bool use_weights = false) {
+        entry_iterator_t entry_it(_nnz, filename, use_weights);
         load_from_iterator(_rows, _cols, _nnz, &entry_it, ifALS);
     }
 
@@ -426,8 +426,8 @@ public:
     ~smat_iterator_t() {}
 
     rate_t next() {
-        int i = 1, j = 1;
-        float v = 0;
+//        int i = 1, j = 1;
+//        float v = 0;
         while (cur_idx >= row_ptr[cur_row + 1]) { ++cur_row; }
         if (nnz > 0) { --nnz; }
         else { fprintf(stderr, "Error: no more entry to iterate !!\n"); }

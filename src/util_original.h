@@ -168,8 +168,8 @@ public:
         }
     }
 
-    void load(long _rows, long _cols, long _nnz, const char* filename, bool with_weights = false) {
-        entry_iterator_t_Double entry_it(_nnz, filename, with_weights);
+    void load(long _rows, long _cols, long _nnz, const char* filename, bool use_weights = false) {
+        entry_iterator_t_Double entry_it(_nnz, filename, use_weights);
         load_from_iterator(_rows, _cols, _nnz, &entry_it);
     }
 
