@@ -64,7 +64,7 @@ public:
     bool with_weights;
     size_t nnz;
 
-    entry_iterator_t_Double() : nnz(0), fp(nullptr), with_weights(false) {}
+    entry_iterator_t_Double() : fp(nullptr), with_weights(false), nnz(0) {}
 
     entry_iterator_t_Double(size_t nnz_, const char* filename, bool with_weights_ = false) {
         nnz = nnz_;
@@ -132,32 +132,6 @@ public:
     smat_t_Double(const smat_t_Double& m) {
         *this = m;
         mem_alloc_by_me = false;
-    }
-
-    // For matlab (Almost deprecated)
-    smat_t_Double(long m, long n, unsigned* ir, long* jc, double* v, unsigned* ir_t, long* jc_t, double* v_t) :
-    //smat_t_Double(long m, long n, unsigned long *ir, long *jc, double *v, unsigned long *ir_t, long *jc_t, double *v_t):
-            rows(m), cols(n), mem_alloc_by_me(false),
-            row_idx(ir), col_ptr(jc), val(v), col_idx(ir_t), row_ptr(jc_t), val_t(v_t) {
-        if (col_ptr[n] != row_ptr[m]) {
-            fprintf(stderr, "Error occurs! two nnz do not match (%ld, %ld)\n", col_ptr[n], row_ptr[n]);
-        }
-        nnz = col_ptr[n];
-        max_row_nnz = max_col_nnz = 0;
-        for (long r = 1; r <= rows; ++r) {
-            max_row_nnz = max(max_row_nnz, row_ptr[r]);
-        }
-        for (long c = 1; c <= cols; ++c) {
-            max_col_nnz = max(max_col_nnz, col_ptr[c]);
-        }
-    }
-
-    void from_mpi() {
-        mem_alloc_by_me = true;
-        max_col_nnz = 0;
-        for (long c = 1; c <= cols; ++c) {
-            max_col_nnz = max(max_col_nnz, col_ptr[c] - col_ptr[c - 1]);
-        }
     }
 
     void print_mat(int host) {
