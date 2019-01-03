@@ -65,9 +65,47 @@ matrix:
       env: CUDA=10.0.130
       before_install: *cuda_install
 
+    # SONARCLOUD
+    - os: linux
+      dist: xenial
+      addons:
+        sonarcloud:
+          organization: "zialus-github"
+          token:
+            secure: "ppdasWXKC6AqyOkgCgUhV09YXMqii2T3v0nnTf2TZ/i5rf5FKXopSkmW+H9//eseZPViC10Fw+F0ne7jmlbEfRNErf2rVk8KA7SQBB6ESUW+mb5kMUJeePp9w6TJa06joFt3xN7YpSlRUNnm7DZaLK7CmbFcyl/lgArbgJkbli9Bvp+4myRfnIiSQSmz8G2/TvMie1r2KOLLeroVkDGep23j2sbWeJXXypMa51YnPtNfStlfyFElxG/O6sDN+aS4Dq9I6XdiW9goKb+qGl1ZHF5ILse2cWFDRqukL74B7VGQRoZOjgfwuEgE68xTrcQg1swjCIT8YH2yTj0SYOpkzMxhmO2+RMJusBgjbqTScIYiV4lRVsPmZDVsAmLnsTziYtbMyf2cg55wwoYLCL/qOesrdEvAUKkUNuImWW+J4mMUlFYKeNiRLrwlv/TgGB01SxGirCTufE8majvvD5TOw1M1FyOuKSVTAH/rwf4aeRymmYL44bFq8hwqIIcEIV3Sui4zIoxYyIViosi8wlbLJcxLz73KX6xFDaEYyFjVDpkeg8Jr43yPGDImTrENsqEiN+GVlciEwkvTCIW1AnvTHOl4mOkrtbsb3a2srmERLPWh3N9DjiRVO5b/S1C50Rlbj0d+dfyvaRSqBAj7Dpi0+tw1lrm7k6a5wfpyLH6nALw="
+      script:
+        - git fetch --unshallow
+        - mkdir build && cd build
+        - cmake -DCMAKE_BUILD_TYPE=Release ..
+        - build-wrapper-linux-x86-64 --out-dir bw-output make clean all
+        - ctest -V -C Release
+        - cd ..
+        - sonar-scanner
+      env:
+        - SONAR_CLOUD="YUP"
+        - CUDA=10.0.130-1
+
+    # COVERITY_SCAN
+    - os: linux
+      dist: xenial
+      addons:
+        apt:
+        coverity_scan:
+          project:
+            name: "Zialus/CUDA-Recommender"
+          notification_email: raulmendesferreira@gmail.com
+          build_command_prepend: "git fetch --unshallow && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .."
+          build_command: "make"
+          branch_pattern: master
+      script:
+        - echo "Coverity Scan"
+      env:
+        - secure: "XKa5FwxqL1PgW2/AKyJuhRQ3AP7LxeGjPyaBnktmgnvSouTZ5gEmWYV+ToPCw4g1+aNXOH71QMpOxUyUMh7vgeDtKzkSx/BGhrnxPxkzfB8zZr7Mfy3h1++2LTJ47VO4SfLVbYgkIKoGldi9JxTks4ri+BmLiNhB9zO0XbW8vdmqgBfxxzm0rCrs6uIbWJDk8MByU8ZNz0spcV4aYEx+dWPg05xC1RQUng+lZhZfHt+E3Klt0pXB9uOVima5fo70+n82uAXLuAdd+cJpHVbkMMcABKYYnF9TikOrAgoZwkPnloF3KDNGZDqYOi2xMf1gAoI8T3bDL+oFk1jAW5qVQsqDiATdPwazzlaaOLr3KuYP5R7ZNeRMtO9b7b8DeZZqUPEUeJe+/3Z96OKkwYaNorb5lbe+PfPze26nZrbfz3R1Ij35A/zyMQnlHYX/LD1UTEnpPLKWE7R1bzbAjqj4QL8oc1HWUmI5/gTEc6fuNQNX3mrakVvldlJiiyIU1ItMZEiG2QntRzv+CHy6lbowkfKpUyOgVQOpeX2y+7U57x8voZ5WGOP0XGNOGTP2O5/mgMsJ1peKWYsySwla9YpFZi1T2duvg46AxruFMbfA5geJYLQUIEO7+25jI2cjwot//8LFz3hHz0xEkgbF1FuLPQMire/Ruy+9SLmIClHADQw="
+        - CUDA=10.0.130-1
+
 before_install:
-  - wget https://cmake.org/files/v3.12/cmake-3.12.2-Linux-x86_64.sh
-  - sudo sh cmake-3.12.2-Linux-x86_64.sh --prefix=/home/travis/.local/ --exclude-subdir
+  - wget https://cmake.org/files/v3.13/cmake-3.13.2-Linux-x86_64.sh
+  - sudo sh cmake-3.13.2-Linux-x86_64.sh --prefix=/home/travis/.local/ --exclude-subdir
   - source ./scripts/travis_linux
 
 install:
@@ -78,11 +116,11 @@ install:
   - g++ --version
 
 script:
-  - mkdir build
-  - cd build
-  - cmake ..
-  - make
+  - mkdir build && cd build
+  - cmake -DCMAKE_BUILD_TYPE=Release ..
+  - make -j2
 
 after_failure:
   - dmesg
   - ls -R /usr/local/cuda*
+
