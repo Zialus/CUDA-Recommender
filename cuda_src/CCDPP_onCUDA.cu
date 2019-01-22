@@ -124,9 +124,7 @@ void kernel_wrapper_ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &pa
         fprintf(stderr, "ALS FAILED: %s\n", cudaGetErrorString(cudaStatus));
     }
     cudaStatus = cudaDeviceReset();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "CUDA RESET FAILED: %s\n", cudaGetErrorString(cudaStatus));
-    }
+    gpuErrchk(cudaStatus);
 }
 
 // Helper function for using CUDA.
@@ -177,103 +175,47 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
 
     // Reset GPU.
     cudaStatus = cudaDeviceReset();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceReset failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
 
     // Choose which GPU to run on, change this on a multi-GPU system.
     cudaStatus = cudaSetDevice(0);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed? %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
-
+    gpuErrchk(cudaStatus);
 
     // Allocate GPU buffers for all vectors.
     cudaStatus = cudaMalloc((void**)&dev_Rcol_ptr, R_C.nbits_col_ptr);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**)&dev_Rrow_idx, R_C.nbits_row_idx);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**)&dev_Rcol_ptr_T, Rt.nbits_col_ptr);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**)&dev_Rrow_idx_T, Rt.nbits_row_idx);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**)&dev_Rval, R_C.nbits_val);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**)&dev_Rval_t, Rt.nbits_val);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**)&dev_Wt_vec_t, nbits_u);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**)&dev_Ht_vec_t, nbits_v);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**)&dev_return, nThreadsPerBlock*nBlocks * sizeof(float));
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**)&dev_return2, nThreadsPerBlock*nBlocks * sizeof(float));
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
-
+    gpuErrchk(cudaStatus);
 
     // Copy all vectors to GPU buffers.
     cudaStatus = cudaMemcpy(dev_Rval, R_C.val, R_C.nbits_val, cudaMemcpyHostToDevice);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMemcpy(dev_Rval_t, Rt.val, Rt.nbits_val, cudaMemcpyHostToDevice);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMemcpy(dev_Rcol_ptr, R_C.col_ptr, R_C.nbits_col_ptr, cudaMemcpyHostToDevice);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMemcpy(dev_Rrow_idx, R_C.row_idx, R_C.nbits_row_idx, cudaMemcpyHostToDevice);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMemcpy(dev_Rcol_ptr_T, Rt.col_ptr, Rt.nbits_col_ptr, cudaMemcpyHostToDevice);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
     cudaStatus = cudaMemcpy(dev_Rrow_idx_T, Rt.row_idx, Rt.nbits_row_idx, cudaMemcpyHostToDevice);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed! %s\n", cudaGetErrorString(cudaStatus));
-        goto Error;
-    }
+    gpuErrchk(cudaStatus);
 
 
     for (int oiter = 1; oiter <= maxiter; ++oiter) {
@@ -285,22 +227,13 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
             float *Wt = &W[t][0], *Ht = &H[t][0];
 
             cudaStatus = cudaMemcpy(dev_Wt_vec_t, Wt, nbits_u, cudaMemcpyHostToDevice);
-            if (cudaStatus != cudaSuccess) {
-                fprintf(stderr, "cudaMemcpy failed!");
-                goto Error;
-            }
+            gpuErrchk(cudaStatus);
             cudaStatus = cudaMemcpy(dev_Ht_vec_t, Ht, nbits_v, cudaMemcpyHostToDevice);
-            if (cudaStatus != cudaSuccess) {
-                fprintf(stderr, "cudaMemcpy failed!");
-                goto Error;
-            }
+            gpuErrchk(cudaStatus);
             if (oiter > 1) {
                 UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, true, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, true);
                 cudaStatus = cudaDeviceSynchronize();
-                if (cudaStatus != cudaSuccess) {
-                    fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching Kernel!\n", cudaStatus);
-                    goto Error;
-                }
+                gpuErrchk(cudaStatus);
 
             }
 
@@ -312,22 +245,11 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
                 RankOneUpdate_DUAL_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, dev_return, parameters.do_nmf, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, dev_return2);
 
                 cudaStatus = cudaDeviceSynchronize();
-                if (cudaStatus != cudaSuccess) {
-                    fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching Kernel!\n", cudaStatus);
-                    goto Error;
-                }
-
+                gpuErrchk(cudaStatus);
                 cudaStatus = cudaMemcpy(Hostreduction, dev_return, nBlocks*nThreadsPerBlock * sizeof(float), cudaMemcpyDeviceToHost);
-                if (cudaStatus != cudaSuccess) {
-                    fprintf(stderr, "cudaMemcpy failed!");
-                    goto Error;
-                }
-
+                gpuErrchk(cudaStatus);
                 cudaStatus = cudaMemcpy(Hostreduction2, dev_return2, nBlocks*nThreadsPerBlock * sizeof(float), cudaMemcpyDeviceToHost);
-                if (cudaStatus != cudaSuccess) {
-                    fprintf(stderr, "cudaMemcpy failed!");
-                    goto Error;
-                }
+                gpuErrchk(cudaStatus);
 
                 for (size_t index = 0; index < nThreadsPerBlock*nBlocks; index++){
                     innerfundec_cur += Hostreduction[index];
@@ -351,30 +273,17 @@ cudaError_t ccdpp_NV(smat_t_C &R_C, float ** &W, float ** &H, params &parameters
             }
 
             cudaStatus = cudaMemcpy(Wt, dev_Wt_vec_t, nbits_u, cudaMemcpyDeviceToHost);
-            if (cudaStatus != cudaSuccess) {
-                fprintf(stderr, "cudaMemcpy failed!");
-                goto Error;
-            }
-
+            gpuErrchk(cudaStatus);
             cudaStatus = cudaMemcpy(Ht, dev_Ht_vec_t, nbits_v, cudaMemcpyDeviceToHost);
-            if (cudaStatus != cudaSuccess) {
-                fprintf(stderr, "cudaMemcpy failed!");
-                goto Error;
-            }
-
+            gpuErrchk(cudaStatus);
 
             UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, false, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, false);
 
             cudaStatus = cudaDeviceSynchronize();
-            if (cudaStatus != cudaSuccess) {
-                fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching Kernel!\n", cudaStatus);
-                goto Error;
-            }
-
+            gpuErrchk(cudaStatus);
         }
     }
 
-Error:
     free(u);
     free(v);
     free(Hostreduction);

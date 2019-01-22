@@ -7,6 +7,8 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
+#include "ERROR_CHECKING.h"
+
 struct params_als {
     int nBlocks;
     int nThreadsPerBlock;
