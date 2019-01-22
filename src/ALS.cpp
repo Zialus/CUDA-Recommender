@@ -99,43 +99,6 @@ void ALS(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
     if (param.enable_cuda) {
         printf("CUDA enabled version.\n");
 
-        params_als parameters;
-        parameters.k = param.k;
-        parameters.maxiter = param.maxiter;
-        parameters.inneriter = param.maxinneriter;
-        parameters.lambda = param.lambda;
-        parameters.do_nmf = param.do_nmf;
-        parameters.verbose = param.verbose;
-        parameters.enable_cuda = param.enable_cuda;
-        parameters.nBlocks = param.nBlocks;
-        parameters.nThreadsPerBlock = param.nThreadsPerBlock;
-
-        smat_t_C_als R_C;
-        R_C.cols = R.cols;
-        R_C.rows = R.rows;
-        R_C.nnz = R.nnz;
-        R_C.val = R.val;
-        R_C.val_t = R.val_t;
-        R_C.nbits_val = R.nbits_val;
-        R_C.nbits_val_t = R.nbits_val_t;
-        R_C.with_weights = R.with_weights;
-        R_C.weight = R.weight;
-        R_C.weight_t = R.weight_t;
-        R_C.nbits_weight = R.nbits_weight;
-        R_C.nbits_weight_t = R.nbits_weight_t;
-        R_C.col_ptr = R.col_ptr;
-        R_C.row_ptr = R.row_ptr;
-        R_C.nbits_col_ptr = R.nbits_col_ptr;
-        R_C.nbits_row_ptr = R.nbits_row_ptr;
-        R_C.col_idx = R.col_idx;
-        R_C.row_idx = R.row_idx;
-        R_C.nbits_col_idx = R.nbits_col_idx;
-        R_C.nbits_row_idx = R.nbits_row_idx;
-        R_C.max_col_nnz = R.max_col_nnz;
-        R_C.max_row_nnz = R.max_row_nnz;
-        R_C.colMajored_sparse_idx = R.colMajored_sparse_idx;
-        R_C.nbits_colMajored_sparse_idx = R.nbits_colMajored_sparse_idx;
-
         float** W_c;
         float** H_c;
 
@@ -155,7 +118,7 @@ void ALS(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
             assert(W_c[i]);
         }
 
-        kernel_wrapper_als_NV(R_C, W_c, H_c, parameters);
+        kernel_wrapper_als_NV(R, W_c, H_c, param);
 
         free(W_c);
         free(H_c);

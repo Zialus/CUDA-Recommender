@@ -247,7 +247,7 @@ __global__ void updateH_overW_kernel(const long cols, const long* col_ptr, const
     }
 }
 
-void kernel_wrapper_als_NV(smat_t_C_als& R_C, float**& W, float**& H, params_als& parameters) {
+void kernel_wrapper_als_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters) {
     cudaError_t cudaStatus;
     cudaStatus = als_NV(R_C, W, H, parameters);
     if (cudaStatus != cudaSuccess) {
@@ -257,7 +257,7 @@ void kernel_wrapper_als_NV(smat_t_C_als& R_C, float**& W, float**& H, params_als
     gpuErrchk(cudaStatus);
 }
 
-cudaError_t als_NV(smat_t_C_als& R_C, float**& W, float**& H, params_als& parameters) {
+cudaError_t als_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters) {
     long* dev_col_ptr = 0, * dev_row_ptr = 0;
     unsigned* dev_row_idx = 0, * dev_col_idx = 0;
     unsigned* dev_colMajored_sparse_idx = 0;

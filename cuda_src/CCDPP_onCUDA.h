@@ -8,35 +8,7 @@
 #include <cuda_runtime_api.h>
 
 #include "ERROR_CHECKING.h"
-
-struct params {
-    int nBlocks;
-    int nThreadsPerBlock;
-    int k;
-    int maxiter;
-    int inneriter;
-    int do_nmf;
-    int verbose;
-    float lambda;
-    float eps;
-    bool enable_cuda;
-};
-
-struct smat_t_C {
-    long rows, cols;
-    long nnz, max_row_nnz, max_col_nnz;
-    float* val, * val_t;
-    size_t nbits_val, nbits_val_t;
-    float* weight, * weight_t;
-    size_t nbits_weight, nbits_weight_t;
-    long* col_ptr, * row_ptr;
-    size_t nbits_col_ptr, nbits_row_ptr;
-    //long *col_nnz, *row_nnz;
-    size_t nbits_col_nnz, nbits_row_nnz;
-    unsigned* row_idx, * col_idx;
-    size_t nbits_row_idx, nbits_col_idx;
-    bool with_weights;
-};
+#include "pmf.h"
 
 __global__ void RankOneUpdate_DUAL_kernel(const long Rcols, //are the iterations on for
                                           const long* Rcol_ptr,
@@ -82,11 +54,9 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols, //are the iter
 );
 
 
-cudaError_t ccdpp_NV(smat_t_C& R_C, float**& W, float**& H, params& parameters);
+cudaError_t ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters);
 
-void kernel_wrapper_ccdpp_NV(smat_t_C& R_C, float**& W, float**& H, params& parameters);
-
-smat_t_C transpose(smat_t_C m);
+void kernel_wrapper_ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters);
 
 float maxC(float a, float b);
 

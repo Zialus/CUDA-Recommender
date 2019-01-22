@@ -114,7 +114,7 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols, //are the iter
     }
 }
 
-void kernel_wrapper_ccdpp_NV(smat_t_C& R_C, float**& W, float**& H, params& parameters) {
+void kernel_wrapper_ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters) {
     cudaError_t cudaStatus;
     cudaStatus = ccdpp_NV(R_C, W, H, parameters);
     if (cudaStatus != cudaSuccess) {
@@ -125,7 +125,7 @@ void kernel_wrapper_ccdpp_NV(smat_t_C& R_C, float**& W, float**& H, params& para
 }
 
 // Helper function for using CUDA.
-cudaError_t ccdpp_NV(smat_t_C& R_C, float**& W, float**& H, params& parameters) {
+cudaError_t ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters) {
     long* dev_Rcol_ptr = 0;
     unsigned* dev_Rrow_idx = 0;
     long* dev_Rcol_ptr_T = 0;
@@ -150,15 +150,15 @@ cudaError_t ccdpp_NV(smat_t_C& R_C, float**& W, float**& H, params& parameters) 
 
     int k = parameters.k;
     int maxiter = parameters.maxiter;
-    int inneriter = parameters.inneriter;
+    int inneriter = parameters.maxinneriter;
     float lambda = parameters.lambda;
     float eps = parameters.eps;
     long num_updates = 0;
 
 
     // Create transpose view of R
-    smat_t_C Rt;
-    Rt = transpose(R_C);
+    smat_t Rt;
+    Rt = R_C.transpose();
     // initial value of the regularization term
     // H is a zero matrix now.
     for (int t = 0; t < k; ++t) { for (long c = 0; c < R_C.cols; ++c) { H[t][c] = 0; }}
@@ -296,33 +296,6 @@ cudaError_t ccdpp_NV(smat_t_C& R_C, float**& W, float**& H, params& parameters) 
     cudaFree(dev_Ht_vec_t);
     cudaFree(dev_return);
     return cudaStatus;
-}
-
-smat_t_C transpose(smat_t_C m) {
-    smat_t_C mt;
-    mt.cols = m.rows;
-    mt.rows = m.cols;
-    mt.nnz = m.nnz;
-    mt.val = m.val_t;
-    mt.val_t = m.val;
-    mt.nbits_val = m.nbits_val_t;
-    mt.nbits_val_t = m.nbits_val;
-    mt.with_weights = m.with_weights;
-    mt.weight = m.weight_t;
-    mt.weight_t = m.weight;
-    mt.nbits_weight = m.nbits_weight_t;
-    mt.nbits_weight_t = m.nbits_weight;
-    mt.col_ptr = m.row_ptr;
-    mt.row_ptr = m.col_ptr;
-    mt.nbits_col_ptr = m.nbits_row_ptr;
-    mt.nbits_row_ptr = m.nbits_col_ptr;
-    mt.col_idx = m.row_idx;
-    mt.row_idx = m.col_idx;
-    mt.nbits_col_idx = m.nbits_row_idx;
-    mt.nbits_row_idx = m.nbits_col_idx;
-    mt.max_col_nnz = m.max_row_nnz;
-    mt.max_row_nnz = m.max_col_nnz;
-    return mt;
 }
 
 float maxC(float a, float b) {
