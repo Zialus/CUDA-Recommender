@@ -36,24 +36,24 @@ void save_mat_t(mat_t A, FILE* fp, bool row_major) {
     fwrite(&m, sizeof(long), 1, fp);
     fwrite(&n, sizeof(long), 1, fp);
     //printf("passed\n");
-    vec_tDouble buf(m * n);
+    vec_t buf(m * n);
     //printf("passed-buffer\n");
     if (row_major) {
         size_t idx = 0;
         for (size_t i = 0; i < m; ++i) {
             for (size_t j = 0; j < n; ++j) {
-                buf[idx++] = (double) A[i][j];
+                buf[idx++] = A[i][j];
             }
         }
     } else {
         size_t idx = 0;
         for (size_t i = 0; i < m; ++i) {
             for (size_t j = 0; j < n; ++j) {
-                buf[idx++] = (double) A[j][i];
+                buf[idx++] = A[j][i];
             }
         }
     }
-    fwrite(&buf[0], sizeof(double), m * n, fp);
+    fwrite(&buf[0], sizeof(float), m * n, fp);
 }
 
 // Load a matrix from a file and return a mat_t matrix 

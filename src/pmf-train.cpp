@@ -1,5 +1,4 @@
 #include "pmf.h"
-#include "pmf_original.h"
 
 bool with_weights;
 
@@ -240,51 +239,6 @@ void read_input(const parameter& param, const char* input_file_name, smat_t& R, 
     }
 }
 
-void run_ccdr1_Double(parameter &param, const char* input_file_name){
-
-    smat_t_Double R;
-    mat_t_Double W;
-    mat_t_Double H;
-    testset_t_Double T;
-    parameter_Double param_Double;
-
-    param_Double.betadown = param.betadown;
-    param_Double.betaup = param.betaup;
-    param_Double.do_nmf = param.do_nmf;
-    param_Double.do_predict = param.do_predict;
-    param_Double.eps = param.eps;
-    param_Double.eta0 = param.eta0;
-    param_Double.k = param.k;
-    param_Double.lambda = param.lambda;
-    param_Double.lrate_method = param.lrate_method;
-    param_Double.maxinneriter = param.maxinneriter;
-    param_Double.maxiter = param.maxiter;
-    param_Double.num_blocks = param.num_blocks;
-    param_Double.rho = param.rho;
-    param_Double.solver_type = CCDR1_Double;
-    param_Double.threads = param.threads;
-    param_Double.verbose = param.verbose;
-
-    load(input_file_name, R, T, with_weights);
-    // W, H  here are k*m, k*n
-    initial_col(W, param.k, R.rows);
-    initial_col(H, param.k, R.cols);
-
-//    printf("global mean %g\n", R.get_global_mean());
-//    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
-
-    puts("starts!");
-    double time = omp_get_wtime();
-    ccdr1_Double(R, W, H, T, param_Double);
-    printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
-
-    if (model_fp) {
-        save_mat_t(W, model_fp, false);
-        save_mat_t(H, model_fp, false);
-    }
-
-}
-
 int main(int argc, char* argv[]) {
 
     char input_file_name[1024];
@@ -324,10 +278,6 @@ int main(int argc, char* argv[]) {
         case CCDR1:
             run_ccdr1(param, input_file_name);
             break;
-        case 1:
-            fprintf(stdout, "Original OMP Double Implementation\n");
-            run_ccdr1_Double(param, input_file_name);
-            break;
         case 2:
             fprintf(stdout, "ALS\n");
             run_ALS(param, input_file_name);
@@ -354,8 +304,8 @@ void calculate_rmse() {
 
     double time = omp_get_wtime();
 
-    mat_t_Double W = load_mat_t_Double(model_fp, true);
-    mat_t_Double H = load_mat_t_Double(model_fp, true);
+    mat_t W = load_mat_t(model_fp, true);
+    mat_t H = load_mat_t(model_fp, true);
 
     unsigned long rank = W[0].size();
     if (rank == 0) {

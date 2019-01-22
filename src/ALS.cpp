@@ -41,7 +41,6 @@ void choldcsl(int n, float** A) {
 
 void inverseMatrix_CholeskyMethod(int n, float** A) {
     choldcsl(n, A);
-    //vecIndex = (i * 3) + j; to ontain index from vector if needed.
     for (int i = 0; i < n; ++i) {
         for (int j = i + 1; j < n; ++j) {
             A[i][j] = 0.0;
@@ -65,7 +64,6 @@ void inverseMatrix_CholeskyMethod(int n, float** A) {
     }
 }
 
-//Multiply matrix M transpose by M 
 void Mt_byM_multiply(int i, int j, float** M, float** Result) {
     float SUM;
     for (int I = 0; I < j; ++I) {
@@ -76,20 +74,6 @@ void Mt_byM_multiply(int i, int j, float** M, float** Result) {
                 SUM += M[K][I] * M[K][J];
             }
             Result[J][I] = SUM;
-            Result[I][J] = SUM;
-        }
-    }
-}
-
-//Multiply matrix M by M tranpose
-void M_byMt_multiply(int i, int j, float** M, float** Result) {
-    float SUM;
-    for (int I = 0; I < i; ++I) {
-        for (int J = 0; J < i; ++J) {
-            SUM = 0.0;
-            for (int K = 0; K < j; ++K) {
-                SUM += M[I][K] * M[J][K];
-            }
             Result[I][J] = SUM;
         }
     }
@@ -129,14 +113,12 @@ void ALS(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
 
 
 void ALS_multicore(smat_t& R, mat_t& W, mat_t& H, parameter& param) {
-    int maxIter = param.maxiter;
-    float lambda = param.lambda;
     int k = param.k;
-    int num_threads_old = omp_get_num_threads();
 
+    int num_threads_old = omp_get_num_threads();
     omp_set_num_threads(param.threads);
 
-    for (int iter = 0; iter < maxIter; ++iter) {
+    for (int iter = 0; iter < param.maxiter; ++iter) {
 
         //optimize W over H
 #pragma omp parallel for schedule(kind)
@@ -154,17 +136,15 @@ void ALS_multicore(smat_t& R, mat_t& W, mat_t& H, parameter& param) {
 
                 //a trick to avoid malloc
                 float** H_Omega = (float**) malloc(omegaSize * sizeof(float*));
-                unsigned i = 0;
-                for (int idx = R.row_ptr[Rw]; idx < R.row_ptr[Rw + 1]; ++idx) {
+                for (int idx = R.row_ptr[Rw], i=0; idx < R.row_ptr[Rw + 1]; ++idx, ++i) {
                     H_Omega[i] = &H[R.col_idx[idx]][0];
-                    ++i;
                 }
 
                 Mt_byM_multiply(omegaSize, k, H_Omega, subMatrix);
 
                 //add lambda to diag of sub-matrix
                 for (int c = 0; c < k; c++) {
-                    subMatrix[c][c] = subMatrix[c][c] + lambda;
+                    subMatrix[c][c] = subMatrix[c][c] + param.lambda;
                 }
 
                 //invert sub-matrix
@@ -220,17 +200,15 @@ void ALS_multicore(smat_t& R, mat_t& W, mat_t& H, parameter& param) {
 
                 //a trick to avoid malloc
                 float** W_Omega = (float**) malloc(omegaSize * sizeof(float*));
-                unsigned i = 0;
-                for (long idx = R.col_ptr[Rh]; idx < R.col_ptr[Rh + 1]; ++idx) {
+                for (long idx = R.col_ptr[Rh], i = 0; idx < R.col_ptr[Rh + 1]; ++idx, ++i) {
                     W_Omega[i] = &W[R.row_idx[idx]][0];
-                    ++i;
                 }
 
                 Mt_byM_multiply(omegaSize, k, W_Omega, subMatrix);
 
                 //add lambda to diag of sub-matrix
                 for (int c = 0; c < k; c++) {
-                    subMatrix[c][c] = subMatrix[c][c] + lambda;
+                    subMatrix[c][c] = subMatrix[c][c] + param.lambda;
                 }
 
                 //invert sub-matrix

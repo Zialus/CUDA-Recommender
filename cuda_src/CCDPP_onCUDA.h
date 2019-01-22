@@ -58,6 +58,4 @@ cudaError_t ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters)
 
 void kernel_wrapper_ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters);
 
-float maxC(float a, float b);
-
 #endif

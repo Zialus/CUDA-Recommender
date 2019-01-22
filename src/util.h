@@ -29,7 +29,6 @@ class RateComp;
 class smat_t;
 class testset_t;
 
-typedef vector<double> vec_tDouble;
 typedef vector<float> vec_t;
 typedef vector<vec_t> mat_t;
 

@@ -263,9 +263,9 @@ cudaError_t ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters)
                     break;
                 }
                 rankfundec += innerfundec_cur;
-                innerfundec_max = maxC(innerfundec_max, innerfundec_cur);
+                innerfundec_max = std::max(innerfundec_max, innerfundec_cur);
                 if (!(oiter == 1 && t == 0 && iter == 1)) {
-                    fundec_max = maxC(fundec_max, innerfundec_cur);
+                    fundec_max = std::max(fundec_max, innerfundec_cur);
                 }
             }
 
@@ -298,6 +298,3 @@ cudaError_t ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters)
     return cudaStatus;
 }
 
-float maxC(float a, float b) {
-    return (a > b ? a : b);
-}
