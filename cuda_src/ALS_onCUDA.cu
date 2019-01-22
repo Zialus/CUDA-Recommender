@@ -26,8 +26,7 @@ __device__ void choldc1_k(int n, float** a, float* p) {
                 //	printf(" a is not positive definite!\n");
                 //}
                 p[i] = sqrtf(sum);//float saquare root
-            }
-            else {
+            } else {
                 a[j][i] = sum / p[i];
             }
         }
@@ -37,7 +36,7 @@ __device__ void choldc1_k(int n, float** a, float* p) {
 __device__ void choldcsl_k(int n, float** A) {
     unsigned i, j, k;
     float* p;
-    p = (float *)malloc(n * sizeof(float));
+    p = (float*) malloc(n * sizeof(float));
     choldc1_k(n, A, p);
     for (i = 0; i < n; ++i) {
         A[i][i] = 1 / p[i];
@@ -79,12 +78,12 @@ __device__ void inverseMatrix_CholeskyMethod_k(int n, float** A) {
 }
 
 //Multiply matrix M transpose by M 
-__device__ void Mt_byM_multiply_k(int i, int j, float*H, float**Result, const long ptr, const unsigned *idx){
+__device__ void Mt_byM_multiply_k(int i, int j, float* H, float** Result, const long ptr, const unsigned* idx) {
     float SUM;
-    for (unsigned I = 0; I < j; ++I){
+    for (unsigned I = 0; I < j; ++I) {
         for (unsigned J = I; J < j; ++J) {
             SUM = 0.0f;
-            for (unsigned K = 0; K < i; ++K){
+            for (unsigned K = 0; K < i; ++K) {
                 unsigned offset = idx[ptr + K] * j;
                 //printf("%.3f %.3f\n", M[K][I], M[K][J]);
                 //printf("%.3f %.3f\n", H[( offset) + I], H[( offset) + J]);
@@ -99,59 +98,59 @@ __device__ void Mt_byM_multiply_k(int i, int j, float*H, float**Result, const lo
     }
 }
 
-__global__ void updateW_overH_kernel(const long rows, const long *row_ptr, const unsigned *col_idx, const unsigned *colMajored_sparse_idx, const float *val, const float lambda, const int k, float *W, float *H){
+__global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const unsigned* col_idx, const unsigned* colMajored_sparse_idx, const float* val, const float lambda, const int k, float* W, float* H) {
     assert(row_ptr);
     assert(colMajored_sparse_idx);
     assert(val);
     assert(W);
     assert(H);
 
-    int tid = blockIdx.x*blockDim.x + threadIdx.x;
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if(tid == 0){
+    if (tid == 0) {
         printf("OLA 1\n");
     }
 
     //optimize W over H
     int ii = threadIdx.x + blockIdx.x * blockDim.x;
-    for (int Rw = ii; Rw < rows; Rw += blockDim.x*gridDim.x){
+    for (int Rw = ii; Rw < rows; Rw += blockDim.x * gridDim.x) {
         //int offset_W = Rw*k;
         //int offset_H = Rw*cols;
 
-        float *Wr = &W[Rw*k];
+        float* Wr = &W[Rw * k];
         unsigned omegaSize = row_ptr[Rw + 1] - row_ptr[Rw];
-        float ** subMatrix;
-        float * subVector;
+        float** subMatrix;
+        float* subVector;
 
-        if (omegaSize>0){
-            subVector = (float *)malloc(k * sizeof(float));
-            subMatrix = (float **)malloc(k * sizeof(float *));
+        if (omegaSize > 0) {
+            subVector = (float*) malloc(k * sizeof(float));
+            subMatrix = (float**) malloc(k * sizeof(float*));
 
-            if(tid == 0){
+            if (tid == 0) {
                 printf("OLA 2\n");
             }
 
             assert(subVector);
             assert(subMatrix);
-            for (unsigned i = 0; i < k; ++i){
-                if(tid == 0){
-                    printf("OLA 3.1,i=%d\n",i);
+            for (unsigned i = 0; i < k; ++i) {
+                if (tid == 0) {
+                    printf("OLA 3.1,i=%d\n", i);
                 } //else { sleep(1000000000);}
-                subMatrix[i] = (float *)malloc(k * sizeof(float));
-                if(tid == 0){
-                    printf("OLA 3.2,i=%d\n",i);
+                subMatrix[i] = (float*) malloc(k * sizeof(float));
+                if (tid == 0) {
+                    printf("OLA 3.2,i=%d\n", i);
                 }
                 assert(subMatrix);
             }
 
-            if(tid == 0){
+            if (tid == 0) {
                 printf("OLA 4\n");
             }
 
             Mt_byM_multiply_k(omegaSize, k, H, subMatrix, row_ptr[Rw], col_idx);
 
             //add lambda to diag of sub-matrix
-            for (unsigned c = 0; c < k; c++){
+            for (unsigned c = 0; c < k; c++) {
                 subMatrix[c][c] = subMatrix[c][c] + lambda;
             }
 
@@ -160,58 +159,57 @@ __global__ void updateW_overH_kernel(const long rows, const long *row_ptr, const
 
 
             //sparse multiplication
-            for (unsigned c = 0; c < k; ++c){
+            for (unsigned c = 0; c < k; ++c) {
                 subVector[c] = 0;
-                for (long idx = row_ptr[Rw]; idx < row_ptr[Rw + 1]; ++idx){
+                for (long idx = row_ptr[Rw]; idx < row_ptr[Rw + 1]; ++idx) {
                     unsigned idx2 = colMajored_sparse_idx[idx];
                     subVector[c] += val[idx2] * H[(col_idx[idx] * k) + c];
                 }
             }
 
             //multiply subVector by subMatrix
-            for (unsigned c = 0; c < k; ++c){
+            for (unsigned c = 0; c < k; ++c) {
                 Wr[c] = 0;
-                for (unsigned subVid = 0; subVid < k; ++subVid){
+                for (unsigned subVid = 0; subVid < k; ++subVid) {
                     Wr[c] += subVector[subVid] * subMatrix[c][subVid];
                 }
             }
 
 
-            for (unsigned i = 0; i < k; ++i){
+            for (unsigned i = 0; i < k; ++i) {
                 free(subMatrix[i]);
             }
             free(subMatrix);
             free(subVector);
-        }
-        else{
-            for (unsigned c = 0; c < k; ++c){
+        } else {
+            for (unsigned c = 0; c < k; ++c) {
                 Wr[c] = 0.0f;
             }
         }
     }
 }
 
-__global__ void updateH_overW_kernel(const long cols, const long *col_ptr, const unsigned *row_idx, const float *val, const float lambda, const int k, float *W, float *H){
+__global__ void updateH_overW_kernel(const long cols, const long* col_ptr, const unsigned* row_idx, const float* val, const float lambda, const int k, float* W, float* H) {
     //optimize H over W
     int ii = threadIdx.x + blockIdx.x * blockDim.x;
-    for (int Rh = ii; Rh < cols; Rh += blockDim.x*gridDim.x){
-        float *Hr = &H[Rh*k];
+    for (int Rh = ii; Rh < cols; Rh += blockDim.x * gridDim.x) {
+        float* Hr = &H[Rh * k];
         //int offset_H = Rh*k;
         unsigned omegaSize = col_ptr[Rh + 1] - col_ptr[Rh];
-        float ** subMatrix;// ** W_Omega;
-        float * subVector;
+        float** subMatrix;// ** W_Omega;
+        float* subVector;
 
-        if (omegaSize>0){
-            subVector = (float *)malloc(k * sizeof(float));
-            subMatrix = (float **)malloc(k * sizeof(float *));
-            for (unsigned i = 0; i < k; ++i){
-                subMatrix[i] = (float *)malloc(k * sizeof(float));
+        if (omegaSize > 0) {
+            subVector = (float*) malloc(k * sizeof(float));
+            subMatrix = (float**) malloc(k * sizeof(float*));
+            for (unsigned i = 0; i < k; ++i) {
+                subMatrix[i] = (float*) malloc(k * sizeof(float));
             }
 
             Mt_byM_multiply_k(omegaSize, k, W, subMatrix, col_ptr[Rh], row_idx);
 
             //add lambda to diag of sub-matrix
-            for (unsigned c = 0; c < k; c++){
+            for (unsigned c = 0; c < k; c++) {
                 subMatrix[c][c] = subMatrix[c][c] + lambda;
             }
 
@@ -220,37 +218,36 @@ __global__ void updateH_overW_kernel(const long cols, const long *col_ptr, const
 
 
             //sparse multiplication
-            for (unsigned c = 0; c < k; ++c){
+            for (unsigned c = 0; c < k; ++c) {
                 subVector[c] = 0;
-                for (long idx = col_ptr[Rh]; idx < col_ptr[Rh + 1]; ++idx){
+                for (long idx = col_ptr[Rh]; idx < col_ptr[Rh + 1]; ++idx) {
                     subVector[c] += val[idx] * W[(row_idx[idx] * k) + c];
                 }
             }
 
             //multiply subVector by subMatrix
-            for (unsigned c = 0; c < k; ++c){
+            for (unsigned c = 0; c < k; ++c) {
                 Hr[c] = 0;
-                for (unsigned subVid = 0; subVid < k; ++subVid){
+                for (unsigned subVid = 0; subVid < k; ++subVid) {
                     Hr[c] += subVector[subVid] * subMatrix[c][subVid];
                 }
             }
 
 
-            for (unsigned i = 0; i < k; ++i){
+            for (unsigned i = 0; i < k; ++i) {
                 free(subMatrix[i]);
             }
             free(subMatrix);
             free(subVector);
-        }
-        else{
-            for (unsigned c = 0; c < k; ++c){
+        } else {
+            for (unsigned c = 0; c < k; ++c) {
                 Hr[c] = 0.0f;
             }
         }
     }
 }
 
-void kernel_wrapper_als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &parameters){
+void kernel_wrapper_als_NV(smat_t_C_als& R_C, float**& W, float**& H, params_als& parameters) {
     cudaError_t cudaStatus;
     cudaStatus = als_NV(R_C, W, H, parameters);
     if (cudaStatus != cudaSuccess) {
@@ -260,12 +257,12 @@ void kernel_wrapper_als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_a
     gpuErrchk(cudaStatus);
 }
 
-cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &parameters){
-    long *dev_col_ptr = 0, *dev_row_ptr = 0;
-    unsigned *dev_row_idx = 0, *dev_col_idx = 0;
-    unsigned *dev_colMajored_sparse_idx = 0;
-    float *dev_val = 0;
-    float *dev_W_ = 0, *dev_H_ = 0;
+cudaError_t als_NV(smat_t_C_als& R_C, float**& W, float**& H, params_als& parameters) {
+    long* dev_col_ptr = 0, * dev_row_ptr = 0;
+    unsigned* dev_row_idx = 0, * dev_col_idx = 0;
+    unsigned* dev_colMajored_sparse_idx = 0;
+    float* dev_val = 0;
+    float* dev_W_ = 0, * dev_H_ = 0;
 
     int nThreadsPerBlock = parameters.nThreadsPerBlock;
     int nBlocks = parameters.nBlocks;
@@ -283,15 +280,15 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
     //Load H and W on vectors
     int indexPosition = 0;
     //// float *Wt = &W[t][0], *Ht = &H[t][0];
-    for (int i = 0; i < R_C.rows; ++i){
-        for (int j = 0; j < k; ++j){
+    for (int i = 0; i < R_C.rows; ++i) {
+        for (int j = 0; j < k; ++j) {
             W_[indexPosition] = W[i][j];
             ++indexPosition;
         }
     }
     indexPosition = 0;
-    for (int i = 0; i < R_C.cols; ++i){
-        for (int j = 0; j < k; ++j){
+    for (int i = 0; i < R_C.cols; ++i) {
+        for (int j = 0; j < k; ++j) {
             H_[indexPosition] = H[i][j];
             ++indexPosition;
         }
@@ -305,21 +302,21 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
     gpuErrchk(cudaStatus);
 
     // Allocate GPU buffers for all vectors.
-    cudaStatus = cudaMalloc((void**)&dev_col_ptr, R_C.nbits_col_ptr);
+    cudaStatus = cudaMalloc((void**) &dev_col_ptr, R_C.nbits_col_ptr);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**)&dev_row_ptr, R_C.nbits_row_ptr);
+    cudaStatus = cudaMalloc((void**) &dev_row_ptr, R_C.nbits_row_ptr);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**)&dev_row_idx, R_C.nbits_row_idx);
+    cudaStatus = cudaMalloc((void**) &dev_row_idx, R_C.nbits_row_idx);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**)&dev_col_idx, R_C.nbits_col_idx);
+    cudaStatus = cudaMalloc((void**) &dev_col_idx, R_C.nbits_col_idx);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**)&dev_colMajored_sparse_idx, R_C.nbits_colMajored_sparse_idx);
+    cudaStatus = cudaMalloc((void**) &dev_colMajored_sparse_idx, R_C.nbits_colMajored_sparse_idx);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**)&dev_val, R_C.nbits_val);
+    cudaStatus = cudaMalloc((void**) &dev_val, R_C.nbits_val);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**)&dev_W_, nbits_W_ * sizeof(float));
+    cudaStatus = cudaMalloc((void**) &dev_W_, nbits_W_ * sizeof(float));
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**)&dev_H_, nbits_H_ * sizeof(float));
+    cudaStatus = cudaMalloc((void**) &dev_H_, nbits_H_ * sizeof(float));
     gpuErrchk(cudaStatus);
 
 
@@ -341,7 +338,7 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
     gpuErrchk(cudaStatus);
 
 
-    for (int iter = 0; iter < maxIter; ++iter){
+    for (int iter = 0; iter < maxIter; ++iter) {
 
         //optimize W over H
         //updateW_overH_HOST(R_C.rows, R_C.row_ptr, R_C.col_idx, R_C.colMajored_sparse_idx, R_C.val, lambda, k, W_, H_);
@@ -376,15 +373,15 @@ cudaError_t als_NV(smat_t_C_als &R_C, float ** &W, float ** &H, params_als &para
 
     indexPosition = 0;
     //// float *Wt = &W[t][0], *Ht = &H[t][0];
-    for (int i = 0; i < R_C.rows; ++i){
-        for (int j = 0; j < k; ++j){
+    for (int i = 0; i < R_C.rows; ++i) {
+        for (int j = 0; j < k; ++j) {
             W[i][j] = W_[indexPosition];
             ++indexPosition;
         }
     }
     indexPosition = 0;
-    for (int i = 0; i < R_C.cols; ++i){
-        for (int j = 0; j < k; ++j){
+    for (int i = 0; i < R_C.cols; ++i) {
+        for (int j = 0; j < k; ++j) {
             H[i][j] = H_[indexPosition];
             ++indexPosition;
         }
