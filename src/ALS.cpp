@@ -5,21 +5,18 @@
 #define kind dynamic,500
 
 void choldc1(int n, float** a, float* p) {
-	int k;
-	float sum;
 	for (int i = 0; i < n; ++i) {
 		for (int j = i; j < n; ++j) {
-			sum = a[i][j];
-			for (k = i - 1; k >= 0; --k) {
+			float sum = a[i][j];
+			for (int k = i - 1; k >= 0; --k) {
 				sum -= a[i][k] * a[j][k];
 			}
 			if (i == j) {
 				if (sum <= 0) {
 					printf(" a is not positive definite!\n");
 				}
-				p[i] = sqrtf(sum);//float saquare root
-			}
-			else {
+				p[i] = sqrtf(sum);
+			} else {
 				a[j][i] = sum / p[i];
 			}
 		}
@@ -27,14 +24,12 @@ void choldc1(int n, float** a, float* p) {
 }
 
 void choldcsl(int n, float** A) {
-	double sum;
-	float* p;
-	p = (float *)malloc(n * sizeof(float));
+	float* p = (float *)malloc(n * sizeof(float));
 	choldc1(n, A, p);
 	for (int i = 0; i < n; ++i) {
 		A[i][i] = 1 / p[i];
 		for (int j = i + 1; j < n; ++j) {
-			sum = 0;
+			double sum = 0;
 			for (int k = i; k < j; ++k) {
 				sum -= A[j][k] * A[k][i];
 			}
@@ -70,7 +65,6 @@ void inverseMatrix_CholeskyMethod(int n, float** A) {
 	}
 }
 
-
 //Multiply matrix M transpose by M 
 void Mt_byM_multiply(int i, int j, float**M, float**Result){
 	float SUM;
@@ -86,20 +80,7 @@ void Mt_byM_multiply(int i, int j, float**M, float**Result){
 		}
 	}
 }
-//void Mt_byM_multiply(int i, int j, float**M, float**Result){
-//	float SUM;
-//	for (unsigned I = 0; I < j; ++I){
-//		for (unsigned J = 0; J < j; ++J) {
-//			SUM = 0.0;
-//			for (unsigned K = 0; K < i; ++K){
-//				//printf("%.3f %.3f\n", M[K][I], M[K][J]);
-//				SUM += M[K][I] * M[K][J];
-//			}
-//			Result[J][I] = SUM;
-//		}
-//	}
-//
-//}
+
 //Multiply matrix M by M tranpose
 void M_byMt_multiply(int i, int j, float**M, float**Result){
 	float SUM;
@@ -111,7 +92,6 @@ void M_byMt_multiply(int i, int j, float**M, float**Result){
 			Result[I][J] = SUM;
 		}
 	}
-
 }
 
 void ALS(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter &param){
