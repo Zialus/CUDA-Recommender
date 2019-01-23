@@ -68,7 +68,7 @@ inline float UpdateRating_Original_float(smat_t &R, const vec_t &Wt, const vec_t
             float Htc = Ht[c], loss_inner = 0;
             for(long idx=R.col_ptr[c]; idx < R.col_ptr[c+1]; ++idx){
                 R.val[idx] +=  Wt[R.row_idx[idx]]*Htc;
-                loss_inner += (R.with_weights? R.weight[idx]: 1.0f)*R.val[idx]*R.val[idx];
+                loss_inner += R.val[idx]*R.val[idx];
             }
             loss += loss_inner;
         }
@@ -79,7 +79,7 @@ inline float UpdateRating_Original_float(smat_t &R, const vec_t &Wt, const vec_t
             float Htc = Ht[c], loss_inner = 0;
             for(long idx=R.col_ptr[c]; idx < R.col_ptr[c+1]; ++idx){
                 R.val[idx] -=  Wt[R.row_idx[idx]]*Htc;
-                loss_inner += (R.with_weights? R.weight[idx]: 1.0f)*R.val[idx]*R.val[idx];
+                loss_inner += R.val[idx]*R.val[idx];
             }
             loss += loss_inner;
         }

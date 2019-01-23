@@ -20,19 +20,16 @@
 #define MALLOC(type, size) (type*)malloc(sizeof(type)*(size))
 #define SIZEBITS(type, size) sizeof(type)*(size)
 
-enum { ROWMAJOR, COLMAJOR };
 
 using namespace std;
 class rate_t;
-class rateset_t;
-class RateComp;
 class smat_t;
 class testset_t;
 
 typedef vector<float> vec_t;
 typedef vector<vec_t> mat_t;
 
-void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS, bool with_weights = false);
+void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS);
 void save_mat_t(mat_t A, FILE* fp, bool row_major = true);
 mat_t load_mat_t(FILE* fp, bool row_major = true);
 void initial(mat_t& X, long n, long k);
@@ -50,54 +47,12 @@ float calrmse_r1(testset_t& testset, vec_t& Wt, vec_t& Ht, vec_t& oldWt, vec_t& 
 
 class rate_t {
 public:
-    int i, j;
-    float v, weight;
-
-    rate_t(int ii = 0, int jj = 0, float vv = 0, float ww = 1.0) : i(ii), j(jj), v(vv), weight(ww) {}
+    int i;
+    int j;
+    float v;
 };
 
-class entry_iterator_t {
-private:
-    FILE* fp;
-    char buf[1000];
-public:
-    bool with_weights;
-    size_t nnz;
-
-    entry_iterator_t() : fp(nullptr), with_weights(false), nnz(0) {}
-
-    entry_iterator_t(size_t nnz_, const char* filename, bool with_weights_ = false) {
-        nnz = nnz_;
-        fp = fopen(filename, "r");
-        with_weights = with_weights_;
-    }
-
-    size_t size() { return nnz; }
-
-    virtual rate_t next() {
-        int i = 1, j = 1;
-        float v = 0, w = 1.0;
-        if (nnz > 0) {
-            fgets(buf, 1000, fp);
-            if (with_weights) {
-                sscanf(buf, "%d %d %f %f", &i, &j, &v, &w);
-            } else {
-                sscanf(buf, "%d %d %f", &i, &j, &v);
-            }
-            --nnz;
-        } else {
-            fprintf(stderr, "Error: no more entry to iterate !!\n");
-        }
-        return rate_t(i - 1, j - 1, v, w);
-    }
-
-    virtual ~entry_iterator_t() {
-        if (fp) { fclose(fp); }
-    }
-};
-
-
-// Comparator for sorting rates into row/column comopression storage
+// Comparator for sorting rates into row/column compression storage
 class SparseComp {
 public:
     const unsigned* row_idx;
@@ -114,14 +69,13 @@ public:
 };
 
 // Sparse matrix format CCS & RCS
-// Access column fomat only when you use it..
+// Access column format only when you use it..
 class smat_t {
 public:
     long rows, cols;
     long nnz, max_row_nnz, max_col_nnz;
     float* val, * val_t;
     size_t nbits_val, nbits_val_t;
-    float* weight, * weight_t;
     size_t nbits_weight, nbits_weight_t;
     long* col_ptr, * row_ptr;
     size_t nbits_col_ptr, nbits_row_ptr;
@@ -131,10 +85,9 @@ public:
     size_t nbits_row_idx, nbits_col_idx;
     unsigned* colMajored_sparse_idx;
     size_t nbits_colMajored_sparse_idx;
-    //unsigned long *row_idx, *col_idx; // for matlab
-    bool mem_alloc_by_me, with_weights;
+    bool mem_alloc_by_me;
 
-    smat_t() : mem_alloc_by_me(false), with_weights(false) {}
+    smat_t() : mem_alloc_by_me(false) {}
 
     smat_t(const smat_t& m) {
         *this = m;
@@ -149,26 +102,28 @@ public:
         }
     }
 
-    void load(long _rows, long _cols, long _nnz, const char* filename, bool ifALS, bool use_weights = false) {
-        entry_iterator_t entry_it(_nnz, filename, use_weights);
-        load_from_iterator(_rows, _cols, _nnz, &entry_it, ifALS);
+    rate_t read_next_line(FILE* fp) {
+        int i;
+        int j;
+        float v = 0;
+        fscanf(fp, "%d %d %f", &i, &j, &v);
+        return rate_t{i - 1, j - 1, v};
     }
 
-    void load_from_iterator(long _rows, long _cols, long _nnz, entry_iterator_t* entry_it, bool ifALS) {
+    void load(long _rows, long _cols, long _nnz, const char* filename, bool ifALS) {
+        FILE* fp = fopen(filename, "r");
+        load_from_file(_rows, _cols, _nnz, fp, ifALS);
+        fclose(fp);
+    }
+
+    void load_from_file(long _rows, long _cols, long _nnz, FILE* fp, bool ifALS) {
         unsigned* mapIDX;
         rows = _rows, cols = _cols, nnz = _nnz;
         mem_alloc_by_me = true;
-        with_weights = entry_it->with_weights;
         val = MALLOC(float, nnz);
         val_t = MALLOC(float, nnz);
         nbits_val = SIZEBITS(float, nnz);
         nbits_val_t = SIZEBITS(float, nnz);
-        if (with_weights) {
-            weight = MALLOC(float, nnz);
-            weight_t = MALLOC(float, nnz);
-            nbits_weight = SIZEBITS(float, nnz);
-            nbits_weight_t = SIZEBITS(float, nnz);
-        }
         row_idx = MALLOC(unsigned, nnz);
         col_idx = MALLOC(unsigned, nnz);  // switch to this for memory
         nbits_row_idx = SIZEBITS(unsigned, nnz);
@@ -183,32 +138,19 @@ public:
             colMajored_sparse_idx = MALLOC(unsigned, nnz);
             nbits_colMajored_sparse_idx = SIZEBITS(unsigned, nnz);
         }
-        /*
-         * Assume ratings are stored in the row-majored ordering
-        for(size_t idx = 0; idx < _nnz; idx++){
-            rate_t rate = entry_it->next();
-            row_ptr[rate.i+1]++;
-            col_ptr[rate.j+1]++;
-            col_idx[idx] = rate.j;
-            val_t[idx] = rate.v;
-        }*/
 
         // a trick here to utilize the space the have been allocated
         vector<size_t> perm(_nnz);
         unsigned* tmp_row_idx = col_idx;
         unsigned* tmp_col_idx = row_idx;
         float* tmp_val = val;
-        float* tmp_weight = weight;
         for (size_t idx = 0; idx < _nnz; idx++) {
-            rate_t rate = entry_it->next();
+            rate_t rate = read_next_line(fp);
             row_ptr[rate.i + 1]++;
             col_ptr[rate.j + 1]++;
             tmp_row_idx[idx] = rate.i;
             tmp_col_idx[idx] = rate.j;
             tmp_val[idx] = rate.v;
-            if (with_weights) {
-                tmp_weight[idx] = rate.weight;
-            }
             perm[idx] = idx;
         }
         //for (int i = 0; i < rows + 1; ++i){
@@ -228,9 +170,6 @@ public:
         for (size_t idx = 0; idx < _nnz; idx++) {
             val_t[idx] = tmp_val[perm[idx]];
             col_idx[idx] = tmp_col_idx[perm[idx]];
-            if (with_weights) {
-                weight_t[idx] = tmp_weight[idx];
-            }
         }
 
         // Calculate nnz for each row and col
@@ -249,7 +188,6 @@ public:
                 long c = col_idx[i];
                 row_idx[col_ptr[c]] = r;
                 val[col_ptr[c]] = val_t[i];
-                if (with_weights) { weight[col_ptr[c]] = weight_t[i]; }
                 col_ptr[c]++;
             }
         }
@@ -310,8 +248,6 @@ public:
         }
     }
 
-    void free(void* ptr) { if (ptr) { ::free(ptr); }}
-
     ~smat_t() {
         if (mem_alloc_by_me) {
             //puts("Warnning: Somebody just free me.");
@@ -321,10 +257,6 @@ public:
             free(row_idx);
             free(col_ptr);
             free(col_idx);
-            if (with_weights) {
-                free(weight);
-                free(weight_t);
-            }
         }
     }
 
@@ -335,13 +267,7 @@ public:
         free(row_idx);
         free(col_ptr);
         free(col_idx);
-        if (with_weights) {
-            free(weight);
-            free(weight_t);
-        }
         mem_alloc_by_me = false;
-        with_weights = false;
-
     }
 
     smat_t transpose() {
@@ -353,10 +279,6 @@ public:
         mt.val_t = val;
         mt.nbits_val = nbits_val_t;
         mt.nbits_val_t = nbits_val;
-        mt.with_weights = with_weights;
-
-        mt.weight = weight_t;
-        mt.weight_t = weight;
         mt.nbits_weight = nbits_weight_t;
         mt.nbits_weight_t = nbits_weight;
         mt.col_ptr = row_ptr;
@@ -370,43 +292,6 @@ public:
         mt.max_col_nnz = max_row_nnz;
         mt.max_row_nnz = max_col_nnz;
         return mt;
-    }
-};
-
-
-// row-major iterator
-class smat_iterator_t : public entry_iterator_t {
-private:
-    unsigned* col_idx;
-    long* row_ptr;
-    float* val_t;
-    float* weight_t;
-    size_t rows, cols, cur_idx, cur_row;
-    bool with_weights;
-public:
-    smat_iterator_t(const smat_t& M, int major = ROWMAJOR) {
-        nnz = M.nnz;
-        col_idx = (major == ROWMAJOR) ? M.col_idx : M.row_idx;
-        row_ptr = (major == ROWMAJOR) ? M.row_ptr : M.col_ptr;
-        val_t = (major == ROWMAJOR) ? M.val_t : M.val;
-        weight_t = (major == ROWMAJOR) ? M.weight_t : M.weight;
-        with_weights = M.with_weights;
-        rows = (major == ROWMAJOR) ? M.rows : M.cols;
-        cols = (major == ROWMAJOR) ? M.cols : M.rows;
-        cur_idx = cur_row = 0;
-    }
-
-    ~smat_iterator_t() {}
-
-    rate_t next() {
-//        int i = 1, j = 1;
-//        float v = 0;
-        while (cur_idx >= row_ptr[cur_row + 1]) { ++cur_row; }
-        if (nnz > 0) { --nnz; }
-        else { fprintf(stderr, "Error: no more entry to iterate !!\n"); }
-        rate_t ret(cur_row, col_idx[cur_idx], val_t[cur_idx], with_weights ? weight_t[cur_idx] : 1.0f);
-        cur_idx++;
-        return ret;
     }
 };
 
@@ -431,17 +316,9 @@ public:
         FILE* fp = fopen(filename, "r");
         for (long idx = 0; idx < nnz; ++idx) {
             fscanf(fp, "%d %d %f", &r, &c, &v);
-            T[idx] = rate_t(r - 1, c - 1, v);
+            T[idx] = rate_t{r - 1, c - 1, v};
         }
         fclose(fp);
-    }
-
-    void load_from_iterator(long _rows, long _cols, long _nnz, entry_iterator_t* entry_it) {
-        rows = _rows, cols = _cols, nnz = _nnz;
-        T = vector<rate_t>(nnz);
-        for (size_t idx = 0; idx < nnz; ++idx) {
-            T[idx] = entry_it->next();
-        }
     }
 
     float get_global_mean() {

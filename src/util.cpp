@@ -1,9 +1,7 @@
 #include "util.h"
 
-#define MALLOC(type, size) (type*)malloc(sizeof(type)*(size))
-
 // load utility for CCS RCS
-void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS, bool with_weights) {
+void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS) {
     // add testing later
     char filename[1024], buf[1024];
     sprintf(filename, "%s/meta", srcdir);
@@ -13,7 +11,7 @@ void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS, bool with_wei
 
     fscanf(fp, "%ld %1023s", &nnz, buf);
     sprintf(filename, "%s/%s", srcdir, buf);
-    R.load(m, n, nnz, filename, ifALS, with_weights);
+    R.load(m, n, nnz, filename, ifALS);
 
     if (fscanf(fp, "%ld %1023s", &nnz, buf) != EOF) {
         sprintf(filename, "%s/%s", srcdir, buf);
@@ -184,7 +182,7 @@ float calobj(const smat_t& R, const mat_t& W, const mat_t& H, const float lambda
             } else {
                 diff += dot(W[R.row_idx[idx]], H[c]);
             }
-            loss += (R.with_weights ? R.weight[idx] : 1.0f) * diff * diff;
+            loss += diff * diff;
         }
     }
     float reg = 0;
