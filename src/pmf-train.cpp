@@ -81,10 +81,6 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
                     param.lambda = (float) atof(argv[i]);
                     break;
 
-                case 'r':
-                    param.rho = (float) atof(argv[i]);
-                    break;
-
                 case 't':
                     param.maxiter = atoi(argv[i]);
                     break;
@@ -136,7 +132,7 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
 }
 
 
-void run_ccdr1(parameter &param, const char* input_file_name){
+void run_ccdr1(parameter& param, const char* input_file_name) {
     smat_t R;
     mat_t W;
     mat_t H;
@@ -144,23 +140,22 @@ void run_ccdr1(parameter &param, const char* input_file_name){
 
     read_input(param, input_file_name, R, W, H, T, false);
 
-//    printf("global mean %g\n", R.get_global_mean());
 //    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
 
-    puts("----------=CCDR1 START=------");
-    double time2 = omp_get_wtime();
+    puts("----------=CCD START=------");
+    double time = omp_get_wtime();
     ccdr1(R, W, H, T, param);
-    printf("Wall-time: %lg secs\n", omp_get_wtime() - time2);
-    puts("----------=CCDR1 END=--------");
+    printf("Wall-time: %lf secs\n", omp_get_wtime() - time);
+    puts("----------=CCD END=--------");
 
-    if(model_fp) {
-        save_mat_t(W,model_fp,false);
-        save_mat_t(H,model_fp,false);
+    if (model_fp) {
+        save_mat_t(W, model_fp, false);
+        save_mat_t(H, model_fp, false);
     }
 
 }
 
-void run_ALS(parameter &param, const char* input_file_name){
+void run_ALS(parameter& param, const char* input_file_name) {
     smat_t R;
     mat_t W;
     mat_t H;
@@ -168,7 +163,6 @@ void run_ALS(parameter &param, const char* input_file_name){
 
     read_input(param, input_file_name, R, W, H, T, true);
 
-//    printf("global mean %g\n", R.get_global_mean());
 //    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
 
     puts("----------=ALS START=------");
@@ -176,17 +170,6 @@ void run_ALS(parameter &param, const char* input_file_name){
     ALS(R, W, H, T, param);
     printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
     puts("----------=ALS END=--------");
-
-    //int s = W[0].size();
-    //int ss = W.size();
-
-    //for (unsigned i = 0; i < ss; ++i){
-    //	for (unsigned j = 0; j < s; ++j){
-    //		printf("%.3f ", W[i][j]);
-    //	}
-    //	printf("\n");
-    //}
-    //printf("\n");
 
     if (model_fp) {
         save_mat_t(W, model_fp, true);
@@ -198,15 +181,14 @@ void read_input(const parameter& param, const char* input_file_name, smat_t& R, 
     puts("----------=INPUT START=------");
     puts("Starting to read inout...");
     double time1 = omp_get_wtime();
-    load(input_file_name,R,T, ifALS, with_weights);
+    load(input_file_name, R, T, ifALS, with_weights);
     printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
     puts("----------=INPUT END=--------");
 
-    // W, H  here are k*m, k*n
-    if (ifALS){
+    if (ifALS) {
         initial_col(W, R.rows, param.k);
         initial_col(H, R.cols, param.k);
-    } else { // CDDR1 for now
+    } else { // CDD
         initial_col(W, param.k, R.rows);
         initial_col(H, param.k, R.cols);
     }
@@ -313,10 +295,6 @@ void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int iter, int ran
 
     double time = omp_get_wtime();
 
-    if (rank == 0) {
-        fprintf(stderr, "Matrix is emty!\n");
-        exit(1);
-    }
     int i;
     int j;
     double v;
@@ -326,15 +304,15 @@ void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int iter, int ran
     while (fscanf(test_fp, "%d %d %lf", &i, &j, &v) != EOF) {
         double pred_v = 0;
 
-        if(ifALS){
-//            #pragma omp parallel for  reduction(+:pred_v)
+        if (ifALS) {
+//#pragma omp parallel for  reduction(+:pred_v)
             for (int t = 0; t < rank; t++) {
                 pred_v += W[i - 1][t] * H[j - 1][t];
             }
         } else {
-//            #pragma omp parallel for  reduction(+:pred_v)
+//#pragma omp parallel for  reduction(+:pred_v)
             for (int t = 0; t < rank; t++) {
-                pred_v += W[t][i-1] * H[t][j-1];
+                pred_v += W[t][i - 1] * H[t][j - 1];
             }
         }
 
