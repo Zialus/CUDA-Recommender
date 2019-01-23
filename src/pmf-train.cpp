@@ -57,22 +57,16 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
             param.enable_cuda = true;
             --i;
         }
-        else if (strcmp(argv[i - 1], "-runOriginal") == 0){
-            param.solver_type = 1;
+        else if (strcmp(argv[i - 1], "-CCD") == 0){
+            param.solver_type = solvertype::CCD;
             --i;
         }else if (strcmp(argv[i - 1], "-ALS") == 0){
-            param.solver_type = 2;
+            param.solver_type = solvertype::ALS;
             --i;
         }
         else{
             switch (argv[i - 1][1])
             {
-                //case 's':
-                //	param.solver_type = atoi(argv[i]);
-                //	if (param.solver_type == 0){
-                //		param.solver_type = CCDR1;
-                //	}
-                //	break;
 
                 case 'k':
                     param.k = atoi(argv[i]);
@@ -100,23 +94,6 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
 
                 case 'e':
                     param.eps = (float) atof(argv[i]);
-                    param.eta0 = (float) atof(argv[i]);
-                    break;
-
-                case 'B':
-                    param.num_blocks = atoi(argv[i]);
-                    break;
-
-                case 'm':
-                    param.lrate_method = atoi(argv[i]);
-                    break;
-
-                case 'u':
-                    param.betaup = (float) atof(argv[i]);
-                    break;
-
-                case 'd':
-                    param.betadown = (float) atof(argv[i]);
                     break;
 
                 case 'p':
@@ -130,11 +107,6 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
                 case 'N':
                     param.do_nmf = (atoi(argv[i]) == 1);
                     break;
-
-                    //case 'C':
-                    //	param.enable_cuda = atoi(argv[i]) == 1 ? true : false;
-                    //	break;
-
 
                 default:
                     fprintf(stderr, "unknown option: -%c\n", argv[i - 1][1]);
@@ -259,26 +231,27 @@ int main(int argc, char* argv[]) {
     test_fp = fopen(test_file_name, "r");
     if (test_fp == nullptr) {
         fprintf(stderr, "can't open test file %s\n", test_file_name);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     output_fp = fopen(output_file_name, "w+b");
     if (output_fp == nullptr) {
         fprintf(stderr, "can't open output file %s\n", output_file_name);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     model_fp = fopen(model_file_name, "w+b");
     if (model_fp == nullptr) {
         fprintf(stderr, "can't open model file %s\n", model_file_name);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     switch (param.solver_type) {
-        case CCDR1:
+        case solvertype::CCD:
+            fprintf(stdout, "CCD\n");
             run_ccdr1(param, input_file_name);
             break;
-        case 2:
+        case solvertype::ALS:
             fprintf(stdout, "ALS\n");
             run_ALS(param, input_file_name);
             break;
@@ -293,7 +266,7 @@ int main(int argc, char* argv[]) {
     fclose(model_fp);
     fclose(output_fp);
     fclose(test_fp);
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 void calculate_rmse() {

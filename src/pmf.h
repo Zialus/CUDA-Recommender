@@ -3,21 +3,19 @@
 
 #include "util.h"
 
-enum { CCDR1 };
+enum class solvertype {CCD, ALS};
 enum { BOLDDRIVER, EXPDECAY };
 
 
 class parameter {
 public:
-    int solver_type;
+    solvertype solver_type;
     int k;
     int threads;
     int maxiter, maxinneriter;
     float lambda;
     float rho;
     float eps;   // for the fundec stop-cond in ccdr1
-    float eta0, betaup, betadown;  // learning rate parameters used in DSGD
-    int lrate_method, num_blocks;
     int do_predict, verbose;
     int do_nmf;  // non-negative matrix factorization
     bool enable_cuda;
@@ -25,7 +23,7 @@ public:
     int nThreadsPerBlock;
 
     parameter() {
-        solver_type = CCDR1;
+        solver_type = solvertype::CCD;
         k = 10;
         rho = 1e-3f;
         maxiter = 5;
@@ -33,17 +31,12 @@ public:
         lambda = 0.1f;
         threads = 4;
         eps = 1e-3f;
-        eta0 = 1e-3f;     // initial eta0
-        betaup = 1.05f;
-        betadown = 0.5f;
-        num_blocks = 30;  // number of blocks used in dsgd
-        lrate_method = BOLDDRIVER;
         do_predict = 0;
         verbose = 0;
         do_nmf = 0;
         enable_cuda = false;
-        nBlocks = 16;
-        nThreadsPerBlock = 32;
+        nBlocks = 32;
+        nThreadsPerBlock = 256;
     }
 };
 
