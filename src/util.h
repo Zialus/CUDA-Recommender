@@ -21,13 +21,12 @@
 #define SIZEBITS(type, size) sizeof(type)*(size)
 
 
-using namespace std;
 class rate_t;
 class smat_t;
 class testset_t;
 
-typedef vector<float> vec_t;
-typedef vector<vec_t> mat_t;
+typedef std::vector<float> vec_t;
+typedef std::vector<vec_t> mat_t;
 
 void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS);
 void save_mat_t(mat_t A, FILE* fp, bool row_major = true);
@@ -81,7 +80,7 @@ public:
     size_t nbits_col_ptr, nbits_row_ptr;
     long* col_nnz, * row_nnz;
     size_t nbits_col_nnz, nbits_row_nnz;
-    unsigned* row_idx, * col_idx;    // condensed
+    unsigned* row_idx, * col_idx;
     size_t nbits_row_idx, nbits_col_idx;
     unsigned* colMajored_sparse_idx;
     size_t nbits_colMajored_sparse_idx;
@@ -117,7 +116,6 @@ public:
     }
 
     void load_from_file(long _rows, long _cols, long _nnz, FILE* fp, bool ifALS) {
-        unsigned* mapIDX;
         rows = _rows, cols = _cols, nnz = _nnz;
         mem_alloc_by_me = true;
         val = MALLOC(float, nnz);
@@ -140,7 +138,7 @@ public:
         }
 
         // a trick here to utilize the space the have been allocated
-        vector<size_t> perm(_nnz);
+        std::vector<size_t> perm(_nnz);
         unsigned* tmp_row_idx = col_idx;
         unsigned* tmp_col_idx = row_idx;
         float* tmp_val = val;
@@ -175,11 +173,11 @@ public:
         // Calculate nnz for each row and col
         max_row_nnz = max_col_nnz = 0;
         for (long r = 1; r <= rows; ++r) {
-            max_row_nnz = max(max_row_nnz, row_ptr[r]);
+            max_row_nnz = std::max(max_row_nnz, row_ptr[r]);
             row_ptr[r] += row_ptr[r - 1];
         }
         for (long c = 1; c <= cols; ++c) {
-            max_col_nnz = max(max_col_nnz, col_ptr[c]);
+            max_col_nnz = std::max(max_col_nnz, col_ptr[c]);
             col_ptr[c] += col_ptr[c - 1];
         }
         // Transpose CRS into CCS matrix
@@ -195,7 +193,7 @@ public:
         col_ptr[0] = 0;
 
         if (ifALS) {
-            mapIDX = MALLOC(unsigned, rows);
+            unsigned* mapIDX = MALLOC(unsigned, rows);
             for (int r = 0; r < rows; ++r) {
                 mapIDX[r] = row_ptr[r];
             }
@@ -300,7 +298,7 @@ public:
 class testset_t {
 public:
     long rows, cols, nnz;
-    vector<rate_t> T;
+    std::vector<rate_t> T;
 
     testset_t() : rows(0), cols(0), nnz(0) {}
 
@@ -312,7 +310,7 @@ public:
         rows = _rows;
         cols = _cols;
         nnz = _nnz;
-        T = vector<rate_t>(nnz);
+        T = std::vector<rate_t>(nnz);
         FILE* fp = fopen(filename, "r");
         for (long idx = 0; idx < nnz; ++idx) {
             fscanf(fp, "%d %d %f", &r, &c, &v);
