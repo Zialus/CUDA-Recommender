@@ -1,4 +1,5 @@
 #include "pmf.h"
+#include "pmf_util.h"
 #include "CCDPP_onCUDA.h"
 #include <assert.h>
 

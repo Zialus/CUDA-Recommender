@@ -1,4 +1,5 @@
 #include "pmf.h"
+#include "pmf_util.h"
 
 bool with_weights;
 
