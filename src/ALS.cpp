@@ -107,12 +107,12 @@ void ALS(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
         free(W_c);
         free(H_c);
     } else {
-        ALS_multicore(R, W, H, param);
+        ALS_multicore(R, W, H, T, param);
     }
 }
 
 
-void ALS_multicore(smat_t& R, mat_t& W, mat_t& H, parameter& param) {
+void ALS_multicore(smat_t& R, mat_t& W, mat_t& H, testset_t &T, parameter& param) {
     int k = param.k;
 
     int num_threads_old = omp_get_num_threads();
@@ -244,7 +244,9 @@ void ALS_multicore(smat_t& R, mat_t& W, mat_t& H, parameter& param) {
                 }
             }
         }
-
+//        calculate_rmse_directly(W, H, T, iter, param.k, true);
+        double rmse = calrmse(T, W, H, true, true);
+        printf("Test RMSE = %f , iteration number %d\n", rmse, iter);
     }
     omp_set_num_threads(num_threads_old);
 }

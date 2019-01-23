@@ -118,11 +118,18 @@ float dot(const vec_t& a, const vec_t& b) {
     return ret;
 }
 
-float dot(const mat_t& W, const int i, const mat_t& H, const int j) {
-    int k = W.size();
-    float ret = 0;
-    for (int t = 0; t < k; ++t) {
-        ret += W[t][i] * H[t][j];
+double dot(const mat_t& W, const int i, const mat_t& H, const int j, bool ifALS) {
+    double ret = 0;
+    if (ifALS) {
+        int k = W[0].size();
+        for (int t = 0; t < k; ++t) {
+            ret += W[i][t] * H[j][t];
+        }
+    } else {
+        int k = W.size();
+        for (int t = 0; t < k; ++t) {
+            ret += W[t][i] * H[t][j];
+        }
     }
     return ret;
 }
@@ -194,13 +201,13 @@ float calobj(const smat_t& R, const mat_t& W, const mat_t& H, const float lambda
     return loss + reg;
 }
 
-float calrmse(testset_t& testset, const mat_t& W, const mat_t& H, bool iscol) {
-    size_t nnz = testset.nnz;
-    float rmse = 0;
+double calrmse(testset_t& testset, const mat_t& W, const mat_t& H, bool ifALS, bool iscol) {
+    long nnz = testset.nnz;
+    double rmse = 0;
     for (size_t idx = 0; idx < nnz; ++idx) {
-        float err = -testset[idx].v;
+        double err = -testset[idx].v;
         if (iscol) {
-            err += dot(W, testset[idx].i, H, testset[idx].j);
+            err += dot(W, testset[idx].i, H, testset[idx].j, ifALS);
         } else {
             err += dot(W[testset[idx].i], H[testset[idx].j]);
         }

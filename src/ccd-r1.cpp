@@ -234,6 +234,9 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
             if(param.verbose) puts("");
             fflush(stdout);
         }
+//        calculate_rmse_directly(W, H, T, oiter, param.k, false);
+        double rmse = calrmse(T, W, H, false, true);
+        printf("Test RMSE = %f , iteration number %d\n", rmse, oiter);
     }
     omp_set_num_threads(num_threads_old);
 }
