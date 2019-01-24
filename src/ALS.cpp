@@ -246,7 +246,7 @@ void ALS_multicore(smat_t& R, mat_t& W, mat_t& H, testset_t &T, parameter& param
                 }
             }
         }
-//        calculate_rmse_directly(W, H, T, iter, param.k, true);
+        calculate_rmse_directly(W, H, T, iter, param.k, true);
         double rmse = calrmse(T, W, H, true, true);
         printf("Test RMSE = %f , iteration number %d\n", rmse, iter);
     }

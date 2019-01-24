@@ -2,12 +2,6 @@
 #include "tools.h"
 #include "pmf-train.h"
 
-bool with_weights;
-
-FILE* test_fp = nullptr;
-FILE* model_fp = nullptr;
-FILE* output_fp = nullptr;
-
 void exit_with_help()
 {
     printf(
@@ -36,11 +30,9 @@ void exit_with_help()
 
 parameter parse_command_line(int argc, char **argv, char *input_file_name, char *model_file_name, char *test_file_name, char* output_file_name)
 {
-    parameter param;   // default values have been set by the constructor
-    with_weights = false;
-    int i;
+    parameter param{};
 
-    // parse options
+    int i;
     for(i=1;i<argc;i++)
     {
         if (argv[i][0] != '-'){
@@ -133,12 +125,7 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
 }
 
 
-void run_ccdr1(parameter& param, const char* input_file_name) {
-    smat_t R;
-    mat_t W;
-    mat_t H;
-    testset_t T;
-
+void run_ccdr1(parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
     read_input(param, input_file_name, R, W, H, T, false);
 
 //    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
@@ -148,20 +135,9 @@ void run_ccdr1(parameter& param, const char* input_file_name) {
     ccdr1(R, W, H, T, param);
     printf("Wall-time: %lf secs\n", omp_get_wtime() - time);
     puts("----------=CCD END=--------");
-
-    if (model_fp) {
-        save_mat_t(W, model_fp, false);
-        save_mat_t(H, model_fp, false);
-    }
-
 }
 
-void run_ALS(parameter& param, const char* input_file_name) {
-    smat_t R;
-    mat_t W;
-    mat_t H;
-    testset_t T;
-
+void run_ALS(parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
     read_input(param, input_file_name, R, W, H, T, true);
 
 //    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
@@ -171,11 +147,6 @@ void run_ALS(parameter& param, const char* input_file_name) {
     ALS(R, W, H, T, param);
     printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
     puts("----------=ALS END=--------");
-
-    if (model_fp) {
-        save_mat_t(W, model_fp, true);
-        save_mat_t(H, model_fp, true);
-    }
 }
 
 void read_input(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T, bool ifALS) {
@@ -212,32 +183,45 @@ int main(int argc, char* argv[]) {
 //     printf("-----------\n");
 
 
-    test_fp = fopen(test_file_name, "r");
+    FILE* test_fp = fopen(test_file_name, "r");
     if (test_fp == nullptr) {
         fprintf(stderr, "can't open test file %s\n", test_file_name);
         exit(EXIT_FAILURE);
     }
 
-    output_fp = fopen(output_file_name, "w+b");
+    FILE* output_fp = fopen(output_file_name, "w+b");
     if (output_fp == nullptr) {
         fprintf(stderr, "can't open output file %s\n", output_file_name);
         exit(EXIT_FAILURE);
     }
 
-    model_fp = fopen(model_file_name, "w+b");
+    FILE* model_fp = fopen(model_file_name, "w+b");
     if (model_fp == nullptr) {
         fprintf(stderr, "can't open model file %s\n", model_file_name);
         exit(EXIT_FAILURE);
     }
 
+    smat_t R;
+    mat_t W;
+    mat_t H;
+    testset_t T;
+
     switch (param.solver_type) {
         case solvertype::CCD:
             fprintf(stdout, "CCD\n");
-            run_ccdr1(param, input_file_name);
+            run_ccdr1(param, input_file_name, R, W, H, T);
+
+            save_mat_t(W, model_fp, false);
+            save_mat_t(H, model_fp, false);
+
             break;
         case solvertype::ALS:
             fprintf(stdout, "ALS\n");
-            run_ALS(param, input_file_name);
+            run_ALS(param, input_file_name, R, W, H, T);
+
+            save_mat_t(W, model_fp, true);
+            save_mat_t(H, model_fp, true);
+
             break;
         default:
             fprintf(stderr, "Error: wrong solver type (%d)!\n", param.solver_type);
@@ -245,7 +229,7 @@ int main(int argc, char* argv[]) {
     }
 
     puts("Final RMSE Calculation");
-    calculate_rmse();
+    calculate_rmse(model_fp, test_fp, output_fp);
 
     fclose(model_fp);
     fclose(output_fp);
@@ -253,7 +237,7 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
-void calculate_rmse() {
+void calculate_rmse(FILE* model_fp, FILE* test_fp, FILE* output_fp) {
 
     rewind(model_fp);
     rewind(test_fp);
@@ -292,28 +276,28 @@ void calculate_rmse() {
 
 void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int iter, int rank, bool ifALS) {
 
-    rewind(test_fp);
-
     double time = omp_get_wtime();
 
-    int i;
-    int j;
-    double v;
     double rmse = 0;
     size_t num_insts = 0;
 
-    while (fscanf(test_fp, "%d %d %lf", &i, &j, &v) != EOF) {
-        double pred_v = 0;
+    long nnz = T.nnz;
 
+    for (long idx = 0; idx < nnz; ++idx) {
+        int i = T[idx].i;
+        int j = T[idx].j;
+        double v = T[idx].v;
+
+        double pred_v = 0;
         if (ifALS) {
 //#pragma omp parallel for  reduction(+:pred_v)
             for (int t = 0; t < rank; t++) {
-                pred_v += W[i - 1][t] * H[j - 1][t];
+                pred_v += W[i][t] * H[j][t];
             }
         } else {
 //#pragma omp parallel for  reduction(+:pred_v)
             for (int t = 0; t < rank; t++) {
-                pred_v += W[t][i - 1] * H[t][j - 1];
+                pred_v += W[t][i] * H[t][j];
             }
         }
 
