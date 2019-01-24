@@ -29,7 +29,6 @@ typedef std::vector<float> vec_t;
 typedef std::vector<vec_t> mat_t;
 
 
-
 class rate_t {
 public:
     int i;
@@ -215,9 +214,9 @@ public:
 
     }
 
-    long nnz_of_row(int i) const { return (row_ptr[i + 1] - row_ptr[i]); }
+    long nnz_of_row(long i) const { return (row_ptr[i + 1] - row_ptr[i]); }
 
-    long nnz_of_col(int i) const { return (col_ptr[i + 1] - col_ptr[i]); }
+    long nnz_of_col(long i) const { return (col_ptr[i + 1] - col_ptr[i]); }
 
     float get_global_mean() {
         float sum = 0;

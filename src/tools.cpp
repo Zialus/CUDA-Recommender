@@ -21,15 +21,15 @@ void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS) {
     //float bias = R.get_global_mean(); R.remove_bias(bias); T.remove_bias(bias);
 }
 
-// Save a mat_t A to a file in row_major order.
+// Save a mat_t A to a file.
 // row_major = true: A is stored in row_major order,
 // row_major = false: A is stored in col_major order.
 void save_mat_t(mat_t A, FILE* fp, bool row_major) {
     if (fp == nullptr) {
         fprintf(stderr, "output stream is not valid.\n");
     }
-    long m = row_major ? A.size() : A[0].size();
-    long n = row_major ? A[0].size() : A.size();
+    size_t m = row_major ? A.size() : A[0].size();
+    size_t n = row_major ? A[0].size() : A.size();
 
     fwrite(&m, sizeof(long), 1, fp);
     fwrite(&n, sizeof(long), 1, fp);
@@ -54,16 +54,16 @@ void save_mat_t(mat_t A, FILE* fp, bool row_major) {
     fwrite(&buf[0], sizeof(float), m * n, fp);
 }
 
-// Load a matrix from a file and return a mat_t matrix 
+// Load a matrix from a file and return a mat_t matrix.
 // row_major = true: the returned A is stored in row_major order,
-// row_major = false: the returened A  is stored in col_major order.
+// row_major = false: the returned A is stored in col_major order.
 mat_t load_mat_t(FILE* fp, bool row_major) {
     if (fp == nullptr) {
         fprintf(stderr, "input stream is not valid.\n");
     }
-    long m, n;
-    fread(&m, sizeof(long), 1, fp);
-    fread(&n, sizeof(long), 1, fp);
+    unsigned long m, n;
+    fread(&m, sizeof(unsigned long), 1, fp);
+    fread(&n, sizeof(unsigned long), 1, fp);
     vec_t buf(m * n);
     fread(&buf[0], sizeof(float), m * n, fp);
     mat_t A;
@@ -110,7 +110,7 @@ void initial_col(mat_t& X, long k, long n) {
 float dot(const vec_t& a, const vec_t& b) {
     float ret = 0;
 #pragma omp parallel for
-    for (int i = a.size() - 1; i >= 0; --i) {
+    for (long i = a.size() - 1; i >= 0; --i) {
         ret += a[i] * b[i];
     }
     return ret;
@@ -119,12 +119,12 @@ float dot(const vec_t& a, const vec_t& b) {
 double dot(const mat_t& W, const int i, const mat_t& H, const int j, bool ifALS) {
     double ret = 0;
     if (ifALS) {
-        int k = W[0].size();
+        long k = W[0].size();
         for (int t = 0; t < k; ++t) {
             ret += W[i][t] * H[j][t];
         }
     } else {
-        int k = W.size();
+        long k = W.size();
         for (int t = 0; t < k; ++t) {
             ret += W[t][i] * H[t][j];
         }
@@ -133,7 +133,7 @@ double dot(const mat_t& W, const int i, const mat_t& H, const int j, bool ifALS)
 }
 
 float dot(const mat_t& W, const int i, const vec_t& H_j) {
-    int k = H_j.size();
+    long k = H_j.size();
     float ret = 0;
     for (int t = 0; t < k; ++t) {
         ret += W[t][i] * H_j[t];
@@ -143,7 +143,7 @@ float dot(const mat_t& W, const int i, const vec_t& H_j) {
 
 float norm(const vec_t& a) {
     float ret = 0;
-    for (int i = a.size() - 1; i >= 0; --i) {
+    for (long i = a.size() - 1; i >= 0; --i) {
         ret += a[i] * a[i];
     }
     return ret;
@@ -151,7 +151,7 @@ float norm(const vec_t& a) {
 
 float norm(const mat_t& M) {
     float reg = 0;
-    for (int i = M.size() - 1; i >= 0; --i) { reg += norm(M[i]); }
+    for (long i = M.size() - 1; i >= 0; --i) { reg += norm(M[i]); }
     return reg;
 }
 
@@ -169,11 +169,11 @@ float calloss(const smat_t& R, const mat_t& W, const mat_t& H) {
 
 float calobj(const smat_t& R, const mat_t& W, const mat_t& H, const float lambda, bool iscol) {
     float loss = 0;
-    int k = iscol ? H.size() : 0;
+    size_t k = iscol ? H.size() : 0;
     vec_t Hc(k);
     for (long c = 0; c < R.cols; ++c) {
         if (iscol) {
-            for (int t = 0; t < k; ++t) { Hc[t] = H[t][c]; }
+            for (size_t t = 0; t < k; ++t) { Hc[t] = H[t][c]; }
         }
         for (long idx = R.col_ptr[c]; idx < R.col_ptr[c + 1]; ++idx) {
             float diff = -R.val[idx];
@@ -187,7 +187,7 @@ float calobj(const smat_t& R, const mat_t& W, const mat_t& H, const float lambda
     }
     float reg = 0;
     if (iscol) {
-        for (int t = 0; t < k; ++t) {
+        for (size_t t = 0; t < k; ++t) {
             for (long r = 0; r < R.rows; ++r) { reg += W[t][r] * W[t][r] * R.nnz_of_row(r); }
             for (long c = 0; c < R.cols; ++c) { reg += H[t][c] * H[t][c] * R.nnz_of_col(c); }
         }
@@ -202,7 +202,7 @@ float calobj(const smat_t& R, const mat_t& W, const mat_t& H, const float lambda
 double calrmse(testset_t& testset, const mat_t& W, const mat_t& H, bool ifALS, bool iscol) {
     long nnz = testset.nnz;
     double rmse = 0;
-    for (size_t idx = 0; idx < nnz; ++idx) {
+    for (long idx = 0; idx < nnz; ++idx) {
         double err = -testset[idx].v;
         if (iscol) {
             err += dot(W, testset[idx].i, H, testset[idx].j, ifALS);
@@ -214,9 +214,9 @@ double calrmse(testset_t& testset, const mat_t& W, const mat_t& H, bool ifALS, b
     return sqrt(rmse / nnz);
 }
 
-float calrmse_r1(testset_t& testset, vec_t& Wt, vec_t& Ht) {
-    size_t nnz = testset.nnz;
-    float rmse = 0;
+double calrmse_r1(testset_t& testset, vec_t& Wt, vec_t& Ht) {
+    long nnz = testset.nnz;
+    double rmse = 0;
 #pragma omp parallel for reduction(+:rmse)
     for (int idx = 0; idx < nnz; ++idx) {
         testset[idx].v -= Wt[testset[idx].i] * Ht[testset[idx].j];
@@ -225,9 +225,9 @@ float calrmse_r1(testset_t& testset, vec_t& Wt, vec_t& Ht) {
     return sqrt(rmse / nnz);
 }
 
-float calrmse_r1(testset_t& testset, vec_t& Wt, vec_t& Ht, vec_t& oldWt, vec_t& oldHt) {
-    size_t nnz = testset.nnz;
-    float rmse = 0;
+double calrmse_r1(testset_t& testset, vec_t& Wt, vec_t& Ht, vec_t& oldWt, vec_t& oldHt) {
+    long nnz = testset.nnz;
+    double rmse = 0;
 #pragma omp parallel for reduction(+:rmse)
     for (int idx = 0; idx < nnz; ++idx) {
         testset[idx].v -= Wt[testset[idx].i] * Ht[testset[idx].j] - oldWt[testset[idx].i] * oldHt[testset[idx].j];
