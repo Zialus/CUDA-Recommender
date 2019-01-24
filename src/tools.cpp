@@ -1,4 +1,4 @@
-#include "util.h"
+#include "tools.h"
 
 // load utility for CCS RCS
 void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS) {

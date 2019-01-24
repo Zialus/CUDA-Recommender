@@ -1,4 +1,5 @@
 #include "pmf.h"
+#include "tools.h"
 #include "pmf-train.h"
 #include "ALS_onCUDA.h"
 #include <assert.h>
