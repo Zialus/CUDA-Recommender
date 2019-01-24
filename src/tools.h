@@ -9,7 +9,7 @@ mat_t load_mat_t(FILE* fp, bool row_major = true);
 void initial(mat_t& X, long n, long k);
 void initial_col(mat_t& X, long k, long n);
 float dot(const vec_t& a, const vec_t& b);
-double dot(const mat_t& W, const int i, const mat_t& H, const int j);
+double dot(const mat_t& W, const int i, const mat_t& H, const int j, bool ifALS);
 float dot(const mat_t& W, const int i, const vec_t& H_j);
 float norm(const vec_t& a);
 float norm(const mat_t& M);
