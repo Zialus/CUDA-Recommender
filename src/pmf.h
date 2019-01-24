@@ -7,35 +7,19 @@ enum class solvertype {CCD, ALS};
 
 class parameter {
 public:
-    solvertype solver_type;
-    int k;
-    int threads;
-    int maxiter;
-    int maxinneriter;
-    float lambda;
-    float eps;   // for the fundec stop-cond in ccdr1
-    int do_predict;
-    int verbose;
-    int do_nmf;  // non-negative matrix factorization
-    bool enable_cuda;
-    int nBlocks;
-    int nThreadsPerBlock;
-
-    parameter() {
-        solver_type = solvertype::CCD;
-        k = 10;
-        threads = 4;
-        maxiter = 5;
-        maxinneriter = 5;
-        lambda = 0.1f;
-        eps = 1e-3f;
-        do_predict = 0;
-        verbose = 0;
-        do_nmf = 0;
-        enable_cuda = false;
-        nBlocks = 32;
-        nThreadsPerBlock = 256;
-    }
+    solvertype solver_type = solvertype::CCD;
+    int k = 10;
+    int threads = 4;
+    int maxiter = 5;
+    int maxinneriter = 5;
+    float lambda = 0.1f;
+    float eps = 1e-3f;  // for the fundec stop-cond in ccdr1
+    int do_predict = 0;
+    int verbose = 0;
+    int do_nmf = 0;  // non-negative matrix factorization
+    bool enable_cuda = false;
+    int nBlocks = 32;
+    int nThreadsPerBlock = 256;
 };
 
 #endif
