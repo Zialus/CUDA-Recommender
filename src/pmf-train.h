@@ -1,5 +1,5 @@
-#ifndef _PMF_UTIL_H_
-#define _PMF_UTIL_H_
+#ifndef _PMF_TRAIN_H_
+#define _PMF_TRAIN_H_
 
 void ccdr1(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param);
 void ccdr1_original_float(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param);
