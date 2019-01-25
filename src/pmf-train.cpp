@@ -2,6 +2,8 @@
 #include "tools.h"
 #include "pmf-train.h"
 
+#include <chrono>
+
 void exit_with_help()
 {
     printf(
@@ -28,7 +30,7 @@ void exit_with_help()
     exit(1);
 }
 
-parameter parse_command_line(int argc, char **argv, char *input_file_name, char *model_file_name, char *test_file_name, char* output_file_name)
+parameter parse_command_line(int argc, char **argv)
 {
     parameter param{};
 
@@ -113,23 +115,13 @@ parameter parse_command_line(int argc, char **argv, char *input_file_name, char 
     if(i>=argc)
         exit_with_help();
 
-    sprintf(input_file_name, "%s", argv[i]);
-
-    sprintf(model_file_name, "%s", argv[i+1]);
-
-    sprintf(test_file_name, "%s", argv[i+2]);
-
-    sprintf(output_file_name, "%s", argv[i+3]);
+    snprintf(param.src_dir, 1024, "%s", argv[i]);
 
     return param;
 }
 
 
-void run_ccdr1(parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
-    read_input(param, input_file_name, R, W, H, T, false);
-
-//    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
-
+void run_ccdr1(parameter& param, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
     puts("----------=CCD START=------");
     double time1 = omp_get_wtime();
     ccdr1(R, W, H, T, param);
@@ -138,11 +130,7 @@ void run_ccdr1(parameter& param, const char* input_file_name, smat_t& R, mat_t& 
     puts("----------=CCD END=--------");
 }
 
-void run_ALS(parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
-    read_input(param, input_file_name, R, W, H, T, true);
-
-//    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
-
+void run_ALS(parameter& param, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
     puts("----------=ALS START=------");
     double time1 = omp_get_wtime();
     ALS(R, W, H, T, param);
@@ -151,53 +139,35 @@ void run_ALS(parameter& param, const char* input_file_name, smat_t& R, mat_t& W,
     puts("----------=ALS END=--------");
 }
 
-void read_input(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T, bool ifALS) {
+void read_input(const parameter& param, smat_t& R, testset_t& T, bool ifALS) {
     puts("----------=INPUT START=------");
     puts("Starting to read input...");
     double time1 = omp_get_wtime();
-    load(input_file_name, R, T, ifALS);
+    load(param.src_dir, R, T, ifALS);
     double time2 = omp_get_wtime();
     printf("Input loaded in: %lf secs\n", time2 - time1);
     puts("----------=INPUT END=--------");
-
-    if (ifALS) {
-        initial_col(W, R.rows, param.k);
-        initial_col(H, R.cols, param.k);
-    } else { // CDD
-        initial_col(W, param.k, R.rows);
-        initial_col(H, param.k, R.cols);
-    }
 }
 
 int main(int argc, char* argv[]) {
+    auto t7 = std::chrono::high_resolution_clock::now();
+    parameter param = parse_command_line(argc, argv);
 
-    char input_file_name[1024];
-    char model_file_name[1024];
-    char test_file_name[1024];
-    char output_file_name[1024];
-
-    parameter param = parse_command_line(argc, argv, input_file_name, model_file_name, test_file_name, output_file_name);
-
-//     printf("-----------\n");
-//     printf("input: %s\n",input_file_name);
-//     printf("model: %s\n",model_file_name);
-//     printf("test: %s\n",test_file_name);
-//     printf("output: %s\n",output_file_name);
-//     printf("-----------\n");
-
+    char test_file_name[2048], train_file_name[2048], model_file_name[2048], output_file_name[2048];
+    generate_file_pointers(param, test_file_name, train_file_name, model_file_name, output_file_name);
+    printf("input: %s | model: %s | test: %s | output: %s\n",
+            train_file_name, model_file_name, test_file_name, output_file_name);
 
     FILE* test_fp = fopen(test_file_name, "r");
     if (test_fp == nullptr) {
         fprintf(stderr, "can't open test file %s\n", test_file_name);
         exit(EXIT_FAILURE);
     }
-
     FILE* output_fp = fopen(output_file_name, "w+b");
     if (output_fp == nullptr) {
         fprintf(stderr, "can't open output file %s\n", output_file_name);
         exit(EXIT_FAILURE);
     }
-
     FILE* model_fp = fopen(model_file_name, "w+b");
     if (model_fp == nullptr) {
         fprintf(stderr, "can't open model file %s\n", model_file_name);
@@ -211,16 +181,29 @@ int main(int argc, char* argv[]) {
 
     switch (param.solver_type) {
         case solvertype::CCD:
+            read_input(param, R, T, false);
+
+            initial_col(W, param.k, R.rows);
+            initial_col(H, param.k, R.cols);
+
             fprintf(stdout, "CCD\n");
-            run_ccdr1(param, input_file_name, R, W, H, T);
+            printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
+
+            run_ccdr1(param, R, W, H, T);
 
             save_mat_t(W, model_fp, false);
             save_mat_t(H, model_fp, false);
-
             break;
         case solvertype::ALS:
+            read_input(param, R, T, true);
+
+            initial_col(W, R.rows, param.k);
+            initial_col(H, R.cols, param.k);
+
             fprintf(stdout, "ALS\n");
-            run_ALS(param, input_file_name, R, W, H, T);
+            printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
+
+            run_ALS(param, R, W, H, T);
 
             save_mat_t(W, model_fp, true);
             save_mat_t(H, model_fp, true);
@@ -236,7 +219,34 @@ int main(int argc, char* argv[]) {
     fclose(model_fp);
     fclose(output_fp);
     fclose(test_fp);
+
+    auto t8 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> deltaT78 = t8 - t7;
+
+    printf("Total Time: %lf!\n", deltaT78.count());
+
     return EXIT_SUCCESS;
+}
+
+void generate_file_pointers(const parameter& param, char* test_file_name, char* train_file_name, char* model_file_name, char* output_file_name) {
+    char meta_filename[1024];
+    snprintf(meta_filename, sizeof(meta_filename), "%s/meta", param.src_dir);
+    FILE* fp = fopen(meta_filename, "r");
+    if (fp == nullptr) {
+        printf("Can't open meta input file.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char buf_train[1024], buf_test[1024];
+    unsigned m, n, nnz, nnz_test;
+    fscanf(fp, "%u %u", &m, &n);
+    fscanf(fp, "%u %1023s", &nnz, buf_train);
+    fscanf(fp, "%u %1023s", &nnz_test, buf_test);
+    snprintf(test_file_name, 2048, "%s/%s", param.src_dir, buf_test);
+    snprintf(train_file_name, 2048, "%s/%s", param.src_dir, buf_train);
+    snprintf(model_file_name, 2048, "%s/%s", param.src_dir, "model");
+    snprintf(output_file_name, 2048, "%s/%s", param.src_dir, "output");
+    fclose(fp);
 }
 
 void calculate_rmse(FILE* model_fp, FILE* test_fp, FILE* output_fp) {
@@ -252,7 +262,7 @@ void calculate_rmse(FILE* model_fp, FILE* test_fp, FILE* output_fp) {
 
     unsigned long rank = W[0].size();
     if (rank == 0) {
-        fprintf(stderr, "Matrix is emty!\n");
+        fprintf(stderr, "Matrix is empty!\n");
         exit(1);
     }
     int i;

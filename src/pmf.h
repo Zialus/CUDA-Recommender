@@ -20,6 +20,7 @@ public:
     bool enable_cuda = false;
     int nBlocks = 32;
     int nThreadsPerBlock = 256;
+    char src_dir[1024] = "../data/simple";
 };
 
 #endif
