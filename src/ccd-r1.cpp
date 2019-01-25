@@ -2,7 +2,6 @@
 #include "tools.h"
 #include "pmf-train.h"
 #include "CCDPP_onCUDA.h"
-#include <assert.h>
 
 #define kind dynamic,500
 
@@ -87,8 +86,6 @@ void ccdr1(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter &param){
 
 void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter &param){
     int k = param.k;
-    int maxiter = param.maxiter;
-    int inneriter = param.maxinneriter;
     float lambda = param.lambda;
 
     int num_threads_old = omp_get_num_threads();
@@ -103,7 +100,7 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
 
     vec_t oldWt(R.rows), oldHt(R.cols);
     vec_t u(R.rows), v(R.cols);
-    for(int oiter = 1; oiter <= maxiter; ++oiter) {
+    for(int oiter = 1; oiter <= param.maxiter; ++oiter) {
 
         double Itime = 0, Wtime = 0, Htime = 0, Rtime = 0, start = 0;
 
@@ -124,15 +121,9 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
             }
             Itime += omp_get_wtime() - start;
 
-            float innerfundec_cur = 0;
-            int maxit = inneriter;
-
-            for(int iter = 1; iter <= maxit; ++iter){
-
+            for (int iter = 1; iter <= param.maxinneriter; ++iter) {
                 // Update H[t]
                 start = omp_get_wtime();
-
-                innerfundec_cur = 0;
 #pragma omp parallel for schedule(kind) shared(u,v)
                 for(long c = 0; c < R.cols; ++c)
                     v[c] = RankOneUpdate_Original_float(R, c, u, lambda*(R.col_ptr[c+1]-R.col_ptr[c]), param.do_nmf);
@@ -162,9 +153,8 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
             if(param.verbose)
                 printf("iter %d rank %d time %f",oiter,t+1, Itime+Htime+Wtime+Rtime);
 
-            if(T.nnz!=0 && param.do_predict){
-                if(param.verbose)
-                    printf(" rmse %.10g", calrmse_r1(T, Wt, Ht, oldWt, oldHt));
+            if(param.do_predict){
+                printf(" rmse %.10g", calrmse_r1(T, Wt, Ht, oldWt, oldHt));
             }
             if(param.verbose) puts("");
             fflush(stdout);

@@ -4,21 +4,25 @@
 void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS) {
     // add testing later
     char filename[1024], buf[1024];
+    long m, n, nnz;
+
     sprintf(filename, "%s/meta", srcdir);
     FILE* fp = fopen(filename, "r");
-    long m, n, nnz;
+    if (fp == nullptr) {
+        fprintf(stderr, "Can't open meta input file.\n");
+        exit(EXIT_FAILURE);
+    }
     fscanf(fp, "%ld %ld", &m, &n);
 
     fscanf(fp, "%ld %1023s", &nnz, buf);
     sprintf(filename, "%s/%s", srcdir, buf);
     R.load(m, n, nnz, filename, ifALS);
 
-    if (fscanf(fp, "%ld %1023s", &nnz, buf) != EOF) {
-        sprintf(filename, "%s/%s", srcdir, buf);
-        T.load(m, n, nnz, filename);
-    }
+    fscanf(fp, "%ld %1023s", &nnz, buf);
+    sprintf(filename, "%s/%s", srcdir, buf);
+    T.load(m, n, nnz, filename);
+
     fclose(fp);
-    //float bias = R.get_global_mean(); R.remove_bias(bias); T.remove_bias(bias);
 }
 
 // Save a mat_t A to a file.

@@ -2,7 +2,6 @@
 #include "tools.h"
 #include "pmf-train.h"
 #include "ALS_onCUDA.h"
-#include <assert.h>
 
 #define kind dynamic,500
 
@@ -112,7 +111,6 @@ void ALS(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
         ALS_multicore(R, W, H, T, param);
     }
 }
-
 
 void ALS_multicore(smat_t& R, mat_t& W, mat_t& H, testset_t &T, parameter& param) {
     int k = param.k;

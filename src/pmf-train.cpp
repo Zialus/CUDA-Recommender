@@ -2,31 +2,26 @@
 #include "tools.h"
 #include "pmf-train.h"
 
-#include <chrono>
-
 void exit_with_help() {
     printf(
             "Usage: omp-pmf-train [options] data_dir [model_filename]\n"
             "options:\n"
-            "    -s type : set type of solver (default 0)\n"
-            "        0 -- CCDR1 with fundec stopping condition\n"
             "    -k rank : set the rank (default 10)\n"
             "    -n threads : set the number of threads (default 4)\n"
             "    -l lambda : set the regularization parameter lambda (default 0.1)\n"
             "    -t max_iter: set the number of iterations (default 5)\n"
-            "    -T max_iter: set the number of inner iterations used in CCDR1 (default 5)\n"
+            "    -T max_inner_iter: set the number of inner iterations used in CCDR1 (default 5)\n"
             "    -e epsilon : set inner termination criterion epsilon of CCDR1 (default 1e-3)\n"
             "    -p do_predict: do prediction or not (default 0)\n"
             "    -q verbose: show information or not (default 0)\n"
             "    -N do_nmf: do nmf (default 0)\n"
-            "    -runOriginal: Flag to run libpmf original implementation\n"
-            "    -Cuda: Flag to enable cuda\n"
-            "    -nBlocks: Number of blocks on cuda (default 16)\n"
-            "    -nThreadsPerBlock: Number of threads per block on cuda (default 32)\n"
+            "    -CUDA: Flag to enable CUDA\n"
+            "    -nBlocks: Number of blocks on CUDA (default 32)\n"
+            "    -nThreadsPerBlock: Number of threads per block on CUDA (default 256)\n"
             "    -ALS: Flag to enable ALS algorithm, if not present CCD++ is used\n"
     );
 
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
 parameter parse_command_line(int argc, char** argv) {
@@ -44,54 +39,41 @@ parameter parse_command_line(int argc, char** argv) {
             param.nBlocks = atoi(argv[i]);
         } else if (strcmp(argv[i - 1], "-nThreadsPerBlock") == 0) {
             param.nThreadsPerBlock = atoi(argv[i]);
-        } else if (strcmp(argv[i - 1], "-Cuda") == 0) {
+        } else if (strcmp(argv[i - 1], "-CUDA") == 0) {
             param.enable_cuda = true;
-            --i;
-        } else if (strcmp(argv[i - 1], "-CCD") == 0) {
-            param.solver_type = solvertype::CCD;
             --i;
         } else if (strcmp(argv[i - 1], "-ALS") == 0) {
             param.solver_type = solvertype::ALS;
             --i;
         } else {
             switch (argv[i - 1][1]) {
-
                 case 'k':
                     param.k = atoi(argv[i]);
                     break;
-
                 case 'n':
                     param.threads = atoi(argv[i]);
                     break;
-
                 case 'l':
                     param.lambda = (float) atof(argv[i]);
                     break;
-
                 case 't':
                     param.maxiter = atoi(argv[i]);
                     break;
-
                 case 'T':
                     param.maxinneriter = atoi(argv[i]);
                     break;
-
                 case 'e':
                     param.eps = (float) atof(argv[i]);
                     break;
-
                 case 'p':
                     param.do_predict = atoi(argv[i]);
                     break;
-
                 case 'q':
                     param.verbose = atoi(argv[i]);
                     break;
-
                 case 'N':
                     param.do_nmf = (atoi(argv[i]) == 1);
                     break;
-
                 default:
                     fprintf(stderr, "unknown option: -%c\n", argv[i - 1][1]);
                     exit_with_help();
@@ -120,7 +102,7 @@ void run_ccdr1(parameter& param, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
     double time1 = omp_get_wtime();
     ccdr1(R, W, H, T, param);
     double time2 = omp_get_wtime();
-    printf("Wall-time: %lf secs\n", time2 - time1);
+    printf("CCD run time: %lf secs\n", time2 - time1);
     puts("----------=CCD END=--------");
 }
 
@@ -129,13 +111,12 @@ void run_ALS(parameter& param, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
     double time1 = omp_get_wtime();
     ALS(R, W, H, T, param);
     double time2 = omp_get_wtime();
-    printf("Wall-time: %lf secs\n", time2 - time1);
+    printf("ALS run time: %lf secs\n", time2 - time1);
     puts("----------=ALS END=--------");
 }
 
 void read_input(const parameter& param, smat_t& R, testset_t& T, bool ifALS) {
     puts("----------=INPUT START=------");
-    puts("Starting to read input...");
     double time1 = omp_get_wtime();
     load(param.src_dir, R, T, ifALS);
     double time2 = omp_get_wtime();

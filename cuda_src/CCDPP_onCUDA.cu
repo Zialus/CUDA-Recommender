@@ -1,6 +1,6 @@
 #include "CCDPP_onCUDA.h"
 
-__global__ void RankOneUpdate_DUAL_kernel(const long Rcols, //are the iterations on for
+__global__ void RankOneUpdate_DUAL_kernel(const long Rcols,
                                           const long* Rcol_ptr,
                                           const unsigned int* Rrow_idx,
                                           const float* Rval,
@@ -69,7 +69,7 @@ __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
     return newvj;
 }
 
-__global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols, //are the iterations on for
+__global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols,
                                                 const long* Rcol_ptr,
                                                 const unsigned int* Rrow_idx,
                                                 float* Rval,
@@ -77,7 +77,7 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols, //are the iter
                                                 const float* Ht_vec_t,
                                                 const bool add,
 
-                                                const long Rcols_t, //are the iterations on for
+                                                const long Rcols_t,
                                                 const long* Rcol_ptr_t,
                                                 const unsigned int* Rrow_idx_t,
                                                 float* Rval_t,
