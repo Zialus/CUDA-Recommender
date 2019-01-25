@@ -86,7 +86,6 @@ void ccdr1(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter &param){
 
 
 void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter &param){
-    fprintf(stdout, "Float OMP Implementation\n");
     int k = param.k;
     int maxiter = param.maxiter;
     int inneriter = param.maxinneriter;

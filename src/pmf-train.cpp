@@ -131,9 +131,10 @@ void run_ccdr1(parameter& param, const char* input_file_name, smat_t& R, mat_t& 
 //    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
 
     puts("----------=CCD START=------");
-    double time = omp_get_wtime();
+    double time1 = omp_get_wtime();
     ccdr1(R, W, H, T, param);
-    printf("Wall-time: %lf secs\n", omp_get_wtime() - time);
+    double time2 = omp_get_wtime();
+    printf("Wall-time: %lf secs\n", time2 - time1);
     puts("----------=CCD END=--------");
 }
 
@@ -143,18 +144,20 @@ void run_ALS(parameter& param, const char* input_file_name, smat_t& R, mat_t& W,
 //    printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
 
     puts("----------=ALS START=------");
-    double time = omp_get_wtime();
+    double time1 = omp_get_wtime();
     ALS(R, W, H, T, param);
-    printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
+    double time2 = omp_get_wtime();
+    printf("Wall-time: %lf secs\n", time2 - time1);
     puts("----------=ALS END=--------");
 }
 
 void read_input(const parameter& param, const char* input_file_name, smat_t& R, mat_t& W, mat_t& H, testset_t& T, bool ifALS) {
     puts("----------=INPUT START=------");
-    puts("Starting to read inout...");
+    puts("Starting to read input...");
     double time1 = omp_get_wtime();
     load(input_file_name, R, T, ifALS);
-    printf("Input loaded in: %lg secs\n", omp_get_wtime() - time1);
+    double time2 = omp_get_wtime();
+    printf("Input loaded in: %lf secs\n", time2 - time1);
     puts("----------=INPUT END=--------");
 
     if (ifALS) {
@@ -228,7 +231,6 @@ int main(int argc, char* argv[]) {
             break;
     }
 
-    puts("Final RMSE Calculation");
     calculate_rmse(model_fp, test_fp, output_fp);
 
     fclose(model_fp);
