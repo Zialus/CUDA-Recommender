@@ -4,8 +4,7 @@
 
 #include <chrono>
 
-void exit_with_help()
-{
+void exit_with_help() {
     printf(
             "Usage: omp-pmf-train [options] data_dir [model_filename]\n"
             "options:\n"
@@ -30,39 +29,32 @@ void exit_with_help()
     exit(1);
 }
 
-parameter parse_command_line(int argc, char **argv)
-{
+parameter parse_command_line(int argc, char** argv) {
     parameter param{};
 
     int i;
-    for(i=1;i<argc;i++)
-    {
-        if (argv[i][0] != '-'){
+    for (i = 1; i < argc; i++) {
+        if (argv[i][0] != '-') {
             break;
         }
-        if (++i >= argc){
+        if (++i >= argc) {
             exit_with_help();
         }
-        if (strcmp(argv[i - 1], "-nBlocks") == 0){
+        if (strcmp(argv[i - 1], "-nBlocks") == 0) {
             param.nBlocks = atoi(argv[i]);
-        }
-        else if (strcmp(argv[i - 1], "-nThreadsPerBlock") == 0){
+        } else if (strcmp(argv[i - 1], "-nThreadsPerBlock") == 0) {
             param.nThreadsPerBlock = atoi(argv[i]);
-        }
-        else if (strcmp(argv[i - 1], "-Cuda") == 0){
+        } else if (strcmp(argv[i - 1], "-Cuda") == 0) {
             param.enable_cuda = true;
             --i;
-        }
-        else if (strcmp(argv[i - 1], "-CCD") == 0){
+        } else if (strcmp(argv[i - 1], "-CCD") == 0) {
             param.solver_type = solvertype::CCD;
             --i;
-        }else if (strcmp(argv[i - 1], "-ALS") == 0){
+        } else if (strcmp(argv[i - 1], "-ALS") == 0) {
             param.solver_type = solvertype::ALS;
             --i;
-        }
-        else{
-            switch (argv[i - 1][1])
-            {
+        } else {
+            switch (argv[i - 1][1]) {
 
                 case 'k':
                     param.k = atoi(argv[i]);
@@ -109,11 +101,13 @@ parameter parse_command_line(int argc, char **argv)
 
     }
 
-    if (param.do_predict!=0)
+    if (param.do_predict != 0) {
         param.verbose = 1;
+    }
 
-    if(i>=argc)
+    if (i >= argc) {
         exit_with_help();
+    }
 
     snprintf(param.src_dir, 1024, "%s", argv[i]);
 
@@ -156,7 +150,7 @@ int main(int argc, char* argv[]) {
     char test_file_name[2048], train_file_name[2048], model_file_name[2048], output_file_name[2048];
     generate_file_pointers(param, test_file_name, train_file_name, model_file_name, output_file_name);
     printf("input: %s | model: %s | test: %s | output: %s\n",
-            train_file_name, model_file_name, test_file_name, output_file_name);
+           train_file_name, model_file_name, test_file_name, output_file_name);
 
     FILE* test_fp = fopen(test_file_name, "r");
     if (test_fp == nullptr) {
@@ -228,7 +222,8 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
-void generate_file_pointers(const parameter& param, char* test_file_name, char* train_file_name, char* model_file_name, char* output_file_name) {
+void generate_file_pointers(const parameter& param, char* test_file_name, char* train_file_name, char* model_file_name,
+                            char* output_file_name) {
     char meta_filename[1024];
     snprintf(meta_filename, sizeof(meta_filename), "%s/meta", param.src_dir);
     FILE* fp = fopen(meta_filename, "r");
