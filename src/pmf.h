@@ -36,7 +36,7 @@ public:
         enable_cuda = false;
         nBlocks = 32;
         nThreadsPerBlock = 256;
-        snprintf(src_dir, 1024, "../data/simple");
+        sprintf(src_dir, "../data/simple");
     }
 };
 

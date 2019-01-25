@@ -91,7 +91,7 @@ parameter parse_command_line(int argc, char** argv) {
         exit_with_help();
     }
 
-    snprintf(param.src_dir, 1024, "%s", argv[i]);
+    sprintf(param.src_dir, "%s", argv[i]);
 
     return param;
 }
@@ -206,7 +206,7 @@ int main(int argc, char* argv[]) {
 void generate_file_pointers(const parameter& param, char* test_file_name, char* train_file_name, char* model_file_name,
                             char* output_file_name) {
     char meta_filename[1024];
-    snprintf(meta_filename, sizeof(meta_filename), "%s/meta", param.src_dir);
+    sprintf(meta_filename, "%s/meta", param.src_dir);
     FILE* fp = fopen(meta_filename, "r");
     if (fp == nullptr) {
         printf("Can't open meta input file.\n");
@@ -218,10 +218,10 @@ void generate_file_pointers(const parameter& param, char* test_file_name, char* 
     fscanf(fp, "%u %u", &m, &n);
     fscanf(fp, "%u %1023s", &nnz, buf_train);
     fscanf(fp, "%u %1023s", &nnz_test, buf_test);
-    snprintf(test_file_name, 2048, "%s/%s", param.src_dir, buf_test);
-    snprintf(train_file_name, 2048, "%s/%s", param.src_dir, buf_train);
-    snprintf(model_file_name, 2048, "%s/%s", param.src_dir, "model");
-    snprintf(output_file_name, 2048, "%s/%s", param.src_dir, "output");
+    sprintf(test_file_name, "%s/%s", param.src_dir, buf_test);
+    sprintf(train_file_name, "%s/%s", param.src_dir, buf_train);
+    sprintf(model_file_name, "%s/%s", param.src_dir, "model");
+    sprintf(output_file_name, "%s/%s", param.src_dir, "output");
     fclose(fp);
 }
 
