@@ -12,20 +12,17 @@
 //}
 
 __device__ void choldc1_k(int n, float** a, float* p) {
-    unsigned i, j;
-    int k;
-    float sum;
-    for (i = 0; i < n; ++i) {
-        for (j = i; j < n; ++j) {
-            sum = a[i][j];
-            for (k = i - 1; k >= 0; --k) {
+    for (int i = 0; i < n; ++i) {
+        for (int j = i; j < n; ++j) {
+            float sum = a[i][j];
+            for (int k = i - 1; k >= 0; --k) {
                 sum -= a[i][k] * a[j][k];
             }
             if (i == j) {
-                //if (sum <= 0) {
-                //	printf(" a is not positive definite!\n");
-                //}
-                p[i] = sqrtf(sum);//float saquare root
+                if (sum <= 0) {
+                    printf(" a is not positive definite!\n");
+                }
+                p[i] = sqrtf(sum);
             } else {
                 a[j][i] = sum / p[i];
             }
@@ -34,15 +31,13 @@ __device__ void choldc1_k(int n, float** a, float* p) {
 }
 
 __device__ void choldcsl_k(int n, float** A) {
-    unsigned i, j, k;
-    float* p;
-    p = (float*) malloc(n * sizeof(float));
+    float* p = (float*) malloc(n * sizeof(float));
     choldc1_k(n, A, p);
-    for (i = 0; i < n; ++i) {
+    for (int i = 0; i < n; ++i) {
         A[i][i] = 1 / p[i];
-        for (j = i + 1; j < n; ++j) {
+        for (int j = i + 1; j < n; ++j) {
             float sum = 0;
-            for (k = i; k < j; ++k) {
+            for (int k = i; k < j; ++k) {
                 sum -= A[j][k] * A[k][i];
             }
             A[j][i] = sum / p[j];
@@ -52,7 +47,7 @@ __device__ void choldcsl_k(int n, float** A) {
 }
 
 __device__ void inverseMatrix_CholeskyMethod_k(int n, float** A) {
-    unsigned i, j, k;
+    int i, j, k;
     choldcsl_k(n, A);
     for (i = 0; i < n; ++i) {
         for (j = i + 1; j < n; ++j) {
@@ -80,25 +75,22 @@ __device__ void inverseMatrix_CholeskyMethod_k(int n, float** A) {
 //Multiply matrix M transpose by M 
 __device__ void Mt_byM_multiply_k(int i, int j, float* H, float** Result, const long ptr, const unsigned* idx) {
     float SUM;
-    for (unsigned I = 0; I < j; ++I) {
-        for (unsigned J = I; J < j; ++J) {
+    for (int I = 0; I < j; ++I) {
+        for (int J = I; J < j; ++J) {
             SUM = 0.0f;
-            for (unsigned K = 0; K < i; ++K) {
+            for (int K = 0; K < i; ++K) {
                 unsigned offset = idx[ptr + K] * j;
                 //printf("%.3f %.3f\n", M[K][I], M[K][J]);
                 //printf("%.3f %.3f\n", H[( offset) + I], H[( offset) + J]);
                 SUM += H[offset + I] * H[offset + J];
             }
-            //Result[(J*j)+I] = SUM;
-            //Result[(I*j)+J] = SUM;
-
             Result[J][I] = SUM;
             Result[I][J] = SUM;
         }
     }
 }
 
-__global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const unsigned* col_idx, const unsigned* colMajored_sparse_idx, const float* val, const float lambda, const int k, float* W, float* H) {
+__global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const unsigned* col_idx, const unsigned* colMajored_sparse_idx, const float* val, const float lambda, const unsigned k, float* W, float* H) {
     assert(row_ptr);
     assert(colMajored_sparse_idx);
     assert(val);
@@ -189,7 +181,7 @@ __global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const
     }
 }
 
-__global__ void updateH_overW_kernel(const long cols, const long* col_ptr, const unsigned* row_idx, const float* val, const float lambda, const int k, float* W, float* H) {
+__global__ void updateH_overW_kernel(const long cols, const long* col_ptr, const unsigned* row_idx, const float* val, const float lambda, const unsigned k, float* W, float* H) {
     //optimize H over W
     int ii = threadIdx.x + blockIdx.x * blockDim.x;
     for (int Rh = ii; Rh < cols; Rh += blockDim.x * gridDim.x) {
