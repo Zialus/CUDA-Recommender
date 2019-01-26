@@ -18,8 +18,8 @@ public:
     int verbose;
     int do_nmf;
     bool enable_cuda;
-    int nBlocks;
-    int nThreadsPerBlock;
+    unsigned nBlocks;
+    unsigned nThreadsPerBlock;
     char src_dir[1024];
 
     parameter() {

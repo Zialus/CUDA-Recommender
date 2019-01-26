@@ -32,8 +32,8 @@ typedef std::vector<vec_t> mat_t;
 
 class rate_t {
 public:
-    int i;
-    int j;
+    unsigned i;
+    unsigned j;
     float v;
 };
 
@@ -88,8 +88,8 @@ public:
     }
 
     rate_t read_next_line(FILE* fp) {
-        int i;
-        int j;
+        unsigned i;
+        unsigned j;
         float v = 0;
         fscanf(fp, "%d %d %f", &i, &j, &v);
         return rate_t{i - 1, j - 1, v};
@@ -101,7 +101,7 @@ public:
         fclose(fp);
     }
 
-    void load_from_file(long _rows, long _cols, long _nnz, FILE* fp, bool ifALS) {
+    void load_from_file(long _rows, long _cols, unsigned long _nnz, FILE* fp, bool ifALS) {
         rows = _rows, cols = _cols, nnz = _nnz;
         mem_alloc_by_me = true;
         val = MALLOC(float, nnz);
@@ -291,7 +291,7 @@ public:
     inline rate_t& operator[](const unsigned& idx) { return T[idx]; }
 
     void load(long _rows, long _cols, long _nnz, const char* filename) {
-        int r, c;
+        unsigned r, c;
         float v;
         rows = _rows;
         cols = _cols;
@@ -299,7 +299,7 @@ public:
         T = std::vector<rate_t>(nnz);
         FILE* fp = fopen(filename, "r");
         for (long idx = 0; idx < nnz; ++idx) {
-            fscanf(fp, "%d %d %f", &r, &c, &v);
+            fscanf(fp, "%u %u %f", &r, &c, &v);
             T[idx] = rate_t{r - 1, c - 1, v};
         }
         fclose(fp);

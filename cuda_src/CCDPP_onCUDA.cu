@@ -141,8 +141,8 @@ cudaError_t ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters)
     float* Hostreduction2 = 0;
 
 
-    int nThreadsPerBlock = parameters.nThreadsPerBlock;
-    int nBlocks = parameters.nBlocks;
+    unsigned nThreadsPerBlock = parameters.nThreadsPerBlock;
+    unsigned nBlocks = parameters.nBlocks;
     cudaError_t cudaStatus;
     Hostreduction = (float*) malloc(sizeof(float) * (nThreadsPerBlock * nBlocks));
     Hostreduction2 = (float*) malloc(sizeof(float) * (nThreadsPerBlock * nBlocks));
