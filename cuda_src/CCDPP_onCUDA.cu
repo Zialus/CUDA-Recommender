@@ -114,9 +114,9 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols,
     }
 }
 
-void kernel_wrapper_ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters) {
+void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
     cudaError_t cudaStatus;
-    cudaStatus = ccdpp_NV(R_C, W, H, parameters);
+    cudaStatus = ccdpp_NV(R, T, W, H, parameters);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "ALS FAILED: %s\n", cudaGetErrorString(cudaStatus));
     }
@@ -125,20 +125,20 @@ void kernel_wrapper_ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& par
 }
 
 // Helper function for using CUDA.
-cudaError_t ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters) {
-    long* dev_Rcol_ptr = 0;
-    unsigned* dev_Rrow_idx = 0;
-    long* dev_Rcol_ptr_T = 0;
-    unsigned* dev_Rrow_idx_T = 0;
-    float* dev_Rval = 0;
-    float* dev_Rval_t = 0;
-    float* dev_Wt_vec_t = 0;
-    float* dev_Ht_vec_t = 0;
+cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
+    long* dev_Rcol_ptr = nullptr;
+    unsigned* dev_Rrow_idx = nullptr;
+    long* dev_Rcol_ptr_T = nullptr;
+    unsigned* dev_Rrow_idx_T = nullptr;
+    float* dev_Rval = nullptr;
+    float* dev_Rval_t = nullptr;
+    float* dev_Wt_vec_t = nullptr;
+    float* dev_Ht_vec_t = nullptr;
 
-    float* dev_return = 0;
-    float* dev_return2 = 0;
-    float* Hostreduction = 0;
-    float* Hostreduction2 = 0;
+    float* dev_return = nullptr;
+    float* dev_return2 = nullptr;
+    float* Hostreduction = nullptr;
+    float* Hostreduction2 = nullptr;
 
 
     unsigned nThreadsPerBlock = parameters.nThreadsPerBlock;

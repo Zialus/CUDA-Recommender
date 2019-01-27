@@ -238,9 +238,9 @@ __global__ void updateH_overW_kernel(const long cols, const long* col_ptr, const
     }
 }
 
-void kernel_wrapper_als_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters) {
+void kernel_wrapper_als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
     cudaError_t cudaStatus;
-    cudaStatus = als_NV(R_C, W, H, parameters);
+    cudaStatus = als_NV(R, T, W, H, parameters);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "ALS FAILED: %s\n", cudaGetErrorString(cudaStatus));
     }
@@ -248,12 +248,15 @@ void kernel_wrapper_als_NV(smat_t& R_C, float**& W, float**& H, parameter& param
     gpuErrchk(cudaStatus);
 }
 
-cudaError_t als_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters) {
-    long* dev_col_ptr = 0, * dev_row_ptr = 0;
-    unsigned* dev_row_idx = 0, * dev_col_idx = 0;
-    unsigned* dev_colMajored_sparse_idx = 0;
-    float* dev_val = 0;
-    float* dev_W_ = 0, * dev_H_ = 0;
+cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
+    long* dev_col_ptr = nullptr;
+    long* dev_row_ptr = nullptr;
+    unsigned* dev_row_idx = nullptr;
+    unsigned* dev_col_idx = nullptr;
+    unsigned* dev_colMajored_sparse_idx = nullptr;
+    float* dev_val = nullptr;
+    float* dev_W_ = nullptr;
+    float* dev_H_ = nullptr;
 
     int nThreadsPerBlock = parameters.nThreadsPerBlock;
     int nBlocks = parameters.nBlocks;

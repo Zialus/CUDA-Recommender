@@ -23,8 +23,8 @@ __global__ void updateW_overH_kernel(long rows, const long* row_ptr, const unsig
 
 __global__ void updateH_overW_kernel(long cols, const long* col_ptr, const unsigned* row_idx, const float* val, float lambda, unsigned k, float* W, float* H);
 
-void kernel_wrapper_als_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters);
+void kernel_wrapper_als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters);
 
-cudaError_t als_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters);
+cudaError_t als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters);
 
 #endif

@@ -6,6 +6,7 @@
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
+#include <device_launch_parameters.h>
 
 #include "ERROR_CHECKING.h"
 #include "pmf.h"
@@ -54,8 +55,8 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(long Rcols,
 );
 
 
-cudaError_t ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters);
+cudaError_t ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters);
 
-void kernel_wrapper_ccdpp_NV(smat_t& R_C, float**& W, float**& H, parameter& parameters);
+void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters);
 
 #endif

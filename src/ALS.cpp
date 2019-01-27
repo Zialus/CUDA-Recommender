@@ -83,30 +83,7 @@ void Mt_byM_multiply(int i, int j, float** M, float** Result) {
 void ALS(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
     if (param.enable_cuda) {
         printf("CUDA enabled version.\n");
-
-        float** W_c;
-        float** H_c;
-
-        H_c = (float**) malloc(R.cols * sizeof(float*));
-        assert(H_c);
-
-        for (int i = 0; i < R.cols; i++) {
-            H_c[i] = &H[i][0];
-            assert(H_c[i]);
-        }
-
-        W_c = (float**) malloc(R.rows * sizeof(float*));
-        assert(W_c);
-
-        for (int i = 0; i < R.rows; i++) {
-            W_c[i] = &W[i][0];
-            assert(W_c[i]);
-        }
-
-        kernel_wrapper_als_NV(R, W_c, H_c, param);
-
-        free(W_c);
-        free(H_c);
+        kernel_wrapper_als_NV(R, T, W, H, param);
     } else {
         ALS_multicore(R, W, H, T, param);
     }
