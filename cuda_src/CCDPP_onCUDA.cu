@@ -137,24 +137,13 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
 
     float* dev_return = nullptr;
     float* dev_return2 = nullptr;
-    float* Hostreduction = nullptr;
-    float* Hostreduction2 = nullptr;
-
 
     unsigned nThreadsPerBlock = parameters.nThreadsPerBlock;
     unsigned nBlocks = parameters.nBlocks;
     cudaError_t cudaStatus;
-    Hostreduction = (float*) malloc(sizeof(float) * (nThreadsPerBlock * nBlocks));
-    Hostreduction2 = (float*) malloc(sizeof(float) * (nThreadsPerBlock * nBlocks));
-
 
     int k = parameters.k;
-    int maxiter = parameters.maxiter;
-    int inneriter = parameters.maxinneriter;
     float lambda = parameters.lambda;
-    float eps = parameters.eps;
-    long num_updates = 0;
-
 
     // Create transpose view of R
     smat_t Rt;
@@ -163,10 +152,7 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     // H is a zero matrix now.
     for (int t = 0; t < k; ++t) { for (long c = 0; c < R_C.cols; ++c) { H[t][c] = 0; }}
 
-    float* u, * v;
-    u = (float*) malloc(R_C.rows * sizeof(float));
     size_t nbits_u = R_C.rows * sizeof(float);
-    v = (float*) malloc(R_C.cols * sizeof(float));
     size_t nbits_v = R_C.cols * sizeof(float);
 
     // Reset GPU.
@@ -214,59 +200,30 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     gpuErrchk(cudaStatus);
 
 
-    for (int oiter = 1; oiter <= maxiter; ++oiter) {
-        float rankfundec = 0;
-        float fundec_max = 0;
-        int early_stop = 0;
+    for (int oiter = 1; oiter <= parameters.maxiter; ++oiter) {
+
         for (int t = 0; t < k; ++t) {
-            if (early_stop >= 5) { break; }
             float* Wt = &W[t][0], * Ht = &H[t][0];
 
             cudaStatus = cudaMemcpy(dev_Wt_vec_t, Wt, nbits_u, cudaMemcpyHostToDevice);
             gpuErrchk(cudaStatus);
             cudaStatus = cudaMemcpy(dev_Ht_vec_t, Ht, nbits_v, cudaMemcpyHostToDevice);
             gpuErrchk(cudaStatus);
+
             if (oiter > 1) {
                 UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, true, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, true);
+
                 cudaStatus = cudaDeviceSynchronize();
                 gpuErrchk(cudaStatus);
 
             }
 
-            float innerfundec_cur = 0, innerfundec_max = 0;
-            int maxit = inneriter;
-            for (int iter = 1; iter <= maxit; ++iter) {
-                innerfundec_cur = 0;
 
+            for (int iter = 1; iter <= parameters.maxinneriter; ++iter) {
                 RankOneUpdate_DUAL_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, dev_return, parameters.do_nmf, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, dev_return2);
 
                 cudaStatus = cudaDeviceSynchronize();
                 gpuErrchk(cudaStatus);
-                cudaStatus = cudaMemcpy(Hostreduction, dev_return, nBlocks * nThreadsPerBlock * sizeof(float), cudaMemcpyDeviceToHost);
-                gpuErrchk(cudaStatus);
-                cudaStatus = cudaMemcpy(Hostreduction2, dev_return2, nBlocks * nThreadsPerBlock * sizeof(float), cudaMemcpyDeviceToHost);
-                gpuErrchk(cudaStatus);
-
-                for (size_t index = 0; index < nThreadsPerBlock * nBlocks; index++) {
-                    innerfundec_cur += Hostreduction[index];
-                }
-
-                for (size_t index = 0; index < nThreadsPerBlock * nBlocks; index++) {
-                    innerfundec_cur += Hostreduction2[index];
-                }
-
-                num_updates += R_C.cols;
-
-                num_updates += Rt.cols;
-                if ((innerfundec_cur < fundec_max * eps)) {
-                    if (iter == 1) { early_stop += 1; }
-                    break;
-                }
-                rankfundec += innerfundec_cur;
-                innerfundec_max = std::max(innerfundec_max, innerfundec_cur);
-                if (!(oiter == 1 && t == 0 && iter == 1)) {
-                    fundec_max = std::max(fundec_max, innerfundec_cur);
-                }
             }
 
             cudaStatus = cudaMemcpy(Wt, dev_Wt_vec_t, nbits_u, cudaMemcpyDeviceToHost);
@@ -281,10 +238,6 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
         }
     }
 
-    free(u);
-    free(v);
-    free(Hostreduction);
-    free(Hostreduction2);
 
     cudaFree(dev_Rcol_ptr);
     cudaFree(dev_Rrow_idx);
@@ -295,6 +248,7 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     cudaFree(dev_Wt_vec_t);
     cudaFree(dev_Ht_vec_t);
     cudaFree(dev_return);
+
     return cudaStatus;
 }
 
