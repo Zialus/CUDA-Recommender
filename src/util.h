@@ -22,20 +22,12 @@
 #define SIZEBITS(type, size) sizeof(type)*(size)
 
 
-class rate_t;
 class smat_t;
+
 class testset_t;
 
 typedef std::vector<float> vec_t;
 typedef std::vector<vec_t> mat_t;
-
-
-class rate_t {
-public:
-    unsigned i;
-    unsigned j;
-    float v;
-};
 
 // Comparator for sorting rates into row/column compression storage
 class SparseComp {
@@ -53,31 +45,38 @@ public:
     }
 };
 
-// Sparse matrix format CCS & RCS
+// Sparse matrix format CSC & CSR
 // Access column format only when you use it..
 class smat_t {
 public:
-    long rows, cols;
-    long nnz, max_row_nnz, max_col_nnz;
-    float* val, * val_t;
-    size_t nbits_val, nbits_val_t;
-    size_t nbits_weight, nbits_weight_t;
-    long* col_ptr, * row_ptr;
-    size_t nbits_col_ptr, nbits_row_ptr;
-    long* col_nnz, * row_nnz;
-    size_t nbits_col_nnz, nbits_row_nnz;
-    unsigned* row_idx, * col_idx;
-    size_t nbits_row_idx, nbits_col_idx;
+    long rows;
+    long cols;
+    long nnz;
+    long max_row_nnz;
+    long max_col_nnz;
+    float* val;
+    float* val_t;
+    size_t nbits_val;
+    size_t nbits_val_t;
+    size_t nbits_weight;
+    size_t nbits_weight_t;
+    long* col_ptr;
+    long* row_ptr;
+    size_t nbits_col_ptr;
+    size_t nbits_row_ptr;
+    long* col_nnz;
+    long* row_nnz;
+    size_t nbits_col_nnz;
+    size_t nbits_row_nnz;
+    unsigned* row_idx;
+    unsigned* col_idx;
+    size_t nbits_row_idx;
+    size_t nbits_col_idx;
     unsigned* colMajored_sparse_idx;
     size_t nbits_colMajored_sparse_idx;
     bool mem_alloc_by_me;
 
     smat_t() : mem_alloc_by_me(false) {}
-
-    smat_t(const smat_t& m) {
-        *this = m;
-        mem_alloc_by_me = false;
-    }
 
     void print_mat(int host) {
         for (int c = 0; c < cols; ++c) {
@@ -87,21 +86,7 @@ public:
         }
     }
 
-    rate_t read_next_line(FILE* fp) {
-        unsigned i;
-        unsigned j;
-        float v = 0;
-        fscanf(fp, "%d %d %f", &i, &j, &v);
-        return rate_t{i - 1, j - 1, v};
-    }
-
-    void load(long _rows, long _cols, long _nnz, const char* filename, bool ifALS) {
-        FILE* fp = fopen(filename, "r");
-        load_from_file(_rows, _cols, _nnz, fp, ifALS);
-        fclose(fp);
-    }
-
-    void load_from_file(long _rows, long _cols, unsigned long _nnz, FILE* fp, bool ifALS) {
+    void load(long _rows, long _cols, unsigned long _nnz, const char* filename, bool ifALS) {
         rows = _rows, cols = _cols, nnz = _nnz;
         mem_alloc_by_me = true;
         val = MALLOC(float, nnz);
@@ -128,15 +113,23 @@ public:
         unsigned* tmp_row_idx = col_idx;
         unsigned* tmp_col_idx = row_idx;
         float* tmp_val = val;
+
+        FILE* fp = fopen(filename, "r");
         for (size_t idx = 0; idx < _nnz; idx++) {
-            rate_t rate = read_next_line(fp);
-            row_ptr[rate.i + 1]++;
-            col_ptr[rate.j + 1]++;
-            tmp_row_idx[idx] = rate.i;
-            tmp_col_idx[idx] = rate.j;
-            tmp_val[idx] = rate.v;
+            unsigned i;
+            unsigned j;
+            float v;
+            fscanf(fp, "%u %u %f", &i, &j, &v);
+
+            row_ptr[i - 1 + 1]++;
+            col_ptr[j - 1 + 1]++;
+            tmp_row_idx[idx] = i - 1;
+            tmp_col_idx[idx] = j - 1;
+            tmp_val[idx] = v;
             perm[idx] = idx;
         }
+        fclose(fp);
+
         //for (int i = 0; i < rows + 1; ++i){
         //	printf("R%d  C%d \n", row_ptr[i], col_ptr[i]);
         //}
@@ -179,12 +172,12 @@ public:
         col_ptr[0] = 0;
 
         if (ifALS) {
-            unsigned* mapIDX = MALLOC(unsigned, rows);
-            for (int r = 0; r < rows; ++r) {
+            long* mapIDX = MALLOC(long, rows);
+            for (long r = 0; r < rows; ++r) {
                 mapIDX[r] = row_ptr[r];
             }
 
-            for (int r = 0; r < nnz; ++r) {
+            for (long r = 0; r < nnz; ++r) {
                 colMajored_sparse_idx[mapIDX[row_idx[r]]] = r;
                 ++mapIDX[row_idx[r]];
             }
@@ -225,13 +218,6 @@ public:
         return sum / nnz;
     }
 
-    void remove_bias(float bias = 0) {
-        if (bias) {
-            for (long i = 0; i < nnz; ++i) { val[i] -= bias; }
-            for (long i = 0; i < nnz; ++i) { val_t[i] -= bias; }
-        }
-    }
-
     ~smat_t() {
         if (mem_alloc_by_me) {
             //puts("Warnning: Somebody just free me.");
@@ -242,16 +228,6 @@ public:
             free(col_ptr);
             free(col_idx);
         }
-    }
-
-    void clear_space() {
-        free(val);
-        free(val_t);
-        free(row_ptr);
-        free(row_idx);
-        free(col_ptr);
-        free(col_idx);
-        mem_alloc_by_me = false;
     }
 
     smat_t transpose() {
@@ -279,16 +255,15 @@ public:
     }
 };
 
-
-// Test set format
+// Test set in COO format
 class testset_t {
 public:
-    long rows, cols, nnz;
-    std::vector<rate_t> T;
-
-    testset_t() : rows(0), cols(0), nnz(0) {}
-
-    inline rate_t& operator[](const unsigned& idx) { return T[idx]; }
+    long rows;
+    long cols;
+    long nnz;
+    long* test_row;
+    long* test_col;
+    float* test_val;
 
     void load(long _rows, long _cols, long _nnz, const char* filename) {
         unsigned r, c;
@@ -296,24 +271,27 @@ public:
         rows = _rows;
         cols = _cols;
         nnz = _nnz;
-        T = std::vector<rate_t>(nnz);
+
+        test_row = new long[nnz];
+        test_col = new long[nnz];
+        test_val = new float[nnz];
+
         FILE* fp = fopen(filename, "r");
         for (long idx = 0; idx < nnz; ++idx) {
             fscanf(fp, "%u %u %f", &r, &c, &v);
-            T[idx] = rate_t{r - 1, c - 1, v};
+            test_row[idx] = r - 1;
+            test_col[idx] = c - 1;
+            test_val[idx] = v;
         }
         fclose(fp);
     }
 
-    float get_global_mean() {
-        float sum = 0;
-        for (long i = 0; i < nnz; ++i) { sum += T[i].v; }
-        return sum / nnz;
+    ~testset_t() {
+        delete[] test_row;
+        delete[] test_col;
+        delete[] test_val;
     }
 
-    void remove_bias(float bias = 0) {
-        if (bias) { for (long i = 0; i < nnz; ++i) { T[i].v -= bias; }}
-    }
 };
 
 #endif

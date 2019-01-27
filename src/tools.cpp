@@ -120,7 +120,7 @@ float dot(const vec_t& a, const vec_t& b) {
     return ret;
 }
 
-double dot(const mat_t& W, const int i, const mat_t& H, const int j, bool ifALS) {
+double dot(const mat_t& W, const long i, const mat_t& H, const long j, bool ifALS) {
     double ret = 0;
     if (ifALS) {
         long k = W[0].size();
@@ -203,39 +203,39 @@ float calobj(const smat_t& R, const mat_t& W, const mat_t& H, const float lambda
     return loss + reg;
 }
 
-double calrmse(testset_t& testset, const mat_t& W, const mat_t& H, bool ifALS, bool iscol) {
-    long nnz = testset.nnz;
+double calrmse(testset_t& T, const mat_t& W, const mat_t& H, bool ifALS, bool iscol) {
+    long nnz = T.nnz;
     double rmse = 0;
     for (long idx = 0; idx < nnz; ++idx) {
-        double err = -testset[idx].v;
+        double err = -T.test_val[idx];
         if (iscol) {
-            err += dot(W, testset[idx].i, H, testset[idx].j, ifALS);
+            err += dot(W, T.test_row[idx], H, T.test_col[idx], ifALS);
         } else {
-            err += dot(W[testset[idx].i], H[testset[idx].j]);
+            err += dot(W[T.test_row[idx]], H[T.test_col[idx]]);
         }
         rmse += err * err;
     }
     return sqrt(rmse / nnz);
 }
 
-double calrmse_r1(testset_t& testset, vec_t& Wt, vec_t& Ht) {
-    long nnz = testset.nnz;
+double calrmse_r1(testset_t& T, vec_t& Wt, vec_t& Ht) {
+    long nnz = T.nnz;
     double rmse = 0;
 #pragma omp parallel for reduction(+:rmse)
     for (int idx = 0; idx < nnz; ++idx) {
-        testset[idx].v -= Wt[testset[idx].i] * Ht[testset[idx].j];
-        rmse += testset[idx].v * testset[idx].v;
+        T.test_val[idx] -= Wt[T.test_row[idx]] * Ht[T.test_col[idx]];
+        rmse += T.test_val[idx] * T.test_val[idx];
     }
     return sqrt(rmse / nnz);
 }
 
-double calrmse_r1(testset_t& testset, vec_t& Wt, vec_t& Ht, vec_t& oldWt, vec_t& oldHt) {
-    long nnz = testset.nnz;
+double calrmse_r1(testset_t& T, vec_t& Wt, vec_t& Ht, vec_t& oldWt, vec_t& oldHt) {
+    long nnz = T.nnz;
     double rmse = 0;
 #pragma omp parallel for reduction(+:rmse)
     for (int idx = 0; idx < nnz; ++idx) {
-        testset[idx].v -= Wt[testset[idx].i] * Ht[testset[idx].j] - oldWt[testset[idx].i] * oldHt[testset[idx].j];
-        rmse += testset[idx].v * testset[idx].v;
+        T.test_val[idx] -= Wt[T.test_row[idx]] * Ht[T.test_col[idx]] - oldWt[T.test_row[idx]] * oldHt[T.test_col[idx]];
+        rmse += T.test_val[idx] * T.test_val[idx];
     }
     return sqrt(rmse / nnz);
 }

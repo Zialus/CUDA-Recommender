@@ -272,9 +272,9 @@ void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int iter, int ran
     long nnz = T.nnz;
 
     for (long idx = 0; idx < nnz; ++idx) {
-        int i = T[idx].i;
-        int j = T[idx].j;
-        double v = T[idx].v;
+        long i = T.test_row[idx];
+        long j = T.test_col[idx];
+        double v = T.test_val[idx];
 
         double pred_v = 0;
         if (ifALS) {
