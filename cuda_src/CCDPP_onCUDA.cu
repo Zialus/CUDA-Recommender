@@ -132,8 +132,8 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     unsigned* dev_Rrow_idx_T = nullptr;
     float* dev_Rval = nullptr;
     float* dev_Rval_t = nullptr;
-    float* dev_Wt_vec_t = nullptr;
-    float* dev_Ht_vec_t = nullptr;
+    float* dev_Wt_vec_t = nullptr; //u
+    float* dev_Ht_vec_t = nullptr; //v
 
     float* dev_return = nullptr;
     float* dev_return2 = nullptr;
@@ -203,7 +203,9 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     for (int oiter = 1; oiter <= parameters.maxiter; ++oiter) {
 
         for (int t = 0; t < k; ++t) {
-            float* Wt = &W[t][0], * Ht = &H[t][0];
+
+            float* Wt = &W[t][0];
+            float* Ht = &H[t][0];
 
             cudaStatus = cudaMemcpy(dev_Wt_vec_t, Wt, nbits_u, cudaMemcpyHostToDevice);
             gpuErrchk(cudaStatus);
@@ -211,16 +213,19 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
             gpuErrchk(cudaStatus);
 
             if (oiter > 1) {
-                UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, true, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, true);
+                UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
+                        dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, true, Rt.cols,
+                        dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, true);
 
                 cudaStatus = cudaDeviceSynchronize();
                 gpuErrchk(cudaStatus);
-
             }
 
 
             for (int iter = 1; iter <= parameters.maxinneriter; ++iter) {
-                RankOneUpdate_DUAL_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, dev_return, parameters.do_nmf, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, dev_return2);
+                RankOneUpdate_DUAL_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
+                        dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, dev_return, parameters.do_nmf,
+                        Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, dev_return2);
 
                 cudaStatus = cudaDeviceSynchronize();
                 gpuErrchk(cudaStatus);
@@ -231,7 +236,9 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
             cudaStatus = cudaMemcpy(Ht, dev_Ht_vec_t, nbits_v, cudaMemcpyDeviceToHost);
             gpuErrchk(cudaStatus);
 
-            UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx, dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, false, Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, false);
+            UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
+                    dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, false, Rt.cols,
+                    dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, false);
 
             cudaStatus = cudaDeviceSynchronize();
             gpuErrchk(cudaStatus);
