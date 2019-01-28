@@ -7,34 +7,28 @@ __global__ void RankOneUpdate_DUAL_kernel(const long Rcols,
                                           float* u,
                                           float* v,
                                           const float lambda,
-                                          float* innerfundec_cur,
                                           const int do_nmf,
 
                                           const long Rcols_t,
                                           const long* Rcol_ptr_t,
                                           const unsigned int* Rrow_idx_t,
-                                          const float* Rval_t,
-                                          float* innerfundec_cur2
+                                          const float* Rval_t
 ) {
 
     int ii = threadIdx.x + blockIdx.x * blockDim.x;
-    float dev_innerfundec_cur = 0;
-    float dev_innerfundec_cur2 = 0;
-    innerfundec_cur[ii] = 0;
-    innerfundec_cur2[ii] = 0;
+
+
     for (int c = ii; c < Rcols; c += blockDim.x * gridDim.x) {
         v[c] = RankOneUpdate_dev(Rcol_ptr, Rrow_idx, Rval,
-                                 c, u, lambda * (Rcol_ptr[c + 1] - Rcol_ptr[c]), v[c], &dev_innerfundec_cur, do_nmf);
+                                 c, u, lambda * (Rcol_ptr[c + 1] - Rcol_ptr[c]), do_nmf);
 
     }
-    innerfundec_cur[ii] = dev_innerfundec_cur;
 
     for (int c = ii; c < Rcols_t; c += blockDim.x * gridDim.x) {
         u[c] = RankOneUpdate_dev(Rcol_ptr_t, Rrow_idx_t, Rval_t,
-                                 c, v, lambda * (Rcol_ptr_t[c + 1] - Rcol_ptr_t[c]), u[c], &dev_innerfundec_cur2, do_nmf);
+                                 c, v, lambda * (Rcol_ptr_t[c + 1] - Rcol_ptr_t[c]), do_nmf);
 
     }
-    innerfundec_cur2[ii] = dev_innerfundec_cur2;
 
 }
 
@@ -45,8 +39,6 @@ __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
                                    const float* u_vec_t,
 
                                    const float lambda,
-                                   const float vj,
-                                   float* redvar,
                                    const int do_nmf) {
 
     float g = 0, h = lambda;
@@ -56,16 +48,10 @@ __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
         g += u_vec_t[i] * Rval[idx];
         h += u_vec_t[i] * u_vec_t[i];
     }
-    float newvj = g / h, delta = 0, fundec = 0;
+    float newvj = g / h;
     if (do_nmf > 0 & newvj < 0) {
         newvj = 0;
-        delta = vj; // old - new
-        fundec = -2 * g * vj; //+h*vj*vj;
-    } else {
-        delta = vj - newvj;
-        fundec = h * delta * delta;
     }
-    *redvar += fundec;
     return newvj;
 }
 
@@ -135,8 +121,6 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     float* dev_Wt_vec_t = nullptr; //u
     float* dev_Ht_vec_t = nullptr; //v
 
-    float* dev_return = nullptr;
-    float* dev_return2 = nullptr;
 
     unsigned nThreadsPerBlock = parameters.nThreadsPerBlock;
     unsigned nBlocks = parameters.nBlocks;
@@ -180,10 +164,6 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**) &dev_Ht_vec_t, nbits_v);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_return, nThreadsPerBlock * nBlocks * sizeof(float));
-    gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_return2, nThreadsPerBlock * nBlocks * sizeof(float));
-    gpuErrchk(cudaStatus);
 
     // Copy all vectors to GPU buffers.
     cudaStatus = cudaMemcpy(dev_Rval, R_C.val, R_C.nbits_val, cudaMemcpyHostToDevice);
@@ -224,8 +204,8 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
 
             for (int iter = 1; iter <= parameters.maxinneriter; ++iter) {
                 RankOneUpdate_DUAL_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
-                        dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, dev_return, parameters.do_nmf,
-                        Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, dev_return2);
+                        dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, parameters.do_nmf,
+                        Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t);
 
                 cudaStatus = cudaDeviceSynchronize();
                 gpuErrchk(cudaStatus);
@@ -254,7 +234,6 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     cudaFree(dev_Rval_t);
     cudaFree(dev_Wt_vec_t);
     cudaFree(dev_Ht_vec_t);
-    cudaFree(dev_return);
 
     return cudaStatus;
 }

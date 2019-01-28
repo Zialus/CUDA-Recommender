@@ -18,14 +18,12 @@ __global__ void RankOneUpdate_DUAL_kernel(long Rcols,
                                           float* u,
                                           float* v,
                                           float lambda,
-                                          float* innerfundec_cur,
                                           int do_nmf,
 
                                           long Rcols_t,
                                           const long* Rcol_ptr_t,
                                           const unsigned int* Rrow_idx_t,
-                                          const float* Rval_t,
-                                          float* innerfundec_cur2
+                                          const float* Rval_t
 );
 
 __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
@@ -35,8 +33,6 @@ __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
                                    const float* u_vec_t,
 
                                    float lambda,
-                                   float vj,
-                                   float* redvar,
                                    int do_nmf);
 
 __global__ void UpdateRating_DUAL_kernel_NoLoss(long Rcols,

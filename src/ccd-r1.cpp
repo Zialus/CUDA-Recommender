@@ -81,8 +81,7 @@ void ccdr1_original_float(smat_t &R, mat_t &W, mat_t &H, testset_t &T, parameter
 
         double Itime = 0, Wtime = 0, Htime = 0, Rtime = 0, start = 0;
 
-        for(int tt=0; tt < k; ++tt) {
-            int t = tt;
+        for(int t=0; t < k; ++t) {
 
             start = omp_get_wtime();
             vec_t &Wt = W[t], &Ht = H[t];
