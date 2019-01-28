@@ -5,7 +5,7 @@
 
 #define kind dynamic,500
 
-inline float RankOneUpdate_Original_float(const smat_t& R, const int j, const vec_t& u, const float lambda, int do_nmf) {
+inline float RankOneUpdate_Original_float(const smat_t& R, const long j, const vec_t& u, const float lambda, int do_nmf) {
     float g = 0, h = lambda;
     if (R.col_ptr[j + 1] == R.col_ptr[j]) { return 0; }
     for (long idx = R.col_ptr[j]; idx < R.col_ptr[j + 1]; ++idx) {
@@ -70,7 +70,7 @@ void ccdr1_original_float(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter
     // Create transpose view of R
     smat_t Rt;
     Rt = R.transpose();
-    // initial value of the regularization term
+
     // H is a zero matrix now.
     for (int t = 0; t < k; ++t) { for (long c = 0; c < R.cols; ++c) { H[t][c] = 0; }}
 
@@ -86,12 +86,13 @@ void ccdr1_original_float(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter
             vec_t& Wt = W[t], & Ht = H[t];
 #pragma omp parallel for
             for (int i = 0; i < R.rows; ++i) {
-                oldWt[i] = u[i] = Wt[i];
+                u[i] = Wt[i];
+                oldWt[i] = u[i];
             }
 #pragma omp parallel for
             for (int i = 0; i < R.cols; ++i) {
                 v[i] = Ht[i];
-                oldHt[i] = (oiter == 1) ? 0 : v[i];
+                oldHt[i] = v[i];
             }
 
             // Create Rhat = R - Wt Ht^T

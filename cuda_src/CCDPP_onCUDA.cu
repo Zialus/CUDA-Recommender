@@ -19,14 +19,12 @@ __global__ void RankOneUpdate_DUAL_kernel(const long Rcols,
 
 
     for (int c = ii; c < Rcols; c += blockDim.x * gridDim.x) {
-        v[c] = RankOneUpdate_dev(Rcol_ptr, Rrow_idx, Rval,
-                                 c, u, lambda * (Rcol_ptr[c + 1] - Rcol_ptr[c]), do_nmf);
+        v[c] = RankOneUpdate_dev(Rcol_ptr, Rrow_idx, Rval, c, u, lambda * (Rcol_ptr[c + 1] - Rcol_ptr[c]), do_nmf);
 
     }
 
     for (int c = ii; c < Rcols_t; c += blockDim.x * gridDim.x) {
-        u[c] = RankOneUpdate_dev(Rcol_ptr_t, Rrow_idx_t, Rval_t,
-                                 c, v, lambda * (Rcol_ptr_t[c + 1] - Rcol_ptr_t[c]), do_nmf);
+        u[c] = RankOneUpdate_dev(Rcol_ptr_t, Rrow_idx_t, Rval_t, c, v, lambda * (Rcol_ptr_t[c + 1] - Rcol_ptr_t[c]), do_nmf);
 
     }
 
@@ -39,7 +37,8 @@ __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
                                    const float* u_vec_t,
 
                                    const float lambda,
-                                   const int do_nmf) {
+                                   const int do_nmf
+) {
 
     float g = 0, h = lambda;
     if (Rcol_ptr[j + 1] == Rcol_ptr[j]) { return 0; }
@@ -132,7 +131,7 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     // Create transpose view of R
     smat_t Rt;
     Rt = R_C.transpose();
-    // initial value of the regularization term
+
     // H is a zero matrix now.
     for (int t = 0; t < k; ++t) { for (long c = 0; c < R_C.cols; ++c) { H[t][c] = 0; }}
 

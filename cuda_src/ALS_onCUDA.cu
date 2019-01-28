@@ -273,7 +273,6 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
 
     //Load H and W on vectors
     int indexPosition = 0;
-    //// float *Wt = &W[t][0], *Ht = &H[t][0];
     for (int i = 0; i < R_C.rows; ++i) {
         for (int j = 0; j < k; ++j) {
             W_[indexPosition] = W[i][j];
@@ -366,7 +365,6 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     gpuErrchk(cudaStatus);
 
     indexPosition = 0;
-    //// float *Wt = &W[t][0], *Ht = &H[t][0];
     for (int i = 0; i < R_C.rows; ++i) {
         for (int j = 0; j < k; ++j) {
             W[i][j] = W_[indexPosition];
