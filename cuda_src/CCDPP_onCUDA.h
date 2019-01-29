@@ -11,9 +11,9 @@
 #include "ERROR_CHECKING.h"
 #include "pmf.h"
 
-__global__ void RankOneUpdate_DUAL_kernel(long Rcols,
+__global__ void RankOneUpdate_DUAL_kernel(unsigned Rcols,
                                           const long* Rcol_ptr,
-                                          const unsigned int* Rrow_idx,
+                                          const long* Rrow_idx,
                                           const float* Rval,
                                           float* u,
                                           float* v,
@@ -22,14 +22,14 @@ __global__ void RankOneUpdate_DUAL_kernel(long Rcols,
 
                                           long Rcols_t,
                                           const long* Rcol_ptr_t,
-                                          const unsigned int* Rrow_idx_t,
+                                          const long* Rrow_idx_t,
                                           const float* Rval_t
 );
 
 __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
-                                   const unsigned* Rrow_idx,
+                                   const long* Rrow_idx,
                                    const float* Rval,
-                                   int j,
+                                   long j,
                                    const float* u_vec_t,
 
                                    float lambda,
@@ -37,7 +37,7 @@ __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
 
 __global__ void UpdateRating_DUAL_kernel_NoLoss(long Rcols,
                                                 const long* Rcol_ptr,
-                                                const unsigned int* Rrow_idx,
+                                                const long* Rrow_idx,
                                                 float* Rval,
                                                 const float* Wt_vec_t,
                                                 const float* Ht_vec_t,
@@ -45,7 +45,7 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(long Rcols,
 
                                                 long Rcols_t,
                                                 const long* Rcol_ptr_t,
-                                                const unsigned int* Rrow_idx_t,
+                                                const long* Rrow_idx_t,
                                                 float* Rval_t,
                                                 bool add_t
 );

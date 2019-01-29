@@ -2,7 +2,7 @@
 
 __global__ void RankOneUpdate_DUAL_kernel(const long Rcols,
                                           const long* Rcol_ptr,
-                                          const unsigned int* Rrow_idx,
+                                          const long* Rrow_idx,
                                           const float* Rval,
                                           float* u,
                                           float* v,
@@ -11,19 +11,19 @@ __global__ void RankOneUpdate_DUAL_kernel(const long Rcols,
 
                                           const long Rcols_t,
                                           const long* Rcol_ptr_t,
-                                          const unsigned int* Rrow_idx_t,
+                                          const long* Rrow_idx_t,
                                           const float* Rval_t
 ) {
 
-    int ii = threadIdx.x + blockIdx.x * blockDim.x;
+    long ii = threadIdx.x + blockIdx.x * blockDim.x;
 
 
-    for (int c = ii; c < Rcols; c += blockDim.x * gridDim.x) {
+    for (long c = ii; c < Rcols; c += blockDim.x * gridDim.x) {
         v[c] = RankOneUpdate_dev(Rcol_ptr, Rrow_idx, Rval, c, u, lambda * (Rcol_ptr[c + 1] - Rcol_ptr[c]), do_nmf);
 
     }
 
-    for (int c = ii; c < Rcols_t; c += blockDim.x * gridDim.x) {
+    for (long c = ii; c < Rcols_t; c += blockDim.x * gridDim.x) {
         u[c] = RankOneUpdate_dev(Rcol_ptr_t, Rrow_idx_t, Rval_t, c, v, lambda * (Rcol_ptr_t[c + 1] - Rcol_ptr_t[c]), do_nmf);
 
     }
@@ -31,9 +31,9 @@ __global__ void RankOneUpdate_DUAL_kernel(const long Rcols,
 }
 
 __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
-                                   const unsigned* Rrow_idx,
+                                   const long* Rrow_idx,
                                    const float* Rval,
-                                   const int j,
+                                   const long j,
                                    const float* u_vec_t,
 
                                    const float lambda,
@@ -43,7 +43,7 @@ __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
     float g = 0, h = lambda;
     if (Rcol_ptr[j + 1] == Rcol_ptr[j]) { return 0; }
     for (long idx = Rcol_ptr[j]; idx < Rcol_ptr[j + 1]; ++idx) {
-        int i = Rrow_idx[idx];
+        long i = Rrow_idx[idx];
         g += u_vec_t[i] * Rval[idx];
         h += u_vec_t[i] * u_vec_t[i];
     }
@@ -56,7 +56,7 @@ __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
 
 __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols,
                                                 const long* Rcol_ptr,
-                                                const unsigned int* Rrow_idx,
+                                                const long* Rrow_idx,
                                                 float* Rval,
                                                 const float* Wt_vec_t,
                                                 const float* Ht_vec_t,
@@ -64,7 +64,7 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols,
 
                                                 const long Rcols_t,
                                                 const long* Rcol_ptr_t,
-                                                const unsigned int* Rrow_idx_t,
+                                                const long* Rrow_idx_t,
                                                 float* Rval_t,
                                                 const bool add_t
 ) {
@@ -112,9 +112,9 @@ void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parame
 // Helper function for using CUDA.
 cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
     long* dev_Rcol_ptr = nullptr;
-    unsigned* dev_Rrow_idx = nullptr;
+    long* dev_Rrow_idx = nullptr;
     long* dev_Rcol_ptr_T = nullptr;
-    unsigned* dev_Rrow_idx_T = nullptr;
+    long* dev_Rrow_idx_T = nullptr;
     float* dev_Rval = nullptr;
     float* dev_Rval_t = nullptr;
     float* dev_Wt_vec_t = nullptr; //u

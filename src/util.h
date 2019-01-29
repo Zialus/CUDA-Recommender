@@ -32,10 +32,10 @@ typedef std::vector<vec_t> mat_t;
 // Comparator for sorting rates into row/column compression storage
 class SparseComp {
 public:
-    const unsigned* row_idx;
-    const unsigned* col_idx;
+    const long* row_idx;
+    const long* col_idx;
 
-    SparseComp(const unsigned* row_idx_, const unsigned* col_idx_, bool isRCS_ = true) {
+    SparseComp(const long* row_idx_, const long* col_idx_, bool isRCS_ = true) {
         row_idx = (isRCS_) ? row_idx_ : col_idx_;
         col_idx = (isRCS_) ? col_idx_ : row_idx_;
     }
@@ -58,8 +58,6 @@ public:
     float* val_t;
     size_t nbits_val;
     size_t nbits_val_t;
-    size_t nbits_weight;
-    size_t nbits_weight_t;
     long* col_ptr;
     long* row_ptr;
     size_t nbits_col_ptr;
@@ -68,11 +66,11 @@ public:
     long* row_nnz;
     size_t nbits_col_nnz;
     size_t nbits_row_nnz;
-    unsigned* row_idx;
-    unsigned* col_idx;
+    long* row_idx;
+    long* col_idx;
     size_t nbits_row_idx;
     size_t nbits_col_idx;
-    unsigned* colMajored_sparse_idx;
+    long* colMajored_sparse_idx;
     size_t nbits_colMajored_sparse_idx;
     bool mem_alloc_by_me;
 
@@ -93,10 +91,10 @@ public:
         val_t = MALLOC(float, nnz);
         nbits_val = SIZEBITS(float, nnz);
         nbits_val_t = SIZEBITS(float, nnz);
-        row_idx = MALLOC(unsigned, nnz);
-        col_idx = MALLOC(unsigned, nnz);  // switch to this for memory
-        nbits_row_idx = SIZEBITS(unsigned, nnz);
-        nbits_col_idx = SIZEBITS(unsigned, nnz);
+        row_idx = MALLOC(long, nnz);
+        col_idx = MALLOC(long, nnz);  // switch to this for memory
+        nbits_row_idx = SIZEBITS(long, nnz);
+        nbits_col_idx = SIZEBITS(long, nnz);
         row_ptr = MALLOC(long, rows + 1);
         col_ptr = MALLOC(long, cols + 1);
         nbits_row_ptr = SIZEBITS(long, rows + 1);
@@ -104,22 +102,22 @@ public:
         memset(row_ptr, 0, sizeof(long) * (rows + 1));
         memset(col_ptr, 0, sizeof(long) * (cols + 1));
         if (ifALS) {
-            colMajored_sparse_idx = MALLOC(unsigned, nnz);
-            nbits_colMajored_sparse_idx = SIZEBITS(unsigned, nnz);
+            colMajored_sparse_idx = MALLOC(long, nnz);
+            nbits_colMajored_sparse_idx = SIZEBITS(long, nnz);
         }
 
         // a trick here to utilize the space the have been allocated
         std::vector<size_t> perm(_nnz);
-        unsigned* tmp_row_idx = col_idx;
-        unsigned* tmp_col_idx = row_idx;
+        long* tmp_row_idx = col_idx;
+        long* tmp_col_idx = row_idx;
         float* tmp_val = val;
 
         FILE* fp = fopen(filename, "r");
         for (size_t idx = 0; idx < _nnz; idx++) {
-            unsigned i;
-            unsigned j;
+            long i;
+            long j;
             float v;
-            fscanf(fp, "%u %u %f", &i, &j, &v);
+            fscanf(fp, "%ld %ld %f", &i, &j, &v);
 
             row_ptr[i - 1 + 1]++;
             col_ptr[j - 1 + 1]++;
@@ -239,8 +237,6 @@ public:
         mt.val_t = val;
         mt.nbits_val = nbits_val_t;
         mt.nbits_val_t = nbits_val;
-        mt.nbits_weight = nbits_weight_t;
-        mt.nbits_weight_t = nbits_weight;
         mt.col_ptr = row_ptr;
         mt.row_ptr = col_ptr;
         mt.nbits_col_ptr = nbits_row_ptr;
@@ -266,7 +262,8 @@ public:
     float* test_val;
 
     void load(long _rows, long _cols, long _nnz, const char* filename) {
-        unsigned r, c;
+        long r;
+        long c;
         float v;
         rows = _rows;
         cols = _cols;
@@ -278,7 +275,7 @@ public:
 
         FILE* fp = fopen(filename, "r");
         for (long idx = 0; idx < nnz; ++idx) {
-            fscanf(fp, "%u %u %f", &r, &c, &v);
+            fscanf(fp, "%ld %ld %f", &r, &c, &v);
             test_row[idx] = r - 1;
             test_col[idx] = c - 1;
             test_val[idx] = v;

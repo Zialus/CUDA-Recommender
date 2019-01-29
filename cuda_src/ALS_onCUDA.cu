@@ -1,5 +1,4 @@
 #include "ALS_onCUDA.h"
-#include <assert.h>
 
 // CUDA kernel to pause for at least num_cycle cycles
 //__device__ void sleep(int64_t num_cycles) {
@@ -72,7 +71,7 @@ __device__ void inverseMatrix_CholeskyMethod_k(int n, float** A) {
 }
 
 //Multiply matrix M transpose by M 
-__device__ void Mt_byM_multiply_k(int i, int j, float* H, float** Result, const long ptr, const unsigned* idx) {
+__device__ void Mt_byM_multiply_k(long i, long j, float* H, float** Result, const long ptr, const long* idx) {
     float SUM;
     for (int I = 0; I < j; ++I) {
         for (int J = I; J < j; ++J) {
@@ -89,7 +88,7 @@ __device__ void Mt_byM_multiply_k(int i, int j, float* H, float** Result, const 
     }
 }
 
-__global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const unsigned* col_idx, const unsigned* colMajored_sparse_idx, const float* val, const float lambda, const unsigned k, float* W, float* H) {
+__global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const long* col_idx, const long* colMajored_sparse_idx, const float* val, const float lambda, const unsigned k, float* W, float* H) {
     assert(row_ptr);
     assert(colMajored_sparse_idx);
     assert(val);
@@ -180,7 +179,7 @@ __global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const
     }
 }
 
-__global__ void updateH_overW_kernel(const long cols, const long* col_ptr, const unsigned* row_idx, const float* val, const float lambda, const unsigned k, float* W, float* H) {
+__global__ void updateH_overW_kernel(const long cols, const long* col_ptr, const long* row_idx, const float* val, const float lambda, const unsigned k, float* W, float* H) {
     //optimize H over W
     int ii = threadIdx.x + blockIdx.x * blockDim.x;
     for (int Rh = ii; Rh < cols; Rh += blockDim.x * gridDim.x) {
@@ -251,9 +250,9 @@ void kernel_wrapper_als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, paramete
 cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
     long* dev_col_ptr = nullptr;
     long* dev_row_ptr = nullptr;
-    unsigned* dev_row_idx = nullptr;
-    unsigned* dev_col_idx = nullptr;
-    unsigned* dev_colMajored_sparse_idx = nullptr;
+    long* dev_row_idx = nullptr;
+    long* dev_col_idx = nullptr;
+    long* dev_colMajored_sparse_idx = nullptr;
     float* dev_val = nullptr;
     float* dev_W_ = nullptr;
     float* dev_H_ = nullptr;
@@ -273,14 +272,14 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
 
     //Load H and W on vectors
     int indexPosition = 0;
-    for (int i = 0; i < R_C.rows; ++i) {
+    for (long i = 0; i < R_C.rows; ++i) {
         for (int j = 0; j < k; ++j) {
             W_[indexPosition] = W[i][j];
             ++indexPosition;
         }
     }
     indexPosition = 0;
-    for (int i = 0; i < R_C.cols; ++i) {
+    for (long i = 0; i < R_C.cols; ++i) {
         for (int j = 0; j < k; ++j) {
             H_[indexPosition] = H[i][j];
             ++indexPosition;
@@ -365,14 +364,14 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     gpuErrchk(cudaStatus);
 
     indexPosition = 0;
-    for (int i = 0; i < R_C.rows; ++i) {
+    for (long i = 0; i < R_C.rows; ++i) {
         for (int j = 0; j < k; ++j) {
             W[i][j] = W_[indexPosition];
             ++indexPosition;
         }
     }
     indexPosition = 0;
-    for (int i = 0; i < R_C.cols; ++i) {
+    for (long i = 0; i < R_C.cols; ++i) {
         for (int j = 0; j < k; ++j) {
             H[i][j] = H_[indexPosition];
             ++indexPosition;
