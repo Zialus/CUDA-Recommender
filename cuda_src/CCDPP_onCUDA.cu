@@ -101,15 +101,21 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols,
 
 void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
     cudaError_t cudaStatus;
+    // Reset GPU.
+    cudaStatus = cudaDeviceReset();
+    gpuErrchk(cudaStatus);
+    // Choose which GPU to run on, change this on a multi-GPU system.
+    cudaStatus = cudaSetDevice(0);
+    gpuErrchk(cudaStatus);
+
     cudaStatus = ccdpp_NV(R, T, W, H, parameters);
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "ALS FAILED: %s\n", cudaGetErrorString(cudaStatus));
+        fprintf(stderr, "CCD FAILED: %s\n", cudaGetErrorString(cudaStatus));
     }
     cudaStatus = cudaDeviceReset();
     gpuErrchk(cudaStatus);
 }
 
-// Helper function for using CUDA.
 cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
     long* dev_Rcol_ptr = nullptr;
     long* dev_Rrow_idx = nullptr;
@@ -138,13 +144,7 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     size_t nbits_u = R_C.rows * sizeof(float);
     size_t nbits_v = R_C.cols * sizeof(float);
 
-    // Reset GPU.
-    cudaStatus = cudaDeviceReset();
-    gpuErrchk(cudaStatus);
 
-    // Choose which GPU to run on, change this on a multi-GPU system.
-    cudaStatus = cudaSetDevice(0);
-    gpuErrchk(cudaStatus);
 
     // Allocate GPU buffers for all vectors.
     cudaStatus = cudaMalloc((void**) &dev_Rcol_ptr, R_C.nbits_col_ptr);

@@ -239,6 +239,13 @@ __global__ void updateH_overW_kernel(const long cols, const long* col_ptr, const
 
 void kernel_wrapper_als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
     cudaError_t cudaStatus;
+    // Reset GPU.
+    cudaStatus = cudaDeviceReset();
+    gpuErrchk(cudaStatus);
+    // Choose which GPU to run on, change this on a multi-GPU system.
+    cudaStatus = cudaSetDevice(0);
+    gpuErrchk(cudaStatus);
+
     cudaStatus = als_NV(R, T, W, H, parameters);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "ALS FAILED: %s\n", cudaGetErrorString(cudaStatus));
@@ -278,6 +285,7 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
             ++indexPosition;
         }
     }
+
     indexPosition = 0;
     for (long i = 0; i < R_C.cols; ++i) {
         for (int j = 0; j < k; ++j) {
@@ -285,13 +293,6 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
             ++indexPosition;
         }
     }
-
-    // Reset GPU.
-    cudaStatus = cudaDeviceReset();
-    gpuErrchk(cudaStatus);
-    // Choose which GPU to run on, change this on a multi-GPU system.
-    cudaStatus = cudaSetDevice(0);
-    gpuErrchk(cudaStatus);
 
     // Allocate GPU buffers for all vectors.
     cudaStatus = cudaMalloc((void**) &dev_col_ptr, R_C.nbits_col_ptr);
