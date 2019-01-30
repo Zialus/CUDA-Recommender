@@ -15,14 +15,15 @@ __global__ void RankOneUpdate_DUAL_kernel(const long Rcols,
                                           const long* Rrow_idx_t,
                                           const float* Rval_t
 ) {
-    long ii = threadIdx.x + blockIdx.x * blockDim.x;
+    long thread_id = threadIdx.x + blockIdx.x * blockDim.x;
+    long total_threads = blockDim.x * gridDim.x;
 
-    for (long c = ii; c < Rcols; c += blockDim.x * gridDim.x) {
+    for (long c = thread_id; c < Rcols; c += total_threads) {
         v[c] = RankOneUpdate_dev(Rcol_ptr, Rrow_idx, Rval, c, u,
                                  lambda * (Rcol_ptr[c + 1] - Rcol_ptr[c]), do_nmf);
     }
 
-    for (long c = ii; c < Rcols_t; c += blockDim.x * gridDim.x) {
+    for (long c = thread_id; c < Rcols_t; c += total_threads) {
         u[c] = RankOneUpdate_dev(Rcol_ptr_t, Rrow_idx_t, Rval_t, c, v,
                                  lambda * (Rcol_ptr_t[c + 1] - Rcol_ptr_t[c]), do_nmf);
     }
@@ -69,9 +70,10 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols,
                                                 float* Rval_t,
                                                 const bool add_t
 ) {
-    int ii = threadIdx.x + blockIdx.x * blockDim.x;
+    long thread_id = threadIdx.x + blockIdx.x * blockDim.x;
+    long total_threads = blockDim.x * gridDim.x;
 
-    for (int i = ii; i < Rcols; i += blockDim.x * gridDim.x) {
+    for (long i = thread_id; i < Rcols; i += total_threads) {
         if (add) {
             float Htc = Ht_vec_t[i];
             for (long idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx) {
@@ -85,7 +87,7 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols,
         }
     }
 
-    for (int i = ii; i < Rcols_t; i += blockDim.x * gridDim.x) {
+    for (long i = thread_id; i < Rcols_t; i += total_threads) {
         if (add_t) {
             float Htc = Wt_vec_t[i];
             for (long idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx) {
