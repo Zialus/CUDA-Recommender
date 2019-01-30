@@ -18,13 +18,7 @@
 
 #include <omp.h>
 
-#define MALLOC(type, size) (type*)malloc(sizeof(type)*(size))
-#define SIZEBITS(type, size) sizeof(type)*(size)
-
-
-class smat_t;
-
-class testset_t;
+#include "util.h"
 
 typedef std::vector<float> vec_t;
 typedef std::vector<vec_t> mat_t;

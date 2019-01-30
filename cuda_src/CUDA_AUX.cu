@@ -2,7 +2,7 @@
 #include <cuda_runtime_api.h>
 #include <device_launch_parameters.h>
 
-#include "ERROR_CHECKING.h"
+#include "CUDA_AUX.h"
 
 __global__ void
 GPU_rmse(long const* __restrict__ test_row, long const* __restrict__ test_col, float const* __restrict__ test_val,

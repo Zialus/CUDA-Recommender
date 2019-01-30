@@ -8,7 +8,7 @@
 #include <cuda_runtime_api.h>
 #include <device_launch_parameters.h>
 
-#include "ERROR_CHECKING.h"
+#include "CUDA_AUX.h"
 #include "pmf.h"
 
 __device__ void choldc1_k(int n, float** a, float* p);

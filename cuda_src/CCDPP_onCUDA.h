@@ -8,7 +8,7 @@
 #include <cuda_runtime_api.h>
 #include <device_launch_parameters.h>
 
-#include "ERROR_CHECKING.h"
+#include "CUDA_AUX.h"
 #include "pmf.h"
 
 __global__ void RankOneUpdate_DUAL_kernel(unsigned Rcols,
