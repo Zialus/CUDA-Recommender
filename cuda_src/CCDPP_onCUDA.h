@@ -52,9 +52,8 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(long Rcols,
                                                 bool add_t
 );
 
+void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters);
 
 cudaError_t ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters);
-
-void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters);
 
 #endif
