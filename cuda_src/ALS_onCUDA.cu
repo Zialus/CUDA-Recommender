@@ -354,26 +354,21 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
 
     for (int iter = 0; iter < parameters.maxiter; ++iter) {
 
-        //optimize W over H
-        //updateW_overH_HOST(R_C.rows, R_C.row_ptr, R_C.col_idx, R_C.colMajored_sparse_idx, R_C.val, lambda, k, W_, H_);
-        updateW_overH_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.rows, dev_row_ptr, dev_col_idx, dev_colMajored_sparse_idx, dev_val, lambda, k, dev_W_, dev_H_);
+        /********************optimize W over H***************/
+        updateW_overH_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.rows, dev_row_ptr, dev_col_idx,
+                dev_colMajored_sparse_idx, dev_val, lambda, k, dev_W_, dev_H_);
         // Check for any errors launching the kernel
         cudaStatus = cudaGetLastError();
         gpuErrchk(cudaStatus);
-
-
         cudaStatus = cudaDeviceSynchronize();
         gpuErrchk(cudaStatus);
 
-
-        //optimize H over W
-        //updateH_overW_HOST(R_C.cols, R_C.col_ptr, R_C.row_idx, R_C.val, lambda, k, W_, H_);
-        updateH_overW_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_col_ptr, dev_row_idx, dev_val, lambda, k, dev_W_, dev_H_);
+        /*******************optimize H over W****************/
+        updateH_overW_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_col_ptr, dev_row_idx,
+                dev_val, lambda, k, dev_W_, dev_H_);
         // Check for any errors launching the kernel
         cudaStatus = cudaGetLastError();
         gpuErrchk(cudaStatus);
-
-
         cudaStatus = cudaDeviceSynchronize();
         gpuErrchk(cudaStatus);
 
@@ -423,6 +418,7 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
 
     cudaFree(dev_W_);
     cudaFree(dev_H_);
+
     cudaFree(dev_col_ptr);
     cudaFree(dev_row_ptr);
     cudaFree(dev_row_idx);
