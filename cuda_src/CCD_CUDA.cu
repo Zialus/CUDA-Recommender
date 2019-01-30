@@ -1,4 +1,4 @@
-#include "CCDPP_onCUDA.h"
+#include "CCD_CUDA.h"
 
 __global__ void RankOneUpdate_DUAL_kernel(const long Rcols,
                                           const long* Rcol_ptr,

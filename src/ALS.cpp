@@ -1,7 +1,7 @@
 #include "pmf.h"
 #include "tools.h"
 #include "pmf-train.h"
-#include "ALS_onCUDA.h"
+#include "ALS_CUDA.h"
 
 #define kind dynamic,500
 

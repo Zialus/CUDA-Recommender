@@ -1,4 +1,4 @@
-#include "ALS_onCUDA.h"
+#include "ALS_CUDA.h"
 
 // CUDA kernel to pause for at least num_cycle cycles
 //__device__ void sleep(int64_t num_cycles) {
