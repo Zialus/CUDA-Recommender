@@ -20,8 +20,8 @@ GPU_rmse(long const* __restrict__ test_row, long const* __restrict__ test_col, f
 
 
 struct GpuTimer {
-    cudaEvent_t start;
-    cudaEvent_t stop;
+    cudaEvent_t start{};
+    cudaEvent_t stop{};
 
     GpuTimer() {
         cudaEventCreate(&start);

@@ -13,15 +13,15 @@ GPU_rmse(long const* __restrict__ test_row, long const* __restrict__ test_col, f
 
         if (ifALS) {
             for (int t = 0; t < k; t++) {
-                int i = test_row[c];
-                int j = test_col[c];
+                long i = test_row[c];
+                long j = test_col[c];
                 pred_v[c] += W[i * k + t] * H[j * k + t]; //W[i][t] * H[j][t]
 //                pred_v[c] += W[t * rows + i] * H[t * cols + j]; //W[i][t] * H[j][t];
             }
         } else {
             for (int t = 0; t < k; t++) {
-                int i = test_row[c];
-                int j = test_col[c];
+                long i = test_row[c];
+                long j = test_col[c];
                 pred_v[c] += W[t * rows + i] * H[t * cols + j]; //W[t][i] * H[t][j];
 //                pred_v[c] += W[i * t + rows] * H[j * t + cols]; //W[t][i] * H[t][j];
             }
