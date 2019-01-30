@@ -1,8 +1,12 @@
-#ifndef ERROR_CHECKING_H
-#define ERROR_CHECKING_H
+#ifndef CUDA_AUX_H
+#define CUDA_AUX_H
 
 #include <cassert>
 #include <cstdio>
+
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include <device_launch_parameters.h>
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 
@@ -51,4 +55,4 @@ struct GpuTimer {
 
 };
 
-#endif //ERROR_CHECKING_H
+#endif //CUDA_AUX_H

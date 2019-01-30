@@ -1,5 +1,5 @@
-#ifndef ALS_ONCUDA
-#define ALS_ONCUDA
+#ifndef ALS_CUDA_H
+#define ALS_CUDA_H
 
 #include <cstdio>
 #include <cstdlib>
@@ -42,4 +42,4 @@ void kernel_wrapper_als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, paramete
 
 cudaError_t als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters);
 
-#endif
+#endif //ALS_CUDA_H

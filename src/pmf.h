@@ -1,5 +1,5 @@
-#ifndef _PMF_H_
-#define _PMF_H_
+#ifndef PMF_H
+#define PMF_H
 
 #include "pmf_util.h"
 
@@ -40,4 +40,4 @@ public:
     }
 };
 
-#endif
+#endif //PMF_H

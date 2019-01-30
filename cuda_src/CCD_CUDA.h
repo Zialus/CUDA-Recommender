@@ -1,5 +1,5 @@
-#ifndef CCDPP_ONCUDA
-#define CCDPP_ONCUDA
+#ifndef CCD_CUDA_H
+#define CCD_CUDA_H
 
 #include <cstdio>
 #include <cstdlib>
@@ -56,4 +56,4 @@ void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parame
 
 cudaError_t ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters);
 
-#endif
+#endif //CCD_CUDA_H

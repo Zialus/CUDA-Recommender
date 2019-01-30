@@ -1,5 +1,5 @@
-#ifndef _UTIL_H
-#define _UTIL_H
+#ifndef PMF_UTIL_H
+#define PMF_UTIL_H
 
 #include <iostream>
 #include <algorithm>
@@ -285,4 +285,4 @@ public:
 
 };
 
-#endif
+#endif //PMF_UTIL_H
