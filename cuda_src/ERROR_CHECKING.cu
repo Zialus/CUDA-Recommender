@@ -22,9 +22,8 @@ GPU_rmse(long const* __restrict__ test_row, long const* __restrict__ test_col, f
             for (int t = 0; t < k; t++) {
                 int i = test_row[c];
                 int j = test_col[c];
-                pred_v[c] += W[i * t + rows] * H[j * t + cols]; //W[t][i] * H[t][j];
-//                pred_v[c] += W[i * rows + t] * H[j * cols + t]; //W[t][i] * H[t][j], because they are transposed
-
+                pred_v[c] += W[t * rows + i] * H[t * cols + j]; //W[t][i] * H[t][j];
+//                pred_v[c] += W[i * t + rows] * H[j * t + cols]; //W[t][i] * H[t][j];
             }
         }
         rmse[c] = (pred_v[c] - test_val[c]) * (pred_v[c] - test_val[c]);

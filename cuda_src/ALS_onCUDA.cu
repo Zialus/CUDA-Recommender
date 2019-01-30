@@ -334,6 +334,23 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     gpuErrchk(cudaStatus);
 
 
+    float* rmse = (float*) malloc((T.nnz) * sizeof(float));
+
+    long* d_test_row;
+    long* d_test_col;
+    float* d_test_val;
+    float* d_pred_v;
+    float* d_rmse;
+
+    gpuErrchk(cudaMalloc((void**) &d_test_row, (T.nnz + 1) * sizeof(long)));
+    gpuErrchk(cudaMalloc((void**) &d_test_col, (T.nnz + 1) * sizeof(long)));
+    gpuErrchk(cudaMalloc((void**) &d_test_val, (T.nnz + 1) * sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &d_pred_v, (T.nnz + 1) * sizeof(float)));
+    gpuErrchk(cudaMalloc((void**) &d_rmse, (T.nnz + 1) * sizeof(float)));
+
+    gpuErrchk(cudaMemcpy(d_test_row, T.test_row, (T.nnz + 1) * sizeof(long), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_test_col, T.test_col, (T.nnz + 1) * sizeof(long), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_test_val, T.test_val, (T.nnz + 1) * sizeof(float), cudaMemcpyHostToDevice));
 
     for (int iter = 0; iter < parameters.maxiter; ++iter) {
 
@@ -360,7 +377,25 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
         cudaStatus = cudaDeviceSynchronize();
         gpuErrchk(cudaStatus);
 
+        /*********************Check RMSE*********************/
+        gpuErrchk(cudaMemset(d_rmse, 0, (T.nnz + 1) * sizeof(float)));
+        gpuErrchk(cudaMemset(d_pred_v, 0, (T.nnz + 1) * sizeof(float)));
+        GPU_rmse<<<(T.nnz + 1023) / 1024, 1024>>>(d_test_row, d_test_col, d_test_val, d_pred_v, d_rmse,
+                dev_W_, dev_H_, T.nnz, k, R_C.rows, R_C.cols, true);
+        cudaStatus = cudaGetLastError();
+        gpuErrchk(cudaStatus);
+        cudaStatus = cudaDeviceSynchronize();
+        gpuErrchk(cudaStatus);
 
+        float tot_rmse = 0;
+        float f_rmse = 0;
+        gpuErrchk(cudaMemcpy(rmse, d_rmse, (T.nnz + 1) * sizeof(float), cudaMemcpyDeviceToHost));
+
+        for (unsigned i = 0; i < T.nnz; ++i) {
+            tot_rmse += rmse[i];
+        }
+        f_rmse = sqrtf(tot_rmse / T.nnz);
+        printf("iter %d RMSE %f\n", iter+1, f_rmse);
     }
 
     cudaStatus = cudaMemcpy(H_, dev_H_, nbits_H_, cudaMemcpyDeviceToHost);
