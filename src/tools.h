@@ -1,7 +1,7 @@
 #ifndef TOOLS_H
 #define TOOLS_H
 
-#include "util.h"
+#include "pmf_util.h"
 
 void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS);
 void save_mat_t(mat_t A, FILE* fp, bool row_major = true);

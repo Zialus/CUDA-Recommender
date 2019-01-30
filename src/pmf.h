@@ -1,7 +1,7 @@
 #ifndef _PMF_H_
 #define _PMF_H_
 
-#include "util.h"
+#include "pmf_util.h"
 
 enum class solvertype {CCD, ALS};
 
