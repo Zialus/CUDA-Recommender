@@ -220,7 +220,8 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     gpuErrchk(cudaMemcpy(d_test_val, T.test_val, (T.nnz + 1) * sizeof(float), cudaMemcpyHostToDevice));
 
     for (int oiter = 1; oiter <= parameters.maxiter; ++oiter) {
-
+        GpuTimer timer;
+        timer.Start();
         for (int t = 0; t < k; ++t) {
 
             dev_Wt_vec_t = dev_W + t * R_C.rows; //u
@@ -257,7 +258,7 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
             cudaStatus = cudaDeviceSynchronize();
             gpuErrchk(cudaStatus);
         }
-
+        timer.Stop();
         /*********************Check RMSE*********************/
         gpuErrchk(cudaMemset(d_rmse, 0, (T.nnz + 1) * sizeof(float)));
         gpuErrchk(cudaMemset(d_pred_v, 0, (T.nnz + 1) * sizeof(float)));
@@ -276,7 +277,7 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
             tot_rmse += rmse[i];
         }
         f_rmse = sqrtf(tot_rmse / T.nnz);
-        printf("iter %d RMSE %f\n", oiter+1, f_rmse);
+        printf("iter %d RMSE %f time %f\n", oiter, f_rmse, timer.Elapsed());
     }
 
     cudaStatus = cudaMemcpy(H_, dev_H, nbits_H_, cudaMemcpyDeviceToHost);

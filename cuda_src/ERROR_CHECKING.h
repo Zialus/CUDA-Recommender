@@ -18,4 +18,37 @@ GPU_rmse(long const* __restrict__ test_row, long const* __restrict__ test_col, f
          float* __restrict__ pred_v, float* __restrict__ rmse, float const* __restrict__ W,
          float const* __restrict__ H, int m, int k, int rows, int cols, bool ifALS);
 
+
+struct GpuTimer {
+    cudaEvent_t start;
+    cudaEvent_t stop;
+
+    GpuTimer() {
+        cudaEventCreate(&start);
+        cudaEventCreate(&stop);
+    }
+
+    ~GpuTimer() {
+        cudaEventDestroy(start);
+        cudaEventDestroy(stop);
+    }
+
+    void Start() {
+        cudaEventRecord(start, nullptr);
+    }
+
+    void Stop() {
+        cudaEventRecord(stop, nullptr);
+    }
+
+
+    float Elapsed() {
+        float miliseconds;
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&miliseconds, start, stop);
+        return miliseconds / 1000;
+    }
+
+};
+
 #endif //ERROR_CHECKING_H
