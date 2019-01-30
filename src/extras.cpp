@@ -116,24 +116,6 @@ parameter parse_command_line(int argc, char** argv) {
     return param;
 }
 
-void run_ccdr1(parameter& param, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
-    puts("----------=CCD START=------");
-    double time1 = omp_get_wtime();
-    ccdr1(R, W, H, T, param);
-    double time2 = omp_get_wtime();
-    printf("CCD run time: %lf secs\n", time2 - time1);
-    puts("----------=CCD END=--------");
-}
-
-void run_ALS(parameter& param, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
-    puts("----------=ALS START=------");
-    double time1 = omp_get_wtime();
-    ALS(R, W, H, T, param);
-    double time2 = omp_get_wtime();
-    printf("ALS run time: %lf secs\n", time2 - time1);
-    puts("----------=ALS END=--------");
-}
-
 void calculate_rmse(FILE* model_fp, FILE* test_fp, FILE* output_fp) {
 
     rewind(model_fp);

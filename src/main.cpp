@@ -1,4 +1,46 @@
 #include "extras.h"
+#include "ALS_CUDA.h"
+#include "CCD_CUDA.h"
+#include "ALS.h"
+#include "CCD.h"
+
+void ccdr1(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
+
+    if (param.enable_cuda) {
+        printf("CUDA enabled version.\n");
+        kernel_wrapper_ccdpp_NV(R, T, W, H, param);
+    } else {
+        ccdr1_OMP(R, W, H, T, param);
+    }
+}
+
+void ALS(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
+    if (param.enable_cuda) {
+        printf("CUDA enabled version.\n");
+        kernel_wrapper_als_NV(R, T, W, H, param);
+    } else {
+        ALS_OMP(R, W, H, T, param);
+    }
+}
+
+void run_ccdr1(parameter& param, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
+    puts("----------=CCD START=------");
+    double time1 = omp_get_wtime();
+    ccdr1(R, W, H, T, param);
+    double time2 = omp_get_wtime();
+    printf("CCD run time: %lf secs\n", time2 - time1);
+    puts("----------=CCD END=--------");
+}
+
+void run_ALS(parameter& param, smat_t& R, mat_t& W, mat_t& H, testset_t& T) {
+    puts("----------=ALS START=------");
+    double time1 = omp_get_wtime();
+    ALS(R, W, H, T, param);
+    double time2 = omp_get_wtime();
+    printf("ALS run time: %lf secs\n", time2 - time1);
+    puts("----------=ALS END=--------");
+}
+
 
 int main(int argc, char* argv[]) {
     auto t7 = std::chrono::high_resolution_clock::now();

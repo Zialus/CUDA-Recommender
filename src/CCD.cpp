@@ -1,5 +1,5 @@
 #include "extras.h"
-#include "CCD_CUDA.h"
+#include "CCD.h"
 
 #define kind dynamic,500
 
@@ -17,7 +17,6 @@ inline float RankOneUpdate_Original_float(const smat_t& R, const long j, const v
     }
     return newvj;
 }
-
 
 inline float UpdateRating_Original_float(smat_t& R, const vec_t& Wt, const vec_t& Ht, bool add) {
     float loss = 0;
@@ -43,17 +42,6 @@ inline float UpdateRating_Original_float(smat_t& R, const vec_t& Wt, const vec_t
             loss += loss_inner;
         }
         return loss;
-    }
-}
-
-
-void ccdr1(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
-
-    if (param.enable_cuda) {
-        printf("CUDA enabled version.\n");
-        kernel_wrapper_ccdpp_NV(R, T, W, H, param);
-    } else {
-        ccdr1_OMP(R, W, H, T, param);
     }
 }
 

@@ -1,5 +1,5 @@
 #include "extras.h"
-#include "ALS_CUDA.h"
+#include "ALS.h"
 
 #define kind dynamic,500
 
@@ -75,16 +75,6 @@ void Mt_byM_multiply(int i, int j, float** M, float** Result) {
             Result[J][I] = SUM;
             Result[I][J] = SUM;
         }
-    }
-}
-
-
-void ALS(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
-    if (param.enable_cuda) {
-        printf("CUDA enabled version.\n");
-        kernel_wrapper_als_NV(R, T, W, H, param);
-    } else {
-        ALS_OMP(R, W, H, T, param);
     }
 }
 
