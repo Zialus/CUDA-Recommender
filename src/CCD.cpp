@@ -1,6 +1,6 @@
 #include "pmf.h"
 #include "tools.h"
-#include "pmf-train.h"
+#include "main.h"
 #include "CCD_CUDA.h"
 
 #define kind dynamic,500
@@ -55,12 +55,11 @@ void ccdr1(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
         printf("CUDA enabled version.\n");
         kernel_wrapper_ccdpp_NV(R, T, W, H, param);
     } else {
-        ccdr1_original_float(R, W, H, T, param);
+        ccdr1_OMP(R, W, H, T, param);
     }
 }
 
-
-void ccdr1_original_float(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
+void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
     int k = param.k;
     float lambda = param.lambda;
 

@@ -1,6 +1,6 @@
 #include "pmf.h"
 #include "tools.h"
-#include "pmf-train.h"
+#include "main.h"
 #include "ALS_CUDA.h"
 
 #define kind dynamic,500
@@ -80,16 +80,17 @@ void Mt_byM_multiply(int i, int j, float** M, float** Result) {
     }
 }
 
+
 void ALS(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
     if (param.enable_cuda) {
         printf("CUDA enabled version.\n");
         kernel_wrapper_als_NV(R, T, W, H, param);
     } else {
-        ALS_multicore(R, W, H, T, param);
+        ALS_OMP(R, W, H, T, param);
     }
 }
 
-void ALS_multicore(smat_t& R, mat_t& W, mat_t& H, testset_t &T, parameter& param) {
+void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
     int k = param.k;
 
     int num_threads_old = omp_get_num_threads();

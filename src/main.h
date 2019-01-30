@@ -6,11 +6,11 @@ void generate_file_pointers(const parameter& param, char* test_file_name, char* 
 
 void ccdr1(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param);
 
-void ccdr1_original_float(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param);
+void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param);
 
 void ALS(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param);
 
-void ALS_multicore(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param);
+void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param);
 
 void calculate_rmse(FILE* model_fp, FILE* test_fp, FILE* output_fp);
 

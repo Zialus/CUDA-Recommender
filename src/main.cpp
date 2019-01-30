@@ -1,6 +1,6 @@
 #include "pmf.h"
 #include "tools.h"
-#include "pmf-train.h"
+#include "main.h"
 
 void exit_with_help() {
     printf(
