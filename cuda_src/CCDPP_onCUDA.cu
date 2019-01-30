@@ -117,18 +117,9 @@ void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parame
 }
 
 cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
-    long* dev_Rcol_ptr = nullptr;
-    long* dev_Rrow_idx = nullptr;
-    long* dev_Rcol_ptr_T = nullptr;
-    long* dev_Rrow_idx_T = nullptr;
-    float* dev_Rval = nullptr;
-    float* dev_Rval_t = nullptr;
-    float* dev_Wt_vec_t = nullptr; //u
-    float* dev_Ht_vec_t = nullptr; //v
-
-
     unsigned nThreadsPerBlock = parameters.nThreadsPerBlock;
     unsigned nBlocks = parameters.nBlocks;
+
     cudaError_t cudaStatus;
 
     int k = parameters.k;
@@ -138,15 +129,52 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     smat_t Rt;
     Rt = R_C.transpose();
 
-    // H is a zero matrix now.
-    for (int t = 0; t < k; ++t) { for (long c = 0; c < R_C.cols; ++c) { H[t][c] = 0; }}
+    long* dev_Rcol_ptr = nullptr;
+    long* dev_Rrow_idx = nullptr;
+    long* dev_Rcol_ptr_T = nullptr;
+    long* dev_Rrow_idx_T = nullptr;
+    float* dev_Rval = nullptr;
+    float* dev_Rval_t = nullptr;
 
-    size_t nbits_u = R_C.rows * sizeof(float);
-    size_t nbits_v = R_C.cols * sizeof(float);
+    float* dev_Wt_vec_t = nullptr; //u
+    float* dev_Ht_vec_t = nullptr; //v
+
+    float* dev_W = nullptr;
+    float* dev_H = nullptr;
+
+    size_t nbits_W_ = R_C.rows * k * sizeof(float);
+    float* W_ = (float*) malloc(nbits_W_);
+    size_t nbits_H_ = R_C.cols * k * sizeof(float);
+    float* H_ = (float*) malloc(nbits_H_);
+
+    int indexPosition = 0;
+    for (long i = 0; i < k; ++i) {
+        for (int j = 0; j < R_C.rows; ++j) {
+            W_[indexPosition] = W[i][j];
+            ++indexPosition;
+        }
+    }
+
+//    indexPosition = 0;
+//    for (long i = 0; i < k; ++i) {
+//        for (int j = 0; j < R_C.cols; ++j) {
+//            H_[indexPosition] = H[i][j];
+//            ++indexPosition;
+//        }
+//    }
+
+    cudaStatus = cudaMalloc((void**) &dev_W, nbits_W_);
+    gpuErrchk(cudaStatus);
+    cudaStatus = cudaMalloc((void**) &dev_H, nbits_H_);
+    gpuErrchk(cudaStatus);
+
+    cudaStatus = cudaMemcpy(dev_W, W_, nbits_W_, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaStatus);
+    cudaStatus = cudaMemset(dev_H, 0, nbits_H_);
+//    cudaStatus = cudaMemcpy(dev_H, H_, nbits_H_, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaStatus);
 
 
-
-    // Allocate GPU buffers for all vectors.
     cudaStatus = cudaMalloc((void**) &dev_Rcol_ptr, R_C.nbits_col_ptr);
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**) &dev_Rrow_idx, R_C.nbits_row_idx);
@@ -159,16 +187,7 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**) &dev_Rval_t, Rt.nbits_val);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_Wt_vec_t, nbits_u);
-    gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_Ht_vec_t, nbits_v);
-    gpuErrchk(cudaStatus);
 
-    // Copy all vectors to GPU buffers.
-    cudaStatus = cudaMemcpy(dev_Rval, R_C.val, R_C.nbits_val, cudaMemcpyHostToDevice);
-    gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_Rval_t, Rt.val, Rt.nbits_val, cudaMemcpyHostToDevice);
-    gpuErrchk(cudaStatus);
     cudaStatus = cudaMemcpy(dev_Rcol_ptr, R_C.col_ptr, R_C.nbits_col_ptr, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMemcpy(dev_Rrow_idx, R_C.row_idx, R_C.nbits_row_idx, cudaMemcpyHostToDevice);
@@ -177,19 +196,18 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMemcpy(dev_Rrow_idx_T, Rt.row_idx, Rt.nbits_row_idx, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
+    cudaStatus = cudaMemcpy(dev_Rval, R_C.val, R_C.nbits_val, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaStatus);
+    cudaStatus = cudaMemcpy(dev_Rval_t, Rt.val, Rt.nbits_val, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaStatus);
 
 
     for (int oiter = 1; oiter <= parameters.maxiter; ++oiter) {
 
         for (int t = 0; t < k; ++t) {
 
-            float* Wt = &W[t][0];
-            float* Ht = &H[t][0];
-
-            cudaStatus = cudaMemcpy(dev_Wt_vec_t, Wt, nbits_u, cudaMemcpyHostToDevice);
-            gpuErrchk(cudaStatus);
-            cudaStatus = cudaMemcpy(dev_Ht_vec_t, Ht, nbits_v, cudaMemcpyHostToDevice);
-            gpuErrchk(cudaStatus);
+            dev_Wt_vec_t = dev_W + t * R_C.rows; //u
+            dev_Ht_vec_t = dev_H + t * R_C.cols; //v
 
             if (oiter > 1) {
                 UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
@@ -210,11 +228,6 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
                 gpuErrchk(cudaStatus);
             }
 
-            cudaStatus = cudaMemcpy(Wt, dev_Wt_vec_t, nbits_u, cudaMemcpyDeviceToHost);
-            gpuErrchk(cudaStatus);
-            cudaStatus = cudaMemcpy(Ht, dev_Ht_vec_t, nbits_v, cudaMemcpyDeviceToHost);
-            gpuErrchk(cudaStatus);
-
             UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
                     dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, false, Rt.cols,
                     dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, false);
@@ -222,8 +235,31 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
             cudaStatus = cudaDeviceSynchronize();
             gpuErrchk(cudaStatus);
         }
+
     }
 
+    cudaStatus = cudaMemcpy(H_, dev_H, nbits_H_, cudaMemcpyDeviceToHost);
+    gpuErrchk(cudaStatus);
+    cudaStatus = cudaMemcpy(W_, dev_W, nbits_W_, cudaMemcpyDeviceToHost);
+    gpuErrchk(cudaStatus);
+
+    indexPosition = 0;
+    for (long i = 0; i < k; ++i) {
+        for (int j = 0; j < R_C.rows; ++j) {
+            W[i][j] = W_[indexPosition];
+            ++indexPosition;
+        }
+    }
+    indexPosition = 0;
+    for (long i = 0; i < k; ++i) {
+        for (int j = 0; j < R_C.cols; ++j) {
+            H[i][j] = H_[indexPosition];
+            ++indexPosition;
+        }
+    }
+
+    free(W_);
+    free(H_);
 
     cudaFree(dev_Rcol_ptr);
     cudaFree(dev_Rrow_idx);
@@ -231,8 +267,6 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     cudaFree(dev_Rrow_idx_T);
     cudaFree(dev_Rval);
     cudaFree(dev_Rval_t);
-    cudaFree(dev_Wt_vec_t);
-    cudaFree(dev_Ht_vec_t);
 
     return cudaStatus;
 }

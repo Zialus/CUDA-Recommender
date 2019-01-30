@@ -255,29 +255,30 @@ void kernel_wrapper_als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, paramete
 }
 
 cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
+    int nThreadsPerBlock = parameters.nThreadsPerBlock;
+    int nBlocks = parameters.nBlocks;
+
+    cudaError_t cudaStatus;
+
+    float lambda = parameters.lambda;
+    int k = parameters.k;
+
     long* dev_col_ptr = nullptr;
     long* dev_row_ptr = nullptr;
     long* dev_row_idx = nullptr;
     long* dev_col_idx = nullptr;
     long* dev_colMajored_sparse_idx = nullptr;
     float* dev_val = nullptr;
+
     float* dev_W_ = nullptr;
     float* dev_H_ = nullptr;
 
-    int nThreadsPerBlock = parameters.nThreadsPerBlock;
-    int nBlocks = parameters.nBlocks;
 
-    cudaError_t cudaStatus;
-    int maxIter = parameters.maxiter;
-    float lambda = parameters.lambda;
-    int k = parameters.k;
-
-    float* W_ = (float*) malloc(R_C.rows * k * sizeof(float));
     size_t nbits_W_ = R_C.rows * k * sizeof(float);
-    float* H_ = (float*) malloc(R_C.cols * k * sizeof(float));
+    float* W_ = (float*) malloc(nbits_W_);
     size_t nbits_H_ = R_C.cols * k * sizeof(float);
+    float* H_ = (float*) malloc(nbits_H_);
 
-    //Load H and W on vectors
     int indexPosition = 0;
     for (long i = 0; i < R_C.rows; ++i) {
         for (int j = 0; j < k; ++j) {
@@ -294,7 +295,17 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
         }
     }
 
-    // Allocate GPU buffers for all vectors.
+    cudaStatus = cudaMalloc((void**) &dev_W_, nbits_W_);
+    gpuErrchk(cudaStatus);
+    cudaStatus = cudaMalloc((void**) &dev_H_, nbits_H_);
+    gpuErrchk(cudaStatus);
+
+    cudaStatus = cudaMemcpy(dev_W_, W_, nbits_W_, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaStatus);
+    cudaStatus = cudaMemcpy(dev_H_, H_, nbits_H_, cudaMemcpyHostToDevice);
+    gpuErrchk(cudaStatus);
+
+
     cudaStatus = cudaMalloc((void**) &dev_col_ptr, R_C.nbits_col_ptr);
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**) &dev_row_ptr, R_C.nbits_row_ptr);
@@ -306,10 +317,6 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     cudaStatus = cudaMalloc((void**) &dev_colMajored_sparse_idx, R_C.nbits_colMajored_sparse_idx);
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**) &dev_val, R_C.nbits_val);
-    gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_W_, nbits_W_ * sizeof(float));
-    gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_H_, nbits_H_ * sizeof(float));
     gpuErrchk(cudaStatus);
 
 
@@ -325,13 +332,10 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMemcpy(dev_val, R_C.val, R_C.nbits_val, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_W_, W_, nbits_W_, cudaMemcpyHostToDevice);
-    gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_H_, H_, nbits_H_, cudaMemcpyHostToDevice);
-    gpuErrchk(cudaStatus);
 
 
-    for (int iter = 0; iter < maxIter; ++iter) {
+
+    for (int iter = 0; iter < parameters.maxiter; ++iter) {
 
         //optimize W over H
         //updateW_overH_HOST(R_C.rows, R_C.row_ptr, R_C.col_idx, R_C.colMajored_sparse_idx, R_C.val, lambda, k, W_, H_);
@@ -382,14 +386,14 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     free(W_);
     free(H_);
 
-    cudaFree(dev_colMajored_sparse_idx);
-    cudaFree(dev_col_idx);
-    cudaFree(dev_col_ptr);
-    cudaFree(dev_H_);
-    cudaFree(dev_row_idx);
-    cudaFree(dev_row_ptr);
-    cudaFree(dev_val);
     cudaFree(dev_W_);
+    cudaFree(dev_H_);
+    cudaFree(dev_col_ptr);
+    cudaFree(dev_row_ptr);
+    cudaFree(dev_row_idx);
+    cudaFree(dev_col_idx);
+    cudaFree(dev_colMajored_sparse_idx);
+    cudaFree(dev_val);
 
     return cudaStatus;
 }
