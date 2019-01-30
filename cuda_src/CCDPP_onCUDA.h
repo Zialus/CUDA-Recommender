@@ -15,6 +15,7 @@ __global__ void RankOneUpdate_DUAL_kernel(unsigned Rcols,
                                           const long* Rcol_ptr,
                                           const long* Rrow_idx,
                                           const float* Rval,
+
                                           float* u,
                                           float* v,
                                           float lambda,
@@ -29,6 +30,7 @@ __global__ void RankOneUpdate_DUAL_kernel(unsigned Rcols,
 __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
                                    const long* Rrow_idx,
                                    const float* Rval,
+
                                    long j,
                                    const float* u_vec_t,
 
