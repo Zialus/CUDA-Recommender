@@ -1,6 +1,4 @@
-#include "pmf.h"
-#include "tools.h"
-#include "main.h"
+#include "extras.h"
 #include "CCD_CUDA.h"
 
 #define kind dynamic,500
