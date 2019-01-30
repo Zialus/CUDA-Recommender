@@ -15,9 +15,7 @@ __global__ void RankOneUpdate_DUAL_kernel(const long Rcols,
                                           const long* Rrow_idx_t,
                                           const float* Rval_t
 ) {
-
     long ii = threadIdx.x + blockIdx.x * blockDim.x;
-
 
     for (long c = ii; c < Rcols; c += blockDim.x * gridDim.x) {
         v[c] = RankOneUpdate_dev(Rcol_ptr, Rrow_idx, Rval, c, u,
@@ -41,14 +39,15 @@ __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
                                    const float lambda,
                                    const int do_nmf
 ) {
-
     float g = 0, h = lambda;
     if (Rcol_ptr[j + 1] == Rcol_ptr[j]) { return 0; }
+
     for (long idx = Rcol_ptr[j]; idx < Rcol_ptr[j + 1]; ++idx) {
         long i = Rrow_idx[idx];
         g += u_vec_t[i] * Rval[idx];
         h += u_vec_t[i] * u_vec_t[i];
     }
+
     float newvj = g / h;
     if (do_nmf > 0 & newvj < 0) {
         newvj = 0;
