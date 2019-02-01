@@ -1,12 +1,34 @@
 #include "extras.h"
 
+void open_files(const char* test_file_name, const char* model_file_name, const char* output_file_name, FILE*& test_fp,
+                FILE*& output_fp, FILE*& model_fp) {
+    test_fp = fopen(test_file_name, "r");
+    output_fp = fopen(output_file_name, "w+b");
+    model_fp = fopen(model_file_name, "w+b");
+
+    if (test_fp == nullptr) {
+        fprintf(stderr, "can't open test file %s\n", test_file_name);
+        exit(EXIT_FAILURE);
+    }
+
+    if (output_fp == nullptr) {
+        fprintf(stderr, "can't open output file %s\n", output_file_name);
+        exit(EXIT_FAILURE);
+    }
+
+    if (model_fp == nullptr) {
+        fprintf(stderr, "can't open model file %s\n", model_file_name);
+        exit(EXIT_FAILURE);
+    }
+}
+
 void generate_file_pointers(const parameter& param, char* test_file_name, char* train_file_name, char* model_file_name,
                             char* output_file_name) {
     char meta_filename[1024];
     sprintf(meta_filename, "%s/meta", param.src_dir);
     FILE* fp = fopen(meta_filename, "r");
     if (fp == nullptr) {
-        printf("Can't open meta input file.\n");
+        fprintf(stderr, "Can't open meta input file %s\n", meta_filename);
         exit(EXIT_FAILURE);
     }
 
