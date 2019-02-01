@@ -84,6 +84,9 @@ parameter parse_command_line(int argc, char** argv) {
         } else if (strcmp(argv[i - 1], "-CUDA") == 0) {
             param.enable_cuda = true;
             --i;
+        } else if (strcmp(argv[i - 1], "-OMP") == 0) {
+            param.enable_omp = true;
+            --i;
         } else if (strcmp(argv[i - 1], "-ALS") == 0) {
             param.solver_type = solvertype::ALS;
             --i;
@@ -138,13 +141,13 @@ parameter parse_command_line(int argc, char** argv) {
     return param;
 }
 
-void calculate_rmse(FILE* model_fp, FILE* test_fp, FILE* output_fp) {
+void calculate_rmse_from_file(FILE* model_fp, FILE* test_fp, FILE* output_fp) {
 
     rewind(model_fp);
     rewind(test_fp);
     rewind(output_fp);
 
-    double time = omp_get_wtime();
+    double start = omp_get_wtime();
 
     mat_t W = load_mat_t(model_fp, true);
     mat_t H = load_mat_t(model_fp, true);
@@ -172,12 +175,12 @@ void calculate_rmse(FILE* model_fp, FILE* test_fp, FILE* output_fp) {
     }
 
     rmse = sqrt(rmse / num_insts);
-    printf("Test RMSE = %f , calculated in %lfs\n", rmse, omp_get_wtime() - time);
+    double end = omp_get_wtime();
+    printf("[FINAL INFO] Test RMSE = %f. Calculated in %lfs\n", rmse, end - start);
 }
 
-void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int iter, int rank, bool ifALS) {
-
-    double time = omp_get_wtime();
+void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int rank, bool ifALS) {
+    double start = omp_get_wtime();
 
     double rmse = 0;
     size_t num_insts = 0;
@@ -207,14 +210,29 @@ void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int iter, int ran
     }
 
     rmse = sqrt(rmse / num_insts);
-    printf("Test RMSE = %f , for iter %d, calculated in %lfs\n", rmse, iter, omp_get_wtime() - time);
+    double end = omp_get_wtime();
+
+    printf("Test RMSE = %lf. Calculated in %lfs\n", rmse, end - start);
 }
 
-void read_input(const parameter& param, smat_t& R, testset_t& T, bool ifALS) {
-    puts("----------=INPUT START=------");
-    double time1 = omp_get_wtime();
-    load(param.src_dir, R, T, ifALS);
-    double time2 = omp_get_wtime();
-    printf("Input loaded in: %lf secs\n", time2 - time1);
-    puts("----------=INPUT END=--------");
+void golden_compare(mat_t W, mat_t W_ref, unsigned k, unsigned m) {
+    unsigned error_count = 0;
+    for (unsigned i = 0; i < k; i++) {
+        for (unsigned j = 0; j < m; j++) {
+            double delta = fabs(W[i][j] - W_ref[i][j]);
+            if (delta > 0.1 * fabs(W_ref[i][j])) {
+//                std::cout << i << "|" << j << " = " << delta << "\n\t";
+//                std::cout << W[i][j] << "\n\t" << W_ref[i][j];
+//                std::cout << std::endl;
+                error_count++;
+            }
+        }
+    }
+    if (error_count == 0) {
+        std::cout << "Check... PASS!" << std::endl;
+    } else {
+        unsigned entries = k * m;
+        double error_percentage = 100 * (double) error_count / entries;
+        printf("Check... NO PASS! [%.4f%%] #Error = %u out of %u entries.\n", error_percentage, error_count, entries);
+    }
 }

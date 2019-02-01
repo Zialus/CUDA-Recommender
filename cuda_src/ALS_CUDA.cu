@@ -402,7 +402,7 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
         rmse_timer.Stop();
 
         float rmse_time = rmse_timer.Elapsed();
-        printf("[INFO] iter %d \tupdate_time %.4f|%.4fs \tRMSE=%f time:%f \n", iter, update_time, update_time_acc, f_rmse, rmse_time);
+        printf("[-INFO-] iteration num %d \tupdate_time %.4lf|%.4lfs \tRMSE=%lf time:%fs\n", iter, update_time, update_time_acc, f_rmse, rmse_time);
     }
 
     cudaStatus = cudaMemcpy(H_, dev_H_, nbits_H_, cudaMemcpyDeviceToHost);

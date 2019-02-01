@@ -84,7 +84,11 @@ void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
     int num_threads_old = omp_get_num_threads();
     omp_set_num_threads(param.threads);
 
+    double update_time_acc = 0;
+
     for (int iter = 0; iter < param.maxiter; ++iter) {
+
+        double start = omp_get_wtime();
 
         //optimize W over H
 #pragma omp parallel for schedule(kind)
@@ -210,9 +214,17 @@ void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
                 }
             }
         }
-        calculate_rmse_directly(W, H, T, iter, param.k, true);
+        double end = omp_get_wtime();
+        double update_time = end - start;
+        update_time_acc+=update_time;
+
+        start = omp_get_wtime();
         double rmse = calrmse(T, W, H, true, true);
-        printf("Test RMSE = %f , iteration number %d\n", rmse, iter);
+        end = omp_get_wtime();
+        double rmse_timer = end - start;
+
+        printf("[-INFO-] iteration num %d \tupdate_time %.4lf|%.4lfs \tRMSE=%lf time:%fs\n", iter+1, update_time, update_time_acc, rmse, rmse_timer);
+
     }
     omp_set_num_threads(num_threads_old);
 }

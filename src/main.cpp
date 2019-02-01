@@ -4,6 +4,32 @@
 #include "ALS.h"
 #include "CCD.h"
 
+void runCUDA(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters, bool ALS) {
+    if (ALS) {
+        kernel_wrapper_als_NV(R, T, W, H, parameters);
+    } else {
+        kernel_wrapper_ccdpp_NV(R, T, W, H, parameters);
+    }
+}
+
+void runOMP(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters, bool ALS) {
+    if (ALS) {
+        ALS_OMP(R, W, H, T, parameters);
+    } else {
+        ccdr1_OMP(R, W, H, T, parameters);
+    }
+}
+
+void read_input(const parameter& param, smat_t& R, testset_t& T, bool ifALS) {
+    puts("------------------------------------------------------------");
+    puts("[info] Loading R matrix...");
+    double time1 = omp_get_wtime();
+    load(param.src_dir, R, T, ifALS);
+    double time2 = omp_get_wtime();
+    printf("[info] Loading rating data time: %lf s.\n", time2 - time1);
+    puts("------------------------------------------------------------");
+}
+
 int main(int argc, char* argv[]) {
     auto t7 = std::chrono::high_resolution_clock::now();
 
@@ -15,8 +41,7 @@ int main(int argc, char* argv[]) {
     char output_file_name[2048];
 
     generate_file_pointers(param, test_file_name, train_file_name, model_file_name, output_file_name);
-    printf("input: %s | model: %s | test: %s | output: %s\n",
-           train_file_name, model_file_name, test_file_name, output_file_name);
+//    printf("input: %s | model: %s | test: %s | output: %s\n", train_file_name, model_file_name, test_file_name, output_file_name);
 
     FILE* test_fp;
     FILE* output_fp;
@@ -27,8 +52,8 @@ int main(int argc, char* argv[]) {
     smat_t R;
     testset_t T;
 
-    mat_t W;
-    mat_t H;
+    mat_t W_cuda;
+    mat_t H_cuda;
 
     mat_t W_ref;
     mat_t H_ref;
@@ -37,58 +62,29 @@ int main(int argc, char* argv[]) {
 
     switch (param.solver_type) {
         case solvertype::CCD: {
-            read_input(param, R, T, false);
+            ifALS = false;
+            puts("Picked Version: CCD!");
+            read_input(param, R, T, ifALS);
 
-            initial_col(W, param.k, R.rows);
-            initial_col(H, param.k, R.cols);
+            initial_col(W_cuda, param.k, R.rows);
+            initial_col(H_cuda, param.k, R.cols);
 
             initial_col(W_ref, param.k, R.rows);
             initial_col(H_ref, param.k, R.cols);
 
-            printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
-
-            puts("----------=CCD CUDA START=------");
-            if (param.enable_cuda) {
-                double time1 = omp_get_wtime();
-                kernel_wrapper_ccdpp_NV(R, T, W, H, param);
-                double time2 = omp_get_wtime();
-                printf("CCD CUDA run time: %lf secs\n", time2 - time1);
-            }
-            puts("----------=CCD non-CUDA START=------");
-            double time1 = omp_get_wtime();
-            ccdr1_OMP(R, W_ref, H_ref, T, param);
-            double time2 = omp_get_wtime();
-            printf("CCD non-CUDA run time: %lf secs\n", time2 - time1);
-
-            ifALS = false;
             break;
         }
         case solvertype::ALS: {
-            read_input(param, R, T, true);
+            ifALS = true;
+            puts("Picked Version: ALS!");
+            read_input(param, R, T, ifALS);
 
-            initial_col(W, R.rows, param.k);
-            initial_col(H, R.cols, param.k);
+            initial_col(W_cuda, R.rows, param.k);
+            initial_col(H_cuda, R.cols, param.k);
 
             initial_col(W_ref, R.rows, param.k);
             initial_col(H_ref, R.cols, param.k);
 
-            printf("global mean %g W_0 %g\n", R.get_global_mean(), norm(W[0]));
-
-            puts("----------=ALS CUDA START=------");
-            if (param.enable_cuda) {
-                double time1 = omp_get_wtime();
-                printf("CUDA enabled version.\n");
-                kernel_wrapper_als_NV(R, T, W, H, param);
-                double time2 = omp_get_wtime();
-                printf("ALS CUDA run time: %lf secs\n", time2 - time1);
-            }
-            puts("----------=ALS non-CUDA START=------");
-            double time1 = omp_get_wtime();
-            ALS_OMP(R, W_ref, H_ref, T, param);
-            double time2 = omp_get_wtime();
-            printf("ALS non-CUDA run time: %lf secs\n", time2 - time1);
-
-            ifALS = true;
             break;
         }
         default: {
@@ -97,22 +93,51 @@ int main(int argc, char* argv[]) {
         }
     }
 
-//    calculate_rmse_directly(W, H, T, 5, param.k, ifALS);
+    printf("global mean %g\n", R.get_global_mean());
 
-    save_mat_t(W, model_fp, ifALS);
-    save_mat_t(H, model_fp, ifALS);
+    if (param.enable_cuda) {
+        puts("------------------------------------------------------------");
+        puts("[INFO] Computing with CUDA...");
+        double time1 = omp_get_wtime();
+        runCUDA(R, T, W_cuda, H_cuda, param, ifALS);
+        double time2 = omp_get_wtime();
+        printf("[info] CUDA Training time: %lf s.\n", time2 - time1);
+        puts("------------------------------------------------------------");
+        calculate_rmse_directly(W_cuda, H_cuda, T, param.k, ifALS);
+    }
+    if (param.enable_omp) {
+        puts("------------------------------------------------------------");
+        puts("[INFO] Computing with OMP...");
+        double time1 = omp_get_wtime();
+        runOMP(R, T, W_ref, H_ref, param, ifALS);
+        double time2 = omp_get_wtime();
+        printf("[info] OMP Training time: %lf s.\n", time2 - time1);
+        puts("------------------------------------------------------------");
+        calculate_rmse_directly(W_ref, H_ref, T, param.k, ifALS);
+        puts("------------------------------------------------------------");
+    }
 
-    calculate_rmse(model_fp, test_fp, output_fp);
+    std::cout << "[info] validate the results." << std::endl;
+    if (ifALS) {
+        golden_compare(W_cuda, W_ref, R.rows, param.k);
+        golden_compare(H_cuda, H_ref, R.cols, param.k);
+    } else {
+        golden_compare(W_cuda, W_ref, param.k, R.rows);
+        golden_compare(H_cuda, H_ref, param.k, R.cols);
+    }
 
+    save_mat_t(W_cuda, model_fp, ifALS);
+    save_mat_t(H_cuda, model_fp, ifALS);
+
+    calculate_rmse_from_file(model_fp, test_fp, output_fp);
     fclose(model_fp);
     fclose(output_fp);
     fclose(test_fp);
 
+    puts("------------------------------------------------------------");
     auto t8 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> deltaT78 = t8 - t7;
-    printf("Total Time: %lf!\n", deltaT78.count());
+    printf("Total Time: %.4fs.\n", deltaT78.count());
 
     return EXIT_SUCCESS;
 }
-
-

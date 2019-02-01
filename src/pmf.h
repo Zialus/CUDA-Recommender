@@ -18,6 +18,7 @@ public:
     int verbose;
     int do_nmf;
     bool enable_cuda;
+    bool enable_omp;
     unsigned nBlocks;
     unsigned nThreadsPerBlock;
     char src_dir[1024];
@@ -34,6 +35,7 @@ public:
         verbose = 0;
         do_nmf = 0;  // non-negative matrix factorization
         enable_cuda = false;
+        enable_omp = false;
         nBlocks = 32;
         nThreadsPerBlock = 256;
         sprintf(src_dir, "../data/simple");

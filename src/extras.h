@@ -15,10 +15,10 @@ void exit_with_help();
 
 parameter parse_command_line(int argc, char** argv);
 
-void calculate_rmse(FILE* model_fp, FILE* test_fp, FILE* output_fp);
+void calculate_rmse_from_file(FILE* model_fp, FILE* test_fp, FILE* output_fp);
 
-void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int iter, int rank, bool ifALS);
+void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int rank, bool ifALS);
 
-void read_input(const parameter& param, smat_t& R, testset_t& T, bool ifALS);
+void golden_compare(mat_t W, mat_t W_ref, unsigned k, unsigned m);
 
 #endif //EXTRAS_H
