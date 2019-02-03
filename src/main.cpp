@@ -4,6 +4,10 @@
 #include "ALS.h"
 #include "CCD.h"
 
+std::chrono::duration<double> deltaT12;
+std::chrono::duration<double> deltaTAB;
+std::chrono::duration<double> deltaT34;
+
 void runCUDA(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters, bool ALS) {
     if (ALS) {
         kernel_wrapper_als_NV(R, T, W, H, parameters);
@@ -23,10 +27,11 @@ void runOMP(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters, 
 void read_input(const parameter& param, smat_t& R, testset_t& T, bool ifALS) {
     puts("------------------------------------------------------------");
     puts("[info] Loading R matrix...");
-    double time1 = omp_get_wtime();
+    auto t3 = std::chrono::high_resolution_clock::now();
     load(param.src_dir, R, T, ifALS);
-    double time2 = omp_get_wtime();
-    printf("[info] Loading rating data time: %lf s.\n", time2 - time1);
+    auto t4 = std::chrono::high_resolution_clock::now();
+    deltaT34 = t4 - t3;
+    printf("[info] Loading rating data time: %lf s.\n", deltaT34.count());
     puts("------------------------------------------------------------");
 }
 
@@ -95,29 +100,37 @@ int main(int argc, char* argv[]) {
 
     printf("global mean %g\n", R.get_global_mean());
 
+    std::chrono::duration<double> deltaT56{};
+    std::chrono::duration<double> deltaT9_10{};
+    std::chrono::duration<double> deltaT11_12{};
+    std::chrono::duration<double> deltaT13_14{};
+
     if (param.enable_cuda) {
         puts("------------------------------------------------------------");
         puts("[INFO] Computing with CUDA...");
-        double time1 = omp_get_wtime();
+        auto t5 = std::chrono::high_resolution_clock::now();
         runCUDA(R, T, W_cuda, H_cuda, param, ifALS);
-        double time2 = omp_get_wtime();
-        printf("[info] CUDA Training time: %lf s.\n", time2 - time1);
+        auto t6 = std::chrono::high_resolution_clock::now();
+        deltaT56 = t6 - t5;
+        printf("[info] CUDA Training time: %lf s.\n", deltaT56.count());
         puts("------------------------------------------------------------");
         calculate_rmse_directly(W_cuda, H_cuda, T, param.k, ifALS);
     }
     if (param.enable_omp) {
         puts("------------------------------------------------------------");
         puts("[INFO] Computing with OMP...");
-        double time1 = omp_get_wtime();
+        auto t9 = std::chrono::high_resolution_clock::now();
         runOMP(R, T, W_ref, H_ref, param, ifALS);
-        double time2 = omp_get_wtime();
-        printf("[info] OMP Training time: %lf s.\n", time2 - time1);
+        auto t10 = std::chrono::high_resolution_clock::now();
+        deltaT9_10 = t10 - t9;
+        printf("[info] OMP Training time: %lf s.\n", deltaT9_10.count());
         puts("------------------------------------------------------------");
         calculate_rmse_directly(W_ref, H_ref, T, param.k, ifALS);
         puts("------------------------------------------------------------");
     }
 
     std::cout << "[info] validate the results." << std::endl;
+    auto t11 = std::chrono::high_resolution_clock::now();
     if (ifALS) {
         golden_compare(W_cuda, W_ref, R.rows, param.k);
         golden_compare(H_cuda, H_ref, R.cols, param.k);
@@ -125,11 +138,15 @@ int main(int argc, char* argv[]) {
         golden_compare(W_cuda, W_ref, param.k, R.rows);
         golden_compare(H_cuda, H_ref, param.k, R.cols);
     }
+    auto t12 = std::chrono::high_resolution_clock::now();
+    deltaT11_12 = t12 - t11;
+    std::cout << "[info] Validate Time: " << deltaT11_12.count() << " s.\n";
 
-    save_mat_t(W_cuda, model_fp, ifALS);
-    save_mat_t(H_cuda, model_fp, ifALS);
+//    save_mat_t(W_cuda, model_fp, ifALS);
+//    save_mat_t(H_cuda, model_fp, ifALS);
+//
+//    calculate_rmse_from_file(model_fp, test_fp, output_fp);
 
-    calculate_rmse_from_file(model_fp, test_fp, output_fp);
     fclose(model_fp);
     fclose(output_fp);
     fclose(test_fp);
@@ -137,7 +154,9 @@ int main(int argc, char* argv[]) {
     puts("------------------------------------------------------------");
     auto t8 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> deltaT78 = t8 - t7;
-    printf("Total Time: %.4fs.\n", deltaT78.count());
+    std::cout << "Total Time: " << deltaT78.count() << " Parcial Sums:"
+              << deltaT12.count() + deltaT34.count() + deltaT56.count() + deltaTAB.count() + deltaT9_10.count()
+                 + deltaT11_12.count() + deltaT13_14.count() << " s.\n";
 
     return EXIT_SUCCESS;
 }

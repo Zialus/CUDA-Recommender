@@ -73,7 +73,8 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
             double Itime = 0, Wtime = 0, Htime = 0, Rtime = 0, start = 0;
 
             start = omp_get_wtime();
-            vec_t& Wt = W[t], & Ht = H[t];
+            vec_t& Wt = W[t];
+            vec_t& Ht = H[t];
 #pragma omp parallel for
             for (int i = 0; i < R.rows; ++i) {
                 u[i] = Wt[i];
@@ -125,14 +126,13 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
 
             total_time = (Itime + Htime + Wtime + Rtime);
 
-            if (param.verbose) {
-                printf("iter %d rank %d time %f", oiter, t + 1, total_time);
-            }
-            if (param.do_predict) {
-                printf(" rmse %f", calrmse_r1(T, Wt, Ht, oldWt, oldHt));
-            }
-            if (param.verbose) { puts(""); }
-            fflush(stdout);
+//            if (param.verbose) {
+//                printf("iter %d rank %d time %f", oiter, t + 1, total_time);
+//                if (param.do_predict) {
+//                    printf(" rmse %f", calrmse_r1(T, Wt, Ht, oldWt, oldHt));
+//                }
+//                printf("\n");
+//            }
         }
         total_time_acc += total_time;
 
