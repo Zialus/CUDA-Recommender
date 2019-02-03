@@ -6,7 +6,7 @@ void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS) {
     char filename[1024], buf[1024];
     long m, n, nnz;
 
-    sprintf(filename, "%s/meta", srcdir);
+    snprintf(filename, sizeof(filename), "%s/meta", srcdir);
     FILE* fp = fopen(filename, "r");
     if (fp == nullptr) {
         fprintf(stderr, "Can't open meta input file.\n");
@@ -15,11 +15,11 @@ void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS) {
     fscanf(fp, "%ld %ld", &m, &n);
 
     fscanf(fp, "%ld %1023s", &nnz, buf);
-    sprintf(filename, "%s/%s", srcdir, buf);
+    snprintf(filename, sizeof(filename), "%s/%s", srcdir, buf);
     R.load(m, n, nnz, filename, ifALS);
 
     fscanf(fp, "%ld %1023s", &nnz, buf);
-    sprintf(filename, "%s/%s", srcdir, buf);
+    snprintf(filename, sizeof(filename), "%s/%s", srcdir, buf);
     T.load(m, n, nnz, filename);
 
     fclose(fp);

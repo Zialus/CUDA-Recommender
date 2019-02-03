@@ -38,7 +38,7 @@ public:
         enable_omp = false;
         nBlocks = 32;
         nThreadsPerBlock = 256;
-        sprintf(src_dir, "../data/simple");
+        snprintf(src_dir, sizeof(src_dir), "../data/simple");
     }
 };
 
