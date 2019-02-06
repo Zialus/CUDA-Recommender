@@ -79,7 +79,9 @@ public:
     }
 
     void load(long _rows, long _cols, unsigned long _nnz, const char* filename, bool ifALS) {
-        rows = _rows, cols = _cols, nnz = _nnz;
+        rows = _rows;
+        cols = _cols;
+        nnz = _nnz;
         mem_alloc_by_me = true;
         val = MALLOC(float, nnz);
         val_t = MALLOC(float, nnz);
@@ -111,7 +113,7 @@ public:
             long i;
             long j;
             float v;
-            fscanf(fp, "%ld %ld %f", &i, &j, &v);
+            CHECK_FSCAN(fscanf(fp, "%ld %ld %f", &i, &j, &v), 3);
 
             row_ptr[i - 1 + 1]++;
             col_ptr[j - 1 + 1]++;
@@ -269,7 +271,7 @@ public:
 
         FILE* fp = fopen(filename, "r");
         for (long idx = 0; idx < nnz; ++idx) {
-            fscanf(fp, "%ld %ld %f", &r, &c, &v);
+            CHECK_FSCAN(fscanf(fp, "%ld %ld %f", &r, &c, &v), 3);
             test_row[idx] = r - 1;
             test_col[idx] = c - 1;
             test_val[idx] = v;

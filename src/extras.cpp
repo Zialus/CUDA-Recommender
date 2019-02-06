@@ -34,9 +34,9 @@ void generate_file_pointers(const parameter& param, char* test_file_name, char* 
 
     char buf_train[1024], buf_test[1024];
     unsigned m, n, nnz, nnz_test;
-    fscanf(fp, "%u %u", &m, &n);
-    fscanf(fp, "%u %1023s", &nnz, buf_train);
-    fscanf(fp, "%u %1023s", &nnz_test, buf_test);
+    CHECK_FSCAN(fscanf(fp, "%u %u", &m, &n), 2);
+    CHECK_FSCAN(fscanf(fp, "%u %1023s", &nnz, buf_train), 2);
+    CHECK_FSCAN(fscanf(fp, "%u %1023s", &nnz_test, buf_test), 2);
     snprintf(test_file_name, 2048, "%s/%s", param.src_dir, buf_test);
     snprintf(train_file_name, 2048, "%s/%s", param.src_dir, buf_train);
     snprintf(model_file_name, 2048, "%s/%s", param.src_dir, "model");

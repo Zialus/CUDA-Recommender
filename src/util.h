@@ -1,6 +1,11 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#define CHECK_FSCAN(err, num)    if(err != num){ \
+    perror("FSCANF"); \
+    exit(EXIT_FAILURE); \
+}
+
 #define MALLOC(type, size) (type*)malloc(sizeof(type)*(size))
 #define SIZEBITS(type, size) sizeof(type)*(size)
 
