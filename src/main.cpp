@@ -68,7 +68,6 @@ int main(int argc, char* argv[]) {
     switch (param.solver_type) {
         case solvertype::CCD: {
             ifALS = false;
-            puts("Picked Version: CCD!");
             read_input(param, R, T, ifALS);
 
             initial_col(W_cuda, param.k, R.rows);
@@ -77,11 +76,11 @@ int main(int argc, char* argv[]) {
             initial_col(W_ref, param.k, R.rows);
             initial_col(H_ref, param.k, R.cols);
 
+            puts("[info] Picked Version: CCD!");
             break;
         }
         case solvertype::ALS: {
             ifALS = true;
-            puts("Picked Version: ALS!");
             read_input(param, R, T, ifALS);
 
             initial_col(W_cuda, R.rows, param.k);
@@ -90,6 +89,7 @@ int main(int argc, char* argv[]) {
             initial_col(W_ref, R.rows, param.k);
             initial_col(H_ref, R.cols, param.k);
 
+            puts("[info] Picked Version: ALS!");
             break;
         }
         default: {
@@ -97,8 +97,9 @@ int main(int argc, char* argv[]) {
             exit(EXIT_FAILURE);
         }
     }
-
-    printf("global mean %g\n", R.get_global_mean());
+    printf("[info] ThreadsPerBlock = %u | Blocks = %u | K = %d | Learning Rate = %.3f\n",
+            param.nThreadsPerBlock, param.nBlocks,param.k, param.lambda);
+    printf("Rating Matrix global mean: %f\n", R.get_global_mean());
 
     std::chrono::duration<double> deltaT56{};
     std::chrono::duration<double> deltaT9_10{};
