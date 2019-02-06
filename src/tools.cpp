@@ -12,13 +12,13 @@ void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS) {
         fprintf(stderr, "Can't open meta input file.\n");
         exit(EXIT_FAILURE);
     }
-    fscanf(fp, "%ld %ld", &m, &n);
+    CHECK_FSCAN(fscanf(fp, "%ld %ld", &m, &n), 2);
 
-    fscanf(fp, "%ld %1023s", &nnz, buf);
+    CHECK_FSCAN(fscanf(fp, "%ld %1023s", &nnz, buf), 2);
     snprintf(filename, sizeof(filename), "%s/%s", srcdir, buf);
     R.load(m, n, nnz, filename, ifALS);
 
-    fscanf(fp, "%ld %1023s", &nnz, buf);
+    CHECK_FSCAN(fscanf(fp, "%ld %1023s", &nnz, buf), 2);
     snprintf(filename, sizeof(filename), "%s/%s", srcdir, buf);
     T.load(m, n, nnz, filename);
 
@@ -66,10 +66,10 @@ mat_t load_mat_t(FILE* fp, bool row_major) {
         fprintf(stderr, "input stream is not valid.\n");
     }
     unsigned long m, n;
-    fread(&m, sizeof(unsigned long), 1, fp);
-    fread(&n, sizeof(unsigned long), 1, fp);
+    CHECK_FSCAN(fread(&m, sizeof(unsigned long), 1, fp), 1);
+    CHECK_FSCAN(fread(&n, sizeof(unsigned long), 1, fp), 1);
     vec_t buf(m * n);
-    fread(&buf[0], sizeof(float), m * n, fp);
+    CHECK_FSCAN(fread(&buf[0], sizeof(float), m * n, fp), 1);
     mat_t A;
     if (row_major) {
         A = mat_t(m, vec_t(n));
