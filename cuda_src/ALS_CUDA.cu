@@ -391,8 +391,8 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
         cudaStatus = cudaDeviceSynchronize();
         gpuErrchk(cudaStatus);
 
-        float tot_rmse = 0;
-        float f_rmse = 0;
+        double tot_rmse = 0;
+        double f_rmse = 0;
         gpuErrchk(cudaMemcpy(rmse, d_rmse, (T.nnz + 1) * sizeof(float), cudaMemcpyDeviceToHost));
 
         for (unsigned i = 0; i < T.nnz; ++i) {
