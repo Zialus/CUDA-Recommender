@@ -1,19 +1,14 @@
 #include "CCD_CUDA.h"
 
-__global__ void RankOneUpdate_DUAL_kernel(const long Rcols,
-                                          const long* Rcol_ptr,
-                                          const long* Rrow_idx,
-                                          const float* Rval,
+__global__ void RankOneUpdate_v_kernel(const long Rcols,
+                                       const long* Rcol_ptr,
+                                       const long* Rrow_idx,
+                                       const float* Rval,
 
-                                          float* u,
-                                          float* v,
-                                          const float lambda,
-                                          const int do_nmf,
-
-                                          const long Rcols_t,
-                                          const long* Rcol_ptr_t,
-                                          const long* Rrow_idx_t,
-                                          const float* Rval_t
+                                       float* u,
+                                       float* v,
+                                       const float lambda,
+                                       const int do_nmf
 ) {
     long thread_id = threadIdx.x + blockIdx.x * blockDim.x;
     long total_threads = blockDim.x * gridDim.x;
@@ -22,6 +17,21 @@ __global__ void RankOneUpdate_DUAL_kernel(const long Rcols,
         v[c] = RankOneUpdate_dev(Rcol_ptr, Rrow_idx, Rval, c, u,
                                  lambda * (Rcol_ptr[c + 1] - Rcol_ptr[c]), do_nmf);
     }
+
+}
+
+__global__ void RankOneUpdate_u_kernel(const long Rcols_t,
+                                       const long* Rcol_ptr_t,
+                                       const long* Rrow_idx_t,
+                                       const float* Rval_t,
+
+                                       float* u,
+                                       float* v,
+                                       const float lambda,
+                                       const int do_nmf
+) {
+    long thread_id = threadIdx.x + blockIdx.x * blockDim.x;
+    long total_threads = blockDim.x * gridDim.x;
 
     for (long c = thread_id; c < Rcols_t; c += total_threads) {
         u[c] = RankOneUpdate_dev(Rcol_ptr_t, Rrow_idx_t, Rval_t, c, v,
@@ -246,9 +256,10 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
             }
 
             for (int iter = 1; iter <= parameters.maxinneriter; ++iter) {
-                RankOneUpdate_DUAL_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
-                        dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, parameters.do_nmf,
-                        Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t);
+                RankOneUpdate_v_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
+                        dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, parameters.do_nmf);
+                RankOneUpdate_u_kernel<<<nBlocks, nThreadsPerBlock>>>(Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T,
+                        dev_Rval_t, dev_Wt_vec_t, dev_Ht_vec_t, lambda, parameters.do_nmf);
                 // Check for any errors launching the kernel
                 cudaStatus = cudaGetLastError();
                 gpuErrchk(cudaStatus);
