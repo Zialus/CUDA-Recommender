@@ -63,10 +63,14 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
     vec_t u(R.rows), v(R.cols);
 
     double total_time_acc = 0;
+    double update_time_acc = 0;
+    double rank_time_acc = 0;
 
     for (int oiter = 1; oiter <= param.maxiter; ++oiter) {
 
         double total_time = 0;
+        double update_time = 0;
+        double rank_time = 0;
 
         for (int t = 0; t < k; ++t) {
 
@@ -125,6 +129,8 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
             Rtime += omp_get_wtime() - start;
 
             total_time = (Itime + Htime + Wtime + Rtime);
+            update_time = Itime + Rtime;
+            rank_time = Wtime + Htime;
 
 //            if (param.verbose) {
 //                printf("iter %d rank %d time %f", oiter, t + 1, total_time);
@@ -135,12 +141,15 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
 //            }
         }
         total_time_acc += total_time;
+        update_time_acc += update_time;
+        rank_time_acc += rank_time;
 
         double start = omp_get_wtime();
         double rmse = calrmse(T, W, H, false, true);
         double rmse_time = omp_get_wtime() - start;
 
-        printf("[-INFO-] iteration num %d \tupdate_time %.4lf|%.4lfs \tRMSE=%lf time:%fs\n", oiter, total_time, total_time_acc, rmse, rmse_time);
+        printf("[-INFO-] iteration num %d \trank_time %.4lf|%.4lf s \tupdate_time %.4lf|%.4lfs \tRMSE=%lf time:%fs\n",
+               oiter, rank_time, rank_time_acc, update_time, update_time_acc, rmse, rmse_time);
 
     }
     omp_set_num_threads(num_threads_old);
