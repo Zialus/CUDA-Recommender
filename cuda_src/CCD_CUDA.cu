@@ -112,6 +112,64 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols,
     }
 }
 
+__global__ void UpdateRating_W_kernel(const long Rcols,
+                                      const long* Rcol_ptr,
+                                      const long* Rrow_idx,
+                                      float* Rval,
+
+                                      const float* Wt_vec_t,
+                                      const float* Ht_vec_t,
+                                      const bool add
+
+
+) {
+    long thread_id = threadIdx.x + blockIdx.x * blockDim.x;
+    long total_threads = blockDim.x * gridDim.x;
+
+    for (long i = thread_id; i < Rcols; i += total_threads) {
+        if (add) {
+            float Htc = Ht_vec_t[i];
+            for (long idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx) {
+                Rval[idx] += Wt_vec_t[Rrow_idx[idx]] * Htc; //change R.val
+            }
+        } else {
+            float Htc = Ht_vec_t[i];
+            for (long idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx) {
+                Rval[idx] -= Wt_vec_t[Rrow_idx[idx]] * Htc; //change R.val
+            }
+        }
+    }
+
+}
+
+__global__ void UpdateRating_H_kernel(const long Rcols_t,
+                                      const long* Rcol_ptr_t,
+                                      const long* Rrow_idx_t,
+                                      float* Rval_t,
+
+                                      const float* Wt_vec_t,
+                                      const float* Ht_vec_t,
+                                      const bool add_t
+
+) {
+    long thread_id = threadIdx.x + blockIdx.x * blockDim.x;
+    long total_threads = blockDim.x * gridDim.x;
+
+    for (long i = thread_id; i < Rcols_t; i += total_threads) {
+        if (add_t) {
+            float Htc = Wt_vec_t[i];
+            for (long idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx) {
+                Rval_t[idx] += Ht_vec_t[Rrow_idx_t[idx]] * Htc; //change R.val
+            }
+        } else {
+            float Htc = Wt_vec_t[i];
+            for (long idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx) {
+                Rval_t[idx] -= Ht_vec_t[Rrow_idx_t[idx]] * Htc; //change R.val
+            }
+        }
+    }
+}
+
 void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
     cudaError_t cudaStatus;
     // Reset GPU.
@@ -128,6 +186,49 @@ void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parame
     cudaStatus = cudaDeviceReset();
     gpuErrchk(cudaStatus);
 }
+
+inline cudaError_t
+updateRating(unsigned int nThreadsPerBlock, unsigned int nBlocks, const smat_t& R_C, const smat_t& Rt,
+             const long* dev_Rcol_ptr, const long* dev_Rrow_idx, const long* dev_Rcol_ptr_T, const long* dev_Rrow_idx_T,
+             float* dev_Rval, float* dev_Rval_t, const float* dev_Wt_vec_t, const float* dev_Ht_vec_t, const bool add,
+             cudaError_t& cudaStatus) {
+
+    UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
+                    dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, add, Rt.cols,
+                    dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, add);
+
+//    UpdateRating_W_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
+//            dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, add);
+//    UpdateRating_H_kernel<<<nBlocks, nThreadsPerBlock>>>(Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T,
+//            dev_Rval_t, dev_Wt_vec_t, dev_Ht_vec_t, add);
+
+    // Check for any errors launching the kernel
+    cudaStatus = cudaGetLastError();
+    gpuErrchk(cudaStatus);
+    cudaStatus = cudaDeviceSynchronize();
+    gpuErrchk(cudaStatus);
+    return cudaStatus;
+}
+
+inline cudaError_t
+RankOneUpdate(const parameter& parameters, unsigned int nThreadsPerBlock, unsigned int nBlocks, float lambda,
+              const smat_t& R_C, const smat_t& Rt, const long* dev_Rcol_ptr, const long* dev_Rrow_idx,
+              const long* dev_Rcol_ptr_T, const long* dev_Rrow_idx_T, const float* dev_Rval,
+              const float* dev_Rval_t, float* dev_Wt_vec_t,float* dev_Ht_vec_t, cudaError_t& cudaStatus) {
+
+    RankOneUpdate_v_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
+            dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, parameters.do_nmf);
+    RankOneUpdate_u_kernel<<<nBlocks, nThreadsPerBlock>>>(Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T,
+            dev_Rval_t, dev_Wt_vec_t, dev_Ht_vec_t, lambda, parameters.do_nmf);
+
+    // Check for any errors launching the kernel
+    cudaStatus = cudaGetLastError();
+    gpuErrchk(cudaStatus);
+    cudaStatus = cudaDeviceSynchronize();
+    gpuErrchk(cudaStatus);
+    return cudaStatus;
+}
+
 
 cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
     unsigned nThreadsPerBlock = parameters.nThreadsPerBlock;
@@ -236,10 +337,13 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     float rank_time_acc = 0;
 
     for (int oiter = 1; oiter <= parameters.maxiter; ++oiter) {
+
         float update_time = 0;
         float rank_time = 0;
         GpuTimer update_timer;
         GpuTimer rmse_timer;
+        GpuTimer rank_timer;
+
         for (int t = 0; t < k; ++t) {
 
             dev_Wt_vec_t = dev_W_ + t * R_C.rows; //u
@@ -247,42 +351,28 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
 
             if (oiter > 1) {
                 update_timer.Start();
-                UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
-                        dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, true, Rt.cols,
-                        dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, true);
-                // Check for any errors launching the kernel
-                cudaStatus = cudaGetLastError();
-                gpuErrchk(cudaStatus);
-                cudaStatus = cudaDeviceSynchronize();
-                gpuErrchk(cudaStatus);
+                cudaStatus = updateRating(nThreadsPerBlock, nBlocks, R_C,
+                                          Rt, dev_Rcol_ptr, dev_Rrow_idx, dev_Rcol_ptr_T, dev_Rrow_idx_T,
+                                          dev_Rval, dev_Rval_t, dev_Wt_vec_t, dev_Ht_vec_t, true, cudaStatus);
+
                 update_timer.Stop();
                 update_time += update_timer.Elapsed();
             }
 
-            update_timer.Start();
+            rank_timer.Start();
             for (int iter = 1; iter <= parameters.maxinneriter; ++iter) {
-                RankOneUpdate_v_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
-                        dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, parameters.do_nmf);
-                RankOneUpdate_u_kernel<<<nBlocks, nThreadsPerBlock>>>(Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T,
-                        dev_Rval_t, dev_Wt_vec_t, dev_Ht_vec_t, lambda, parameters.do_nmf);
-                // Check for any errors launching the kernel
-                cudaStatus = cudaGetLastError();
-                gpuErrchk(cudaStatus);
-                cudaStatus = cudaDeviceSynchronize();
-                gpuErrchk(cudaStatus);
+                cudaStatus = RankOneUpdate(parameters, nThreadsPerBlock, nBlocks, lambda, R_C, Rt, dev_Rcol_ptr,
+                                           dev_Rrow_idx, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval,
+                                           dev_Rval_t, dev_Wt_vec_t, dev_Ht_vec_t, cudaStatus);
             }
-            update_timer.Stop();
-            rank_time += update_timer.Elapsed();
+            rank_timer.Stop();
+            rank_time += rank_timer.Elapsed();
 
             update_timer.Start();
-            UpdateRating_DUAL_kernel_NoLoss<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
-                    dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, false, Rt.cols,
-                    dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval_t, false);
-            // Check for any errors launching the kernel
-            cudaStatus = cudaGetLastError();
-            gpuErrchk(cudaStatus);
-            cudaStatus = cudaDeviceSynchronize();
-            gpuErrchk(cudaStatus);
+            cudaStatus = updateRating(nThreadsPerBlock, nBlocks, R_C,
+                                      Rt, dev_Rcol_ptr, dev_Rrow_idx, dev_Rcol_ptr_T, dev_Rrow_idx_T,
+                                      dev_Rval, dev_Rval_t, dev_Wt_vec_t, dev_Ht_vec_t, false, cudaStatus);
+
             update_timer.Stop();
             update_time += update_timer.Elapsed();
         }
