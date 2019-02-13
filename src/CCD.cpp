@@ -62,23 +62,24 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
     vec_t oldWt(R.rows), oldHt(R.cols);
     vec_t u(R.rows), v(R.cols);
 
-    double total_time_acc = 0;
     double update_time_acc = 0;
     double rank_time_acc = 0;
 
     for (int oiter = 1; oiter <= param.maxiter; ++oiter) {
 
-        double total_time = 0;
+//        double total_time = 0;
         double update_time = 0;
         double rank_time = 0;
 
         for (int t = 0; t < k; ++t) {
 
-            double Itime = 0, Wtime = 0, Htime = 0, Rtime = 0, start = 0;
+            double Itime = 0, Wtime = 0, Htime = 0, Rtime = 0;
 
-            start = omp_get_wtime();
+            double start = omp_get_wtime();
+
             vec_t& Wt = W[t];
             vec_t& Ht = H[t];
+
 #pragma omp parallel for
             for (int i = 0; i < R.rows; ++i) {
                 u[i] = Wt[i];
@@ -95,6 +96,7 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
                 UpdateRating_Original_float(R, Wt, Ht, true);
                 UpdateRating_Original_float(Rt, Ht, Wt, true);
             }
+
             Itime += omp_get_wtime() - start;
 
             for (int iter = 1; iter <= param.maxinneriter; ++iter) {
@@ -128,11 +130,11 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
 
             Rtime += omp_get_wtime() - start;
 
-            total_time = (Itime + Htime + Wtime + Rtime);
-            update_time = Itime + Rtime;
-            rank_time = Wtime + Htime;
+            update_time += Rtime + Itime;
+            rank_time += Wtime + Htime;
 
 //            if (param.verbose) {
+//                total_time = (Itime + Htime + Wtime + Rtime);
 //                printf("iter %d rank %d time %f", oiter, t + 1, total_time);
 //                if (param.do_predict) {
 //                    printf(" rmse %f", calrmse_r1(T, Wt, Ht, oldWt, oldHt));
@@ -140,7 +142,7 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
 //                printf("\n");
 //            }
         }
-        total_time_acc += total_time;
+
         update_time_acc += update_time;
         rank_time_acc += rank_time;
 
