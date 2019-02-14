@@ -31,6 +31,7 @@ void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS) {
 void save_mat_t(mat_t A, FILE* fp, bool row_major) {
     if (fp == nullptr) {
         fprintf(stderr, "output stream is not valid.\n");
+        exit(EXIT_FAILURE);
     }
     size_t m = row_major ? A.size() : A[0].size();
     size_t n = row_major ? A[0].size() : A.size();
@@ -64,6 +65,7 @@ void save_mat_t(mat_t A, FILE* fp, bool row_major) {
 mat_t load_mat_t(FILE* fp, bool row_major) {
     if (fp == nullptr) {
         fprintf(stderr, "input stream is not valid.\n");
+        exit(EXIT_FAILURE);
     }
     unsigned long m, n;
     CHECK_FREAD(fread(&m, sizeof(unsigned long), 1, fp), 1);

@@ -174,6 +174,7 @@ void calculate_rmse_from_file(FILE* model_fp, FILE* test_fp, FILE* output_fp) {
         fprintf(output_fp, "%lf\n", pred_v);
     }
 
+    if (num_insts == 0) { exit(EXIT_FAILURE); }
     rmse = sqrt(rmse / num_insts);
     double end = omp_get_wtime();
     printf("[FINAL INFO] Test RMSE = %f. Calculated in %lfs\n", rmse, end - start);
@@ -209,9 +210,9 @@ void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int rank, bool if
         rmse += (pred_v - v) * (pred_v - v);
     }
 
+    if (num_insts == 0) { exit(EXIT_FAILURE); }
     rmse = sqrt(rmse / num_insts);
     double end = omp_get_wtime();
-
     printf("Test RMSE = %lf. Calculated in %lfs\n", rmse, end - start);
 }
 
