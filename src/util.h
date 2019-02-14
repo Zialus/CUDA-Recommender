@@ -2,8 +2,14 @@
 #define UTIL_H
 
 #define CHECK_FSCAN(err, num)    if(err != num){ \
-    perror("FSCANF"); \
-    exit(EXIT_FAILURE); \
+    fprintf(stderr,"FSCANF read %d, needed %d, in file %s on line %d\n", err, num,__FILE__,__LINE__); \
+    abort(); \
+}
+
+
+#define CHECK_FREAD(err, num)    if(err != num){ \
+    fprintf(stderr,"FREAD read %lu, needed %d, in file %s on line %d\n", err, num,__FILE__,__LINE__); \
+    abort(); \
 }
 
 #define MALLOC(type, size) (type*)malloc(sizeof(type)*(size))
