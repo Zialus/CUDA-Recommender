@@ -429,6 +429,8 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     free(W_);
     free(H_);
 
+    free(rmse);
+
     cudaFree(dev_W_);
     cudaFree(dev_H_);
 
@@ -438,6 +440,12 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     cudaFree(dev_Rrow_idx_T);
     cudaFree(dev_Rval);
     cudaFree(dev_Rval_t);
+
+    cudaFree(d_test_row);
+    cudaFree(d_test_col);
+    cudaFree(d_test_val);
+    cudaFree(d_pred_v);
+    cudaFree(d_rmse);
 
     return cudaStatus;
 }

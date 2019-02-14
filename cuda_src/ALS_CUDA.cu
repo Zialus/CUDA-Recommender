@@ -428,6 +428,8 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     free(W_);
     free(H_);
 
+    free(rmse);
+
     cudaFree(dev_W_);
     cudaFree(dev_H_);
 
@@ -437,6 +439,12 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     cudaFree(dev_col_idx);
     cudaFree(dev_colMajored_sparse_idx);
     cudaFree(dev_val);
+
+    cudaFree(d_test_row);
+    cudaFree(d_test_col);
+    cudaFree(d_test_val);
+    cudaFree(d_pred_v);
+    cudaFree(d_rmse);
 
     return cudaStatus;
 }
