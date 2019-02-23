@@ -11,11 +11,13 @@ find_package(CUDA REQUIRED)
 find_package(OpenMP REQUIRED)
 
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -rdynamic")
+
 # Add debugging to CUDA NVCC flags for NVidia's NSight tools.
-set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG} "-G")
+set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -G")
 
 set(EXTRA_NVCC_FLAGS -arch=sm_35 -Xptxas -dlcm=ca --std=c++11)
-#set(EXTRA_NVCC_FLAGS -arch=sm_35 -Xptxas -dlcm=ca --std=c++11 -Xcompiler -rdynamic -lineinfo)
+#set(EXTRA_NVCC_FLAGS -arch=sm_35 -Xptxas -dlcm=ca --std=c++11 -lineinfo)
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} ${EXTRA_NVCC_FLAGS})
 
@@ -37,7 +39,7 @@ endif ()
 #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")
 #endif ()
 
-# Compiler flags to silence/add warnings during all compilations
+# Compiler flags to silence/add some warnings during all compilations
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
@@ -46,7 +48,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /w44365")
 endif ()
 
-# Silence warnings only during nvcc compilation
+# Compiler flags to silence/or add some warnings only during nvcc compilation
 #if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 #    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS})
 #elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")

@@ -3,4 +3,3 @@ cmake-*
 exec/
 build/
 sftp-config.json
-results/
