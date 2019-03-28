@@ -315,7 +315,7 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     cudaStatus = cudaMemcpy(dev_Rval_t, Rt.val, Rt.nbits_val, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
 
-    float* rmse = (float*) malloc((T.nnz) * sizeof(float));
+    float* rmse = (float*) malloc((T.nnz + 1) * sizeof(float));
 
     long* d_test_row;
     long* d_test_col;
@@ -431,21 +431,21 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
 
     free(rmse);
 
-    cudaFree(dev_W_);
-    cudaFree(dev_H_);
+    gpuErrchk(cudaFree(dev_W_));
+    gpuErrchk(cudaFree(dev_H_));
 
-    cudaFree(dev_Rcol_ptr);
-    cudaFree(dev_Rrow_idx);
-    cudaFree(dev_Rcol_ptr_T);
-    cudaFree(dev_Rrow_idx_T);
-    cudaFree(dev_Rval);
-    cudaFree(dev_Rval_t);
+    gpuErrchk(cudaFree(dev_Rcol_ptr));
+    gpuErrchk(cudaFree(dev_Rrow_idx));
+    gpuErrchk(cudaFree(dev_Rcol_ptr_T));
+    gpuErrchk(cudaFree(dev_Rrow_idx_T));
+    gpuErrchk(cudaFree(dev_Rval));
+    gpuErrchk(cudaFree(dev_Rval_t));
 
-    cudaFree(d_test_row);
-    cudaFree(d_test_col);
-    cudaFree(d_test_val);
-    cudaFree(d_pred_v);
-    cudaFree(d_rmse);
+    gpuErrchk(cudaFree(d_test_row));
+    gpuErrchk(cudaFree(d_test_col));
+    gpuErrchk(cudaFree(d_test_val));
+    gpuErrchk(cudaFree(d_pred_v));
+    gpuErrchk(cudaFree(d_rmse));
 
     return cudaStatus;
 }
