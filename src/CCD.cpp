@@ -46,7 +46,6 @@ inline float UpdateRating_Original_float(smat_t& R, const vec_t& Wt, const vec_t
 }
 
 void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
-    int k = param.k;
     float lambda = param.lambda;
 
     int num_threads_old = omp_get_num_threads();
@@ -57,7 +56,7 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
     Rt = R.transpose();
 
     // H is a zero matrix now.
-    for (int t = 0; t < k; ++t) { for (long c = 0; c < R.cols; ++c) { H[t][c] = 0; }}
+    for (int t = 0; t < param.k; ++t) { for (long c = 0; c < R.cols; ++c) { H[t][c] = 0; }}
 
     vec_t oldWt(R.rows), oldHt(R.cols);
     vec_t u(R.rows), v(R.cols);
@@ -71,7 +70,7 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
         double update_time = 0;
         double rank_time = 0;
 
-        for (int t = 0; t < k; ++t) {
+        for (int t = 0; t < param.k; ++t) {
 
             double Itime = 0, Wtime = 0, Htime = 0, Rtime = 0;
 
