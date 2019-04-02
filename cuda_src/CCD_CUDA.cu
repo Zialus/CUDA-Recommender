@@ -403,7 +403,7 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
 
         float rmse_time = rmse_timer.Elapsed();
         printf("[-INFO-] iteration num %d \trank_time %.4lf|%.4lf s \tupdate_time %.4lf|%.4lfs \tRMSE=%lf time:%fs\n",
-                oiter, rank_time, rank_time_acc, update_time, update_time_acc, f_rmse, rmse_time);
+               oiter, rank_time, rank_time_acc, update_time, update_time_acc, f_rmse, rmse_time);
     }
 
     cudaStatus = cudaMemcpy(H_, dev_H_, nbits_H_, cudaMemcpyDeviceToHost);

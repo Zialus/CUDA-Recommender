@@ -8,7 +8,7 @@ enum class solvertype {CCD, ALS};
 class parameter {
 public:
     solvertype solver_type;
-    int k;
+    unsigned k;
     int threads;
     int maxiter;
     int maxinneriter;
