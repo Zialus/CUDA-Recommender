@@ -237,3 +237,36 @@ void golden_compare(mat_t W, mat_t W_ref, unsigned k, unsigned m) {
         printf("Check... NO PASS! [%.4f%%] #Error = %u out of %u entries.\n", error_percentage, error_count, entries);
     }
 }
+
+void print_matrix(mat_t M, unsigned k, unsigned n) {
+    printf("-----------------------------------------\n");
+    for (unsigned i = 0; i < n; ++i) {
+        for (unsigned j = 0; j < k; ++j) {
+            printf("|%f", M[j][i]);
+        }
+        printf("\n-----------------------------------------\n");
+    }
+}
+
+void show_final_matrix(mat_t& W, mat_t& H, int rank, unsigned n, unsigned m, bool ifALS) {
+
+    printf("-----------------------------------------\n");
+    for (unsigned i = 0; i < n; ++i) {
+        for (unsigned j = 0; j < m; ++j) {
+            double pred_v = 0;
+            if (ifALS) {
+                for (int t = 0; t < rank; t++) {
+                    pred_v += W[i][t] * H[j][t];
+                }
+            } else {
+                for (int t = 0; t < rank; t++) {
+                    pred_v += W[t][i] * H[t][j];
+                }
+            }
+            printf("|%f", pred_v);
+        }
+        printf("\n-----------------------------------------\n");
+    }
+
+
+}

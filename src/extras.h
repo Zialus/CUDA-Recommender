@@ -21,4 +21,8 @@ void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int rank, bool if
 
 void golden_compare(mat_t W, mat_t W_ref, unsigned k, unsigned m);
 
+void print_matrix(mat_t M, unsigned k, unsigned n);
+
+void show_final_matrix(mat_t& W, mat_t& H, int rank, unsigned n, unsigned m, bool ifALS);
+
 #endif //EXTRAS_H
