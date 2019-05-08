@@ -1,7 +1,7 @@
 #include "tools.h"
 
 // load utility for CCS RCS
-void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS) {
+void load(const char* srcdir, smat_t& R, testset_t& T) {
     // add testing later
     char filename[1024], buf[1024];
     long m, n, nnz;
@@ -16,7 +16,7 @@ void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS) {
 
     CHECK_FSCAN(fscanf(fp, "%ld %1023s", &nnz, buf), 2);
     snprintf(filename, sizeof(filename), "%s/%s", srcdir, buf);
-    R.load(m, n, nnz, filename, ifALS);
+    R.load(m, n, nnz, filename);
 
     CHECK_FSCAN(fscanf(fp, "%ld %1023s", &nnz, buf), 2);
     snprintf(filename, sizeof(filename), "%s/%s", srcdir, buf);

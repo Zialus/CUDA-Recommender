@@ -64,8 +64,6 @@ public:
     long* col_idx;
     size_t nbits_row_idx;
     size_t nbits_col_idx;
-    long* colMajored_sparse_idx;
-    size_t nbits_colMajored_sparse_idx;
     bool mem_alloc_by_me;
 
     smat_t() : mem_alloc_by_me(false) {}
@@ -78,7 +76,7 @@ public:
         }
     }
 
-    void load(long _rows, long _cols, unsigned long _nnz, const char* filename, bool ifALS) {
+    void load(long _rows, long _cols, unsigned long _nnz, const char* filename) {
         rows = _rows;
         cols = _cols;
         nnz = _nnz;
@@ -97,10 +95,7 @@ public:
         nbits_col_ptr = SIZEBITS(long, cols + 1);
         memset(row_ptr, 0, sizeof(long) * (rows + 1));
         memset(col_ptr, 0, sizeof(long) * (cols + 1));
-        if (ifALS) {
-            colMajored_sparse_idx = MALLOC(long, nnz);
-            nbits_colMajored_sparse_idx = SIZEBITS(long, nnz);
-        }
+
 
         // a trick here to utilize the space the have been allocated
         std::vector<size_t> perm(_nnz);
@@ -165,33 +160,6 @@ public:
         for (long c = cols; c > 0; --c) { col_ptr[c] = col_ptr[c - 1]; }
         col_ptr[0] = 0;
 
-        if (ifALS) {
-            long* mapIDX = MALLOC(long, rows);
-            for (long r = 0; r < rows; ++r) {
-                mapIDX[r] = row_ptr[r];
-            }
-
-            for (long r = 0; r < nnz; ++r) {
-                colMajored_sparse_idx[mapIDX[row_idx[r]]] = r;
-                ++mapIDX[row_idx[r]];
-            }
-            //unsigned internalIDX = 0;
-            //for (int r = 0; r < rows; ++r){//extremely slow!!
-            //	for (int idx = 0; idx < nnz; ++idx){
-            //		if (row_idx[idx] == r){
-            //			colMajored_sparse_idx[internalIDX] = idx;
-            //			++internalIDX;
-            //		}
-            //	}
-            //}
-
-            free(mapIDX);
-
-            //for (int i = 0; i < nnz; ++i){
-            //	printf("%d\n", colMajored_sparse_idx[i]);
-            //}
-            //printf("\n");
-        }
         //for (int i = 0; i < rows + 1; ++i){
         //	printf("R%d  C%d \n", row_ptr[i], col_ptr[i]);
         //}

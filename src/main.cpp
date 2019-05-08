@@ -24,11 +24,11 @@ void runOMP(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters, 
     }
 }
 
-void read_input(const parameter& param, smat_t& R, testset_t& T, bool ifALS) {
+void read_input(const parameter& param, smat_t& R, testset_t& T) {
     puts("------------------------------------------------------------");
     puts("[info] Loading R matrix...");
     auto t3 = std::chrono::high_resolution_clock::now();
-    load(param.src_dir, R, T, ifALS);
+    load(param.src_dir, R, T);
     auto t4 = std::chrono::high_resolution_clock::now();
     deltaT34 = t4 - t3;
     printf("[info] Loading rating data time: %lf s.\n", deltaT34.count());
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
     switch (param.solver_type) {
         case solvertype::CCD: {
             ifALS = false;
-            read_input(param, R, T, ifALS);
+            read_input(param, R, T);
 
             initial_col(W_cuda, param.k, R.rows);
             initial_col(H_cuda, param.k, R.cols);
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
         }
         case solvertype::ALS: {
             ifALS = true;
-            read_input(param, R, T, ifALS);
+            read_input(param, R, T);
 
             initial_col(W_cuda, R.rows, param.k);
             initial_col(H_cuda, R.cols, param.k);

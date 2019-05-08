@@ -88,9 +88,9 @@ __device__ void Mt_byM_multiply_k(long i, long j, float* H, float** Result, cons
     }
 }
 
-__global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const long* col_idx, const long* colMajored_sparse_idx, const float* val, const float lambda, const unsigned k, float* W, float* H) {
+__global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const long* col_idx, const float* val_t, const float* val, const float lambda, const unsigned k, float* W, float* H) {
     assert(row_ptr);
-    assert(colMajored_sparse_idx);
+    assert(val_t);
     assert(val);
     assert(W);
     assert(H);
@@ -152,8 +152,7 @@ __global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const
             for (unsigned c = 0; c < k; ++c) {
                 subVector[c] = 0;
                 for (long idx = row_ptr[Rw]; idx < row_ptr[Rw + 1]; ++idx) {
-                    unsigned idx2 = colMajored_sparse_idx[idx];
-                    subVector[c] += val[idx2] * H[(col_idx[idx] * k) + c];
+                    subVector[c] += val_t[idx] * H[(col_idx[idx] * k) + c];
                 }
             }
 
@@ -263,11 +262,15 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     float lambda = parameters.lambda;
     int k = parameters.k;
 
+    // Create transpose view of R
+    smat_t Rt;
+    Rt = R_C.transpose();
+
     long* dev_col_ptr = nullptr;
     long* dev_row_ptr = nullptr;
     long* dev_row_idx = nullptr;
     long* dev_col_idx = nullptr;
-    long* dev_colMajored_sparse_idx = nullptr;
+    float* dev_val_t = nullptr;
     float* dev_val = nullptr;
 
     float* dev_W_ = nullptr;
@@ -314,7 +317,7 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**) &dev_col_idx, R_C.nbits_col_idx);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_colMajored_sparse_idx, R_C.nbits_colMajored_sparse_idx);
+    cudaStatus = cudaMalloc((void**) &dev_val_t, Rt.nbits_val);
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**) &dev_val, R_C.nbits_val);
     gpuErrchk(cudaStatus);
@@ -328,7 +331,7 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMemcpy(dev_col_idx, R_C.col_idx, R_C.nbits_col_idx, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_colMajored_sparse_idx, R_C.colMajored_sparse_idx, R_C.nbits_colMajored_sparse_idx, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_val_t, Rt.val, Rt.nbits_val, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMemcpy(dev_val, R_C.val, R_C.nbits_val, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
@@ -361,7 +364,7 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
         update_timer.Start();
         /********************optimize W over H***************/
         updateW_overH_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.rows, dev_row_ptr, dev_col_idx,
-                dev_colMajored_sparse_idx, dev_val, lambda, k, dev_W_, dev_H_);
+                dev_val_t, dev_val, lambda, k, dev_W_, dev_H_);
         // Check for any errors launching the kernel
         cudaStatus = cudaGetLastError();
         gpuErrchk(cudaStatus);
@@ -438,7 +441,7 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     gpuErrchk(cudaFree(dev_row_ptr));
     gpuErrchk(cudaFree(dev_row_idx));
     gpuErrchk(cudaFree(dev_col_idx));
-    gpuErrchk(cudaFree(dev_colMajored_sparse_idx));
+    gpuErrchk(cudaFree(dev_val_t));
     gpuErrchk(cudaFree(dev_val));
 
     gpuErrchk(cudaFree(d_test_row));

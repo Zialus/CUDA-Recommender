@@ -84,6 +84,10 @@ void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
     int num_threads_old = omp_get_num_threads();
     omp_set_num_threads(param.threads);
 
+    // Create transpose view of R
+    smat_t Rt;
+    Rt = R.transpose();
+
     double update_time_acc = 0;
 
     for (int iter = 0; iter < param.maxiter; ++iter) {
@@ -125,8 +129,7 @@ void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
                 for (int c = 0; c < k; ++c) {
                     subVector[c] = 0;
                     for (int idx = R.row_ptr[Rw]; idx < R.row_ptr[Rw + 1]; ++idx) {
-                        unsigned idx2 = R.colMajored_sparse_idx[idx];
-                        subVector[c] += R.val[idx2] * H[R.col_idx[idx]][c];
+                        subVector[c] += Rt.val[idx] * H[R.col_idx[idx]][c];
                     }
                 }
 

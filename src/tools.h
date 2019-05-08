@@ -3,7 +3,7 @@
 
 #include "pmf_util.h"
 
-void load(const char* srcdir, smat_t& R, testset_t& T, bool ifALS);
+void load(const char* srcdir, smat_t& R, testset_t& T);
 void save_mat_t(mat_t A, FILE* fp, bool row_major = true);
 mat_t load_mat_t(FILE* fp, bool row_major = true);
 void initial(mat_t& X, long n, long k);
