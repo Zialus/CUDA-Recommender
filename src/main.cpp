@@ -148,6 +148,8 @@ int main(int argc, char* argv[]) {
 //
 //    calculate_rmse_from_file(model_fp, test_fp, output_fp);
 
+//    show_final_matrix(W_ref, H_ref, param.k, R.rows, R.cols ,false);
+
     fclose(model_fp);
     fclose(output_fp);
     fclose(test_fp);
@@ -158,6 +160,14 @@ int main(int argc, char* argv[]) {
     std::cout << "Total Time: " << deltaT78.count() << " Parcial Sums:"
               << deltaT12.count() + deltaT34.count() + deltaT56.count() + deltaTAB.count() + deltaT9_10.count()
                  + deltaT11_12.count() + deltaT13_14.count() << " s.\n";
+
+//    print_matrix(W_cuda, param.k, R.rows);
+//    printf("\n");
+//    print_matrix(H_cuda, param.k, R.cols);
+//    printf("\n");
+//    print_matrix(W_ref, param.k, R.rows);
+//    printf("\n");
+//    print_matrix(H_ref, param.k, R.cols);
 
     return EXIT_SUCCESS;
 }

@@ -91,6 +91,11 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
                 oldHt[i] = v[i];
             }
 
+//            print_matrix(W, param.k, R.rows);
+//            printf("\n");
+//            print_matrix(H, param.k, R.cols);
+
+
             // Create Rhat = R - Wt Ht^T
             if (oiter > 1) {
                 UpdateRating_Original_float(R, Wt, Ht, true);
