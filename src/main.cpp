@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
             exit(EXIT_FAILURE);
         }
     }
-    printf("[info] ThreadsPerBlock = %u | Blocks = %u | K = %d | Learning Rate = %.3f\n",
+    printf("[info] ThreadsPerBlock = %u | Blocks = %u | K = %u | Learning Rate = %.3f\n",
             param.nThreadsPerBlock, param.nBlocks,param.k, param.lambda);
     printf("Rating Matrix global mean: %f\n", R.get_global_mean());
 

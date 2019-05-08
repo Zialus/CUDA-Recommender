@@ -8,7 +8,7 @@
 
 
 #define CHECK_FREAD(err, num)    if(err != num){ \
-    fprintf(stderr,"FREAD read %lu, needed %d, in file %s on line %d\n", err, num,__FILE__,__LINE__); \
+    fprintf(stderr,"FREAD read %zu, needed %d, in file %s on line %d\n", err, num,__FILE__,__LINE__); \
     abort(); \
 }
 
