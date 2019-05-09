@@ -78,15 +78,15 @@ void Mt_byM_multiply(int i, int j, float** M, float** Result) {
     }
 }
 
-void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
+void ALS_OMP(SparseMatrix& R, MatData& W, MatData& H, TestData& T, parameter& param) {
     int k = param.k;
 
     int num_threads_old = omp_get_num_threads();
     omp_set_num_threads(param.threads);
 
     // Create transpose view of R
-    smat_t Rt;
-    Rt = R.transpose();
+    SparseMatrix Rt;
+    Rt = R.get_shallow_transpose();
 
     double update_time_acc = 0;
 
@@ -98,7 +98,7 @@ void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
 #pragma omp parallel for schedule(kind)
         for (int Rw = 0; Rw < R.rows; ++Rw) {
             float* Wr = &W[Rw][0];
-            int omegaSize = R.row_ptr[Rw + 1] - R.row_ptr[Rw];
+            int omegaSize = R.get_csr_row_ptr()[Rw + 1] - R.get_csr_row_ptr()[Rw];
             float** subMatrix;
 
             if (omegaSize > 0) {
@@ -110,8 +110,8 @@ void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
 
                 //a trick to avoid malloc
                 float** H_Omega = (float**) malloc(omegaSize * sizeof(float*));
-                for (int idx = R.row_ptr[Rw], i=0; idx < R.row_ptr[Rw + 1]; ++idx, ++i) {
-                    H_Omega[i] = &H[R.col_idx[idx]][0];
+                for (unsigned idx = R.get_csr_row_ptr()[Rw], i=0; idx < R.get_csr_row_ptr()[Rw + 1]; ++idx, ++i) {
+                    H_Omega[i] = &H[R.get_csr_col_indx()[idx]][0];
                 }
 
                 Mt_byM_multiply(omegaSize, k, H_Omega, subMatrix);
@@ -128,8 +128,8 @@ void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
                 //sparse multiplication
                 for (int c = 0; c < k; ++c) {
                     subVector[c] = 0;
-                    for (int idx = R.row_ptr[Rw]; idx < R.row_ptr[Rw + 1]; ++idx) {
-                        subVector[c] += Rt.val[idx] * H[R.col_idx[idx]][c];
+                    for (unsigned idx = R.get_csr_row_ptr()[Rw]; idx < R.get_csr_row_ptr()[Rw + 1]; ++idx) {
+                        subVector[c] += Rt.get_csc_val()[idx] * H[R.get_csr_col_indx()[idx]][c];
                     }
                 }
 
@@ -161,7 +161,7 @@ void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
 #pragma omp parallel for schedule(kind)
         for (int Rh = 0; Rh < R.cols; ++Rh) {
             float* Hr = &H[Rh][0];
-            unsigned omegaSize = R.col_ptr[Rh + 1] - R.col_ptr[Rh];
+            unsigned omegaSize = R.get_csc_col_ptr()[Rh + 1] - R.get_csc_col_ptr()[Rh];
             float** subMatrix;
 
             if (omegaSize > 0) {
@@ -173,8 +173,8 @@ void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
 
                 //a trick to avoid malloc
                 float** W_Omega = (float**) malloc(omegaSize * sizeof(float*));
-                for (long idx = R.col_ptr[Rh], i = 0; idx < R.col_ptr[Rh + 1]; ++idx, ++i) {
-                    W_Omega[i] = &W[R.row_idx[idx]][0];
+                for (long idx = R.get_csc_col_ptr()[Rh], i = 0; idx < R.get_csc_col_ptr()[Rh + 1]; ++idx, ++i) {
+                    W_Omega[i] = &W[R.get_csc_row_indx()[idx]][0];
                 }
 
                 Mt_byM_multiply(omegaSize, k, W_Omega, subMatrix);
@@ -191,8 +191,8 @@ void ALS_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
                 //sparse multiplication
                 for (int c = 0; c < k; ++c) {
                     subVector[c] = 0;
-                    for (long idx = R.col_ptr[Rh]; idx < R.col_ptr[Rh + 1]; ++idx) {
-                        subVector[c] += R.val[idx] * W[R.row_idx[idx]][c];
+                    for (long idx = R.get_csc_col_ptr()[Rh]; idx < R.get_csc_col_ptr()[Rh + 1]; ++idx) {
+                        subVector[c] += R.get_csc_val()[idx] * W[R.get_csc_row_indx()[idx]][c];
                     }
                 }
 

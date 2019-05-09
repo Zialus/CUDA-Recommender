@@ -71,7 +71,7 @@ __device__ void inverseMatrix_CholeskyMethod_k(int n, float** A) {
 }
 
 //Multiply matrix M transpose by M 
-__device__ void Mt_byM_multiply_k(long i, long j, float* H, float** Result, const long ptr, const long* idx) {
+__device__ void Mt_byM_multiply_k(long i, long j, float* H, float** Result, const long ptr, const unsigned* idx) {
     float SUM;
     for (int I = 0; I < j; ++I) {
         for (int J = I; J < j; ++J) {
@@ -88,7 +88,7 @@ __device__ void Mt_byM_multiply_k(long i, long j, float* H, float** Result, cons
     }
 }
 
-__global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const long* col_idx, const float* val_t, const float* val, const float lambda, const unsigned k, float* W, float* H) {
+__global__ void updateW_overH_kernel(const long rows, const unsigned* row_ptr, const unsigned* col_idx, const float* val_t, const float* val, const float lambda, const unsigned k, float* W, float* H) {
     assert(row_ptr);
     assert(val_t);
     assert(val);
@@ -151,7 +151,7 @@ __global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const
             //sparse multiplication
             for (unsigned c = 0; c < k; ++c) {
                 subVector[c] = 0;
-                for (long idx = row_ptr[Rw]; idx < row_ptr[Rw + 1]; ++idx) {
+                for (unsigned idx = row_ptr[Rw]; idx < row_ptr[Rw + 1]; ++idx) {
                     subVector[c] += val_t[idx] * H[(col_idx[idx] * k) + c];
                 }
             }
@@ -178,7 +178,7 @@ __global__ void updateW_overH_kernel(const long rows, const long* row_ptr, const
     }
 }
 
-__global__ void updateH_overW_kernel(const long cols, const long* col_ptr, const long* row_idx, const float* val, const float lambda, const unsigned k, float* W, float* H) {
+__global__ void updateH_overW_kernel(const long cols, const unsigned* col_ptr, const unsigned* row_idx, const float* val, const float lambda, const unsigned k, float* W, float* H) {
     //optimize H over W
     int ii = threadIdx.x + blockIdx.x * blockDim.x;
     for (int Rh = ii; Rh < cols; Rh += blockDim.x * gridDim.x) {
@@ -209,7 +209,7 @@ __global__ void updateH_overW_kernel(const long cols, const long* col_ptr, const
             //sparse multiplication
             for (unsigned c = 0; c < k; ++c) {
                 subVector[c] = 0;
-                for (long idx = col_ptr[Rh]; idx < col_ptr[Rh + 1]; ++idx) {
+                for (unsigned idx = col_ptr[Rh]; idx < col_ptr[Rh + 1]; ++idx) {
                     subVector[c] += val[idx] * W[(row_idx[idx] * k) + c];
                 }
             }
@@ -236,7 +236,7 @@ __global__ void updateH_overW_kernel(const long cols, const long* col_ptr, const
     }
 }
 
-void kernel_wrapper_als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
+void kernel_wrapper_als_NV(SparseMatrix& R, TestData& T, MatData& W, MatData& H, parameter& parameters) {
     cudaError_t cudaStatus;
     // Reset GPU.
     cudaStatus = cudaDeviceReset();
@@ -253,7 +253,7 @@ void kernel_wrapper_als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, paramete
     gpuErrchk(cudaStatus);
 }
 
-cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
+cudaError_t als_NV(SparseMatrix& R_C, TestData& T, MatData& W, MatData& H, parameter& parameters) {
     int nThreadsPerBlock = parameters.nThreadsPerBlock;
     int nBlocks = parameters.nBlocks;
 
@@ -263,13 +263,13 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     int k = parameters.k;
 
     // Create transpose view of R
-    smat_t Rt;
-    Rt = R_C.transpose();
+    SparseMatrix Rt;
+    Rt = R_C.get_shallow_transpose();
 
-    long* dev_col_ptr = nullptr;
-    long* dev_row_ptr = nullptr;
-    long* dev_row_idx = nullptr;
-    long* dev_col_idx = nullptr;
+    unsigned* dev_col_ptr = nullptr;
+    unsigned* dev_row_ptr = nullptr;
+    unsigned* dev_row_idx = nullptr;
+    unsigned* dev_col_idx = nullptr;
     float* dev_val_t = nullptr;
     float* dev_val = nullptr;
 
@@ -298,6 +298,14 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
         }
     }
 
+    size_t nbits_col_ptr = (R_C.cols + 1) * sizeof(unsigned);
+    size_t nbits_row_ptr = (R_C.rows + 1) * sizeof(unsigned);
+
+    size_t nbits_idx = R_C.nnz * sizeof(unsigned);
+
+    size_t nbits_val = R_C.nnz * sizeof(DTYPE);
+
+
     cudaStatus = cudaMalloc((void**) &dev_W_, nbits_W_);
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**) &dev_H_, nbits_H_);
@@ -309,51 +317,51 @@ cudaError_t als_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& par
     gpuErrchk(cudaStatus);
 
 
-    cudaStatus = cudaMalloc((void**) &dev_col_ptr, R_C.nbits_col_ptr);
+    cudaStatus = cudaMalloc((void**) &dev_col_ptr, nbits_col_ptr);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_row_ptr, R_C.nbits_row_ptr);
+    cudaStatus = cudaMalloc((void**) &dev_row_ptr, nbits_row_ptr);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_row_idx, R_C.nbits_row_idx);
+    cudaStatus = cudaMalloc((void**) &dev_row_idx, nbits_idx);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_col_idx, R_C.nbits_col_idx);
+    cudaStatus = cudaMalloc((void**) &dev_col_idx, nbits_idx);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_val_t, Rt.nbits_val);
+    cudaStatus = cudaMalloc((void**) &dev_val_t, nbits_val);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_val, R_C.nbits_val);
+    cudaStatus = cudaMalloc((void**) &dev_val, nbits_val);
     gpuErrchk(cudaStatus);
 
 
-    cudaStatus = cudaMemcpy(dev_col_ptr, R_C.col_ptr, R_C.nbits_col_ptr, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_col_ptr, R_C.get_csc_col_ptr(), nbits_col_ptr, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_row_ptr, R_C.row_ptr, R_C.nbits_row_ptr, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_row_ptr, R_C.get_csr_row_ptr(), nbits_row_ptr, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_row_idx, R_C.row_idx, R_C.nbits_row_idx, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_row_idx, R_C.get_csc_row_indx(), nbits_idx, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_col_idx, R_C.col_idx, R_C.nbits_col_idx, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_col_idx, R_C.get_csr_col_indx(), nbits_idx, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_val_t, Rt.val, Rt.nbits_val, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_val_t, Rt.get_csc_val(), nbits_val, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_val, R_C.val, R_C.nbits_val, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_val, R_C.get_csc_val(), nbits_val, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
 
 
     float* rmse = (float*) malloc((T.nnz + 1) * sizeof(float));
 
-    long* d_test_row;
-    long* d_test_col;
+    unsigned* d_test_row;
+    unsigned* d_test_col;
     float* d_test_val;
     float* d_pred_v;
     float* d_rmse;
 
-    gpuErrchk(cudaMalloc((void**) &d_test_row, (T.nnz + 1) * sizeof(long)));
-    gpuErrchk(cudaMalloc((void**) &d_test_col, (T.nnz + 1) * sizeof(long)));
+    gpuErrchk(cudaMalloc((void**) &d_test_row, (T.nnz + 1) * sizeof(unsigned)));
+    gpuErrchk(cudaMalloc((void**) &d_test_col, (T.nnz + 1) * sizeof(unsigned)));
     gpuErrchk(cudaMalloc((void**) &d_test_val, (T.nnz + 1) * sizeof(float)));
     gpuErrchk(cudaMalloc((void**) &d_pred_v, (T.nnz + 1) * sizeof(float)));
     gpuErrchk(cudaMalloc((void**) &d_rmse, (T.nnz + 1) * sizeof(float)));
 
-    gpuErrchk(cudaMemcpy(d_test_row, T.test_row, (T.nnz + 1) * sizeof(long), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(d_test_col, T.test_col, (T.nnz + 1) * sizeof(long), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(d_test_val, T.test_val, (T.nnz + 1) * sizeof(float), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_test_row, T.getTestRow(), (T.nnz + 1) * sizeof(unsigned), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_test_col, T.getTestCol(), (T.nnz + 1) * sizeof(unsigned), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_test_val, T.getTestVal(), (T.nnz + 1) * sizeof(float), cudaMemcpyHostToDevice));
 
     float update_time_acc = 0;
 

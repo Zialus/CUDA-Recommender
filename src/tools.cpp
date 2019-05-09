@@ -1,26 +1,88 @@
 #include "tools.h"
 
-// load utility for CCS RCS
-void load(const char* srcdir, smat_t& R, testset_t& T) {
-    // add testing later
-    char filename[1024], buf[1024];
-    long m, n, nnz;
-
-    snprintf(filename, sizeof(filename), "%s/meta", srcdir);
+void load(const char* srcdir, SparseMatrix& R, TestData& T) {
+    char filename[1024];
+    snprintf(filename, sizeof(filename), "%s/meta_modified_all", srcdir);
     FILE* fp = fopen(filename, "r");
+
     if (fp == nullptr) {
-        fprintf(stderr, "Can't open meta input file.\n");
+        printf("Can't open meta input file.\n");
         exit(EXIT_FAILURE);
     }
-    CHECK_FSCAN(fscanf(fp, "%ld %ld", &m, &n), 2);
 
-    CHECK_FSCAN(fscanf(fp, "%ld %1023s", &nnz, buf), 2);
-    snprintf(filename, sizeof(filename), "%s/%s", srcdir, buf);
-    R.load(m, n, nnz, filename);
+    long m;
+    long n;
+    long nnz;
+    CHECK_FSCAN(fscanf(fp, "%ld %ld %ld", &m, &n, &nnz), 3);
 
-    CHECK_FSCAN(fscanf(fp, "%ld %1023s", &nnz, buf), 2);
-    snprintf(filename, sizeof(filename), "%s/%s", srcdir, buf);
-    T.load(m, n, nnz, filename);
+    char buf[1024];
+    char binary_filename_val[1024];
+    char binary_filename_row[1024];
+    char binary_filename_col[1024];
+    char binary_filename_rowptr[1024];
+    char binary_filename_colidx[1024];
+    char binary_filename_csrval[1024];
+    char binary_filename_colptr[1024];
+    char binary_filename_rowidx[1024];
+    char binary_filename_cscval[1024];
+
+    char binary_filename_val_test[1024];
+    char binary_filename_row_test[1024];
+    char binary_filename_col_test[1024];
+
+    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_val, sizeof(binary_filename_val), "%s/%s", srcdir, buf);
+    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_row, sizeof(binary_filename_row), "%s/%s", srcdir, buf);
+    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_col, sizeof(binary_filename_col), "%s/%s", srcdir, buf);
+    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_rowptr, sizeof(binary_filename_rowptr), "%s/%s", srcdir, buf);
+    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_colidx, sizeof(binary_filename_colidx), "%s/%s", srcdir, buf);
+    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_csrval, sizeof(binary_filename_csrval), "%s/%s", srcdir, buf);
+    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_colptr, sizeof(binary_filename_colptr), "%s/%s", srcdir, buf);
+    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_rowidx, sizeof(binary_filename_rowidx), "%s/%s", srcdir, buf);
+    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_cscval, sizeof(binary_filename_cscval), "%s/%s", srcdir, buf);
+
+//    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_val_test, sizeof(binary_filename_val_test), "%s/R_test_coo.data.bin", srcdir);
+//    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_row_test, sizeof(binary_filename_row_test), "%s/R_test_coo.row.bin", srcdir);
+//    CHECK_FSCAN(fscanf(fp, "%1023s", buf), 1);
+    snprintf(binary_filename_col_test, sizeof(binary_filename_col_test), "%s/R_test_coo.col.bin", srcdir);
+
+
+    auto t0 = std::chrono::high_resolution_clock::now();
+    R.initialize_matrix(m, n, nnz);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> deltaT = t1 - t0;
+    std::cout << "[info] Alloc TIMER: " << deltaT.count() << "s.\n";
+
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    R.read_binary_file(binary_filename_rowptr, binary_filename_colidx, binary_filename_csrval,
+                       binary_filename_colptr, binary_filename_rowidx, binary_filename_cscval);
+    auto t3 = std::chrono::high_resolution_clock::now();
+    deltaT = t3 - t2;
+    std::cout << "[info] Train TIMER: " << deltaT.count() << "s.\n";
+
+    auto t4 = std::chrono::high_resolution_clock::now();
+
+    if (fscanf(fp, "%ld %1023s", &nnz, buf) != EOF) {
+        snprintf(filename, sizeof(filename), "%s/%s", srcdir, buf);
+        T.read_binary_file(m, n, nnz, binary_filename_val_test, binary_filename_row_test, binary_filename_col_test);
+    }
+
+    auto t5 = std::chrono::high_resolution_clock::now();
+    deltaT = t5 - t4;
+    std::cout << "[info] Tests TIMER: " << deltaT.count() << "s.\n";
+
 
     fclose(fp);
 }
@@ -28,7 +90,7 @@ void load(const char* srcdir, smat_t& R, testset_t& T) {
 // Save a mat_t A to a file.
 // row_major = true: A is stored in row_major order,
 // row_major = false: A is stored in col_major order.
-void save_mat_t(mat_t A, FILE* fp, bool row_major) {
+void save_mat_t(MatData A, FILE* fp, bool row_major) {
     if (fp == nullptr) {
         fprintf(stderr, "output stream is not valid.\n");
         exit(EXIT_FAILURE);
@@ -39,7 +101,7 @@ void save_mat_t(mat_t A, FILE* fp, bool row_major) {
     fwrite(&m, sizeof(long), 1, fp);
     fwrite(&n, sizeof(long), 1, fp);
     //printf("passed\n");
-    vec_t buf(m * n);
+    VecData buf(m * n);
     //printf("passed-buffer\n");
     if (row_major) {
         size_t idx = 0;
@@ -62,7 +124,7 @@ void save_mat_t(mat_t A, FILE* fp, bool row_major) {
 // Load a matrix from a file and return a mat_t matrix.
 // row_major = true: the returned A is stored in row_major order,
 // row_major = false: the returned A is stored in col_major order.
-mat_t load_mat_t(FILE* fp, bool row_major) {
+MatData load_mat_t(FILE* fp, bool row_major) {
     if (fp == nullptr) {
         fprintf(stderr, "input stream is not valid.\n");
         exit(EXIT_FAILURE);
@@ -70,11 +132,11 @@ mat_t load_mat_t(FILE* fp, bool row_major) {
     unsigned long m, n;
     CHECK_FREAD(fread(&m, sizeof(unsigned long), 1, fp), 1);
     CHECK_FREAD(fread(&n, sizeof(unsigned long), 1, fp), 1);
-    vec_t buf(m * n);
+    VecData buf(m * n);
     CHECK_FREAD(fread(&buf[0], sizeof(float), m * n, fp), 1);
-    mat_t A;
+    MatData A;
     if (row_major) {
-        A = mat_t(m, vec_t(n));
+        A = MatData(m, VecData(n));
         size_t idx = 0;
         for (size_t i = 0; i < m; ++i) {
             for (size_t j = 0; j < n; ++j) {
@@ -82,7 +144,7 @@ mat_t load_mat_t(FILE* fp, bool row_major) {
             }
         }
     } else {
-        A = mat_t(n, vec_t(m));
+        A = MatData(n, VecData(m));
         size_t idx = 0;
         for (size_t i = 0; i < m; ++i) {
             for (size_t j = 0; j < n; ++j) {
@@ -93,8 +155,8 @@ mat_t load_mat_t(FILE* fp, bool row_major) {
     return A;
 }
 
-void initial(mat_t& X, long n, long k) {
-    X = mat_t(n, vec_t(k));
+void initial(MatData& X, long n, long k) {
+    X = MatData(n, VecData(k));
     srand(0L);
     for (long i = 0; i < n; ++i) {
         for (long j = 0; j < k; ++j) {
@@ -103,8 +165,8 @@ void initial(mat_t& X, long n, long k) {
     }
 }
 
-void initial_col(mat_t& X, long k, long n) {
-    X = mat_t(k, vec_t(n));
+void initial_col(MatData& X, long k, long n) {
+    X = MatData(k, VecData(n));
     srand(0L);
     for (long i = 0; i < n; ++i) {
         for (long j = 0; j < k; ++j) {
@@ -113,7 +175,7 @@ void initial_col(mat_t& X, long k, long n) {
     }
 }
 
-float dot(const vec_t& a, const vec_t& b) {
+float dot(const VecData& a, const VecData& b) {
     float ret = 0;
 #pragma omp parallel for
     for (long i = a.size() - 1; i >= 0; --i) {
@@ -122,7 +184,7 @@ float dot(const vec_t& a, const vec_t& b) {
     return ret;
 }
 
-double dot(const mat_t& W, const long i, const mat_t& H, const long j, bool ifALS) {
+double dot(const MatData& W, const long i, const MatData& H, const long j, bool ifALS) {
     double ret = 0;
     if (ifALS) {
         long k = W[0].size();
@@ -138,7 +200,7 @@ double dot(const mat_t& W, const long i, const mat_t& H, const long j, bool ifAL
     return ret;
 }
 
-float dot(const mat_t& W, const int i, const vec_t& H_j) {
+float dot(const MatData& W, const int i, const VecData& H_j) {
     long k = H_j.size();
     float ret = 0;
     for (int t = 0; t < k; ++t) {
@@ -147,7 +209,7 @@ float dot(const mat_t& W, const int i, const vec_t& H_j) {
     return ret;
 }
 
-float norm(const vec_t& a) {
+float norm(const VecData& a) {
     float ret = 0;
     for (long i = a.size() - 1; i >= 0; --i) {
         ret += a[i] * a[i];
@@ -155,89 +217,57 @@ float norm(const vec_t& a) {
     return ret;
 }
 
-float norm(const mat_t& M) {
+float norm(const MatData& M) {
     float reg = 0;
     for (long i = M.size() - 1; i >= 0; --i) { reg += norm(M[i]); }
     return reg;
 }
 
-float calloss(const smat_t& R, const mat_t& W, const mat_t& H) {
+float calloss(const SparseMatrix& R, const MatData& W, const MatData& H) {
     float loss = 0;
     for (long c = 0; c < R.cols; ++c) {
-        for (long idx = R.col_ptr[c]; idx < R.col_ptr[c + 1]; ++idx) {
-            float diff = -R.val[idx];
-            diff += dot(W[R.row_idx[idx]], H[c]);
+        for (long idx = R.get_csc_col_ptr()[c]; idx < R.get_csc_col_ptr()[c + 1]; ++idx) {
+            float diff = -R.get_csc_val()[idx];
+            diff += dot(W[R.get_csc_row_indx()[idx]], H[c]);
             loss += diff * diff;
         }
     }
     return loss;
 }
 
-float calobj(const smat_t& R, const mat_t& W, const mat_t& H, const float lambda, bool iscol) {
-    float loss = 0;
-    size_t k = iscol ? H.size() : 0;
-    vec_t Hc(k);
-    for (long c = 0; c < R.cols; ++c) {
-        if (iscol) {
-            for (size_t t = 0; t < k; ++t) { Hc[t] = H[t][c]; }
-        }
-        for (long idx = R.col_ptr[c]; idx < R.col_ptr[c + 1]; ++idx) {
-            float diff = -R.val[idx];
-            if (iscol) {
-                diff += dot(W, R.row_idx[idx], Hc);
-            } else {
-                diff += dot(W[R.row_idx[idx]], H[c]);
-            }
-            loss += diff * diff;
-        }
-    }
-    float reg = 0;
-    if (iscol) {
-        for (size_t t = 0; t < k; ++t) {
-            for (long r = 0; r < R.rows; ++r) { reg += W[t][r] * W[t][r] * R.nnz_of_row(r); }
-            for (long c = 0; c < R.cols; ++c) { reg += H[t][c] * H[t][c] * R.nnz_of_col(c); }
-        }
-    } else {
-        for (long r = 0; r < R.rows; ++r) { reg += R.nnz_of_row(r) * norm(W[r]); }
-        for (long c = 0; c < R.cols; ++c) { reg += R.nnz_of_col(c) * norm(H[c]); }
-    }
-    reg *= lambda;
-    return loss + reg;
-}
-
-double calrmse(testset_t& T, const mat_t& W, const mat_t& H, bool ifALS, bool iscol) {
+double calrmse(TestData& T, const MatData& W, const MatData& H, bool ifALS, bool iscol) {
     long nnz = T.nnz;
     double rmse = 0;
     for (long idx = 0; idx < nnz; ++idx) {
-        double err = -T.test_val[idx];
+        double err = -T.getTestVal()[idx];
         if (iscol) {
-            err += dot(W, T.test_row[idx], H, T.test_col[idx], ifALS);
+            err += dot(W, T.getTestRow()[idx], H, T.getTestCol()[idx], ifALS);
         } else {
-            err += dot(W[T.test_row[idx]], H[T.test_col[idx]]);
+            err += dot(W[T.getTestRow()[idx]], H[T.getTestCol()[idx]]);
         }
         rmse += err * err;
     }
     return sqrt(rmse / nnz);
 }
 
-double calrmse_r1(testset_t& T, vec_t& Wt, vec_t& Ht) {
+double calrmse_r1(TestData& T, VecData& Wt, VecData& Ht) {
     long nnz = T.nnz;
     double rmse = 0;
 #pragma omp parallel for reduction(+:rmse)
     for (int idx = 0; idx < nnz; ++idx) {
-        T.test_val[idx] -= Wt[T.test_row[idx]] * Ht[T.test_col[idx]];
-        rmse += T.test_val[idx] * T.test_val[idx];
+        T.getTestVal()[idx] -= Wt[T.getTestRow()[idx]] * Ht[T.getTestCol()[idx]];
+        rmse += T.getTestVal()[idx] * T.getTestVal()[idx];
     }
     return sqrt(rmse / nnz);
 }
 
-double calrmse_r1(testset_t& T, vec_t& Wt, vec_t& Ht, vec_t& oldWt, vec_t& oldHt) {
+double calrmse_r1(TestData& T, VecData& Wt, VecData& Ht, VecData& oldWt, VecData& oldHt) {
     long nnz = T.nnz;
     double rmse = 0;
 #pragma omp parallel for reduction(+:rmse)
     for (int idx = 0; idx < nnz; ++idx) {
-        T.test_val[idx] -= Wt[T.test_row[idx]] * Ht[T.test_col[idx]] - oldWt[T.test_row[idx]] * oldHt[T.test_col[idx]];
-        rmse += T.test_val[idx] * T.test_val[idx];
+        T.getTestVal()[idx] -= Wt[T.getTestRow()[idx]] * Ht[T.getTestCol()[idx]] - oldWt[T.getTestRow()[idx]] * oldHt[T.getTestCol()[idx]];
+        rmse += T.getTestVal()[idx] * T.getTestVal()[idx];
     }
     return sqrt(rmse / nnz);
 }

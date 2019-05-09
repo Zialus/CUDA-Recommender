@@ -8,7 +8,7 @@ std::chrono::duration<double> deltaT12;
 std::chrono::duration<double> deltaTAB;
 std::chrono::duration<double> deltaT34;
 
-void runCUDA(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters, bool ALS) {
+void runCUDA(SparseMatrix& R, TestData& T, MatData& W, MatData& H, parameter& parameters, bool ALS) {
     if (ALS) {
         kernel_wrapper_als_NV(R, T, W, H, parameters);
     } else {
@@ -16,7 +16,7 @@ void runCUDA(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters,
     }
 }
 
-void runOMP(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters, bool ALS) {
+void runOMP(SparseMatrix& R, TestData& T, MatData& W, MatData& H, parameter& parameters, bool ALS) {
     if (ALS) {
         ALS_OMP(R, W, H, T, parameters);
     } else {
@@ -24,7 +24,7 @@ void runOMP(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters, 
     }
 }
 
-void read_input(const parameter& param, smat_t& R, testset_t& T) {
+void read_input(const parameter& param, SparseMatrix& R, TestData& T) {
     puts("------------------------------------------------------------");
     puts("[info] Loading R matrix...");
     auto t3 = std::chrono::high_resolution_clock::now();
@@ -54,14 +54,14 @@ int main(int argc, char* argv[]) {
 
     open_files(test_file_name, model_file_name, output_file_name, test_fp, output_fp, model_fp);
 
-    smat_t R;
-    testset_t T;
+    SparseMatrix R;
+    TestData T;
 
-    mat_t W_cuda;
-    mat_t H_cuda;
+    MatData W_cuda;
+    MatData H_cuda;
 
-    mat_t W_ref;
-    mat_t H_ref;
+    MatData W_ref;
+    MatData H_ref;
 
     read_input(param, R, T);
 
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
 
     printf("[info] ThreadsPerBlock = %u | Blocks = %u | K = %u | Learning Rate = %.3f\n",
             param.nThreadsPerBlock, param.nBlocks,param.k, param.lambda);
-    printf("Rating Matrix global mean: %f\n", R.get_global_mean());
+//    printf("Rating Matrix global mean: %f\n", get_global_mean(R));
 
     std::chrono::duration<double> deltaT56{};
     std::chrono::duration<double> deltaT9_10{};

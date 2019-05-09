@@ -149,8 +149,8 @@ void calculate_rmse_from_file(FILE* model_fp, FILE* test_fp, FILE* output_fp) {
 
     double start = omp_get_wtime();
 
-    mat_t W = load_mat_t(model_fp, true);
-    mat_t H = load_mat_t(model_fp, true);
+    MatData W = load_mat_t(model_fp, true);
+    MatData H = load_mat_t(model_fp, true);
 
     unsigned long rank = W[0].size();
     if (rank == 0) {
@@ -180,7 +180,7 @@ void calculate_rmse_from_file(FILE* model_fp, FILE* test_fp, FILE* output_fp) {
     printf("[FINAL INFO] Test RMSE = %f. Calculated in %lfs\n", rmse, end - start);
 }
 
-void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int rank, bool ifALS) {
+void calculate_rmse_directly(MatData& W, MatData& H, TestData& T, int rank, bool ifALS) {
     double start = omp_get_wtime();
 
     double rmse = 0;
@@ -189,9 +189,9 @@ void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int rank, bool if
     long nnz = T.nnz;
 
     for (long idx = 0; idx < nnz; ++idx) {
-        long i = T.test_row[idx];
-        long j = T.test_col[idx];
-        double v = T.test_val[idx];
+        long i = T.getTestRow()[idx];
+        long j = T.getTestCol()[idx];
+        double v = T.getTestVal()[idx];
 
         double pred_v = 0;
         if (ifALS) {
@@ -216,7 +216,7 @@ void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int rank, bool if
     printf("Test RMSE = %lf. Calculated in %lfs\n", rmse, end - start);
 }
 
-void golden_compare(mat_t W, mat_t W_ref, unsigned k, unsigned m) {
+void golden_compare(MatData W, MatData W_ref, unsigned k, unsigned m) {
     unsigned error_count = 0;
     for (unsigned i = 0; i < k; i++) {
         for (unsigned j = 0; j < m; j++) {
@@ -238,7 +238,7 @@ void golden_compare(mat_t W, mat_t W_ref, unsigned k, unsigned m) {
     }
 }
 
-void print_matrix(mat_t M, unsigned k, unsigned n) {
+void print_matrix(MatData M, unsigned k, unsigned n) {
     printf("-----------------------------------------\n");
     for (unsigned i = 0; i < n; ++i) {
         for (unsigned j = 0; j < k; ++j) {
@@ -248,7 +248,7 @@ void print_matrix(mat_t M, unsigned k, unsigned n) {
     }
 }
 
-void show_final_matrix(mat_t& W, mat_t& H, int rank, unsigned n, unsigned m, bool ifALS) {
+void show_final_matrix(MatData& W, MatData& H, int rank, unsigned n, unsigned m, bool ifALS) {
 
     printf("-----------------------------------------\n");
     for (unsigned i = 0; i < n; ++i) {

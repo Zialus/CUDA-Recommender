@@ -17,12 +17,12 @@ parameter parse_command_line(int argc, char** argv);
 
 void calculate_rmse_from_file(FILE* model_fp, FILE* test_fp, FILE* output_fp);
 
-void calculate_rmse_directly(mat_t& W, mat_t& H, testset_t& T, int rank, bool ifALS);
+void calculate_rmse_directly(MatData& W, MatData& H, TestData& T, int rank, bool ifALS);
 
-void golden_compare(mat_t W, mat_t W_ref, unsigned k, unsigned m);
+void golden_compare(MatData W, MatData W_ref, unsigned k, unsigned m);
 
-void print_matrix(mat_t M, unsigned k, unsigned n);
+void print_matrix(MatData M, unsigned k, unsigned n);
 
-void show_final_matrix(mat_t& W, mat_t& H, int rank, unsigned n, unsigned m, bool ifALS);
+void show_final_matrix(MatData& W, MatData& H, int rank, unsigned n, unsigned m, bool ifALS);
 
 #endif //EXTRAS_H

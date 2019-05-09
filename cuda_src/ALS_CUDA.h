@@ -38,8 +38,8 @@ __global__ void updateH_overW_kernel(long cols,
                                      float* W,
                                      float* H);
 
-void kernel_wrapper_als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters);
+void kernel_wrapper_als_NV(SparseMatrix& R, TestData& T, MatData& W, MatData& H, parameter& parameters);
 
-cudaError_t als_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters);
+cudaError_t als_NV(SparseMatrix& R, TestData& T, MatData& W, MatData& H, parameter& parameters);
 
 #endif //ALS_CUDA_H

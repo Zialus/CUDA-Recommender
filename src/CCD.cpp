@@ -3,27 +3,27 @@
 
 #define kind dynamic,500
 
-inline float RankOneUpdate_Original_float(const smat_t& R, const long j, const vec_t& u, const float lambda) {
+inline float RankOneUpdate_Original_float(const SparseMatrix& R, const long j, const VecData& u, const float lambda) {
     float g = 0, h = lambda;
-    if (R.col_ptr[j + 1] == R.col_ptr[j]) { return 0; }
-    for (long idx = R.col_ptr[j]; idx < R.col_ptr[j + 1]; ++idx) {
-        long i = R.row_idx[idx];
-        g += u[i] * R.val[idx];
+    if (R.get_csc_col_ptr()[j + 1] == R.get_csc_col_ptr()[j]) { return 0; }
+    for (long idx = R.get_csc_col_ptr()[j]; idx < R.get_csc_col_ptr()[j + 1]; ++idx) {
+        long i = R.get_csc_row_indx()[idx];
+        g += u[i] * R.get_csc_val()[idx];
         h += u[i] * u[i];
     }
     float newvj = g / h;
     return newvj;
 }
 
-inline float UpdateRating_Original_float(smat_t& R, const vec_t& Wt, const vec_t& Ht, bool add) {
+inline float UpdateRating_Original_float(SparseMatrix& R, const VecData& Wt, const VecData& Ht, bool add) {
     float loss = 0;
     if (add) {
 #pragma omp parallel for schedule(kind) reduction(+:loss)
         for (int c = 0; c < R.cols; ++c) {
             float Htc = Ht[c], loss_inner = 0;
-            for (long idx = R.col_ptr[c]; idx < R.col_ptr[c + 1]; ++idx) {
-                R.val[idx] += Wt[R.row_idx[idx]] * Htc;
-                loss_inner += R.val[idx] * R.val[idx];
+            for (long idx = R.get_csc_col_ptr()[c]; idx < R.get_csc_col_ptr()[c + 1]; ++idx) {
+                R.get_csc_val()[idx] += Wt[R.get_csc_row_indx()[idx]] * Htc;
+                loss_inner += R.get_csc_val()[idx] * R.get_csc_val()[idx];
             }
             loss += loss_inner;
         }
@@ -32,9 +32,9 @@ inline float UpdateRating_Original_float(smat_t& R, const vec_t& Wt, const vec_t
 #pragma omp parallel for schedule(kind) reduction(+:loss)
         for (int c = 0; c < R.cols; ++c) {
             float Htc = Ht[c], loss_inner = 0;
-            for (long idx = R.col_ptr[c]; idx < R.col_ptr[c + 1]; ++idx) {
-                R.val[idx] -= Wt[R.row_idx[idx]] * Htc;
-                loss_inner += R.val[idx] * R.val[idx];
+            for (long idx = R.get_csc_col_ptr()[c]; idx < R.get_csc_col_ptr()[c + 1]; ++idx) {
+                R.get_csc_val()[idx] -= Wt[R.get_csc_row_indx()[idx]] * Htc;
+                loss_inner += R.get_csc_val()[idx] * R.get_csc_val()[idx];
             }
             loss += loss_inner;
         }
@@ -42,15 +42,15 @@ inline float UpdateRating_Original_float(smat_t& R, const vec_t& Wt, const vec_t
     }
 }
 
-void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
+void ccdr1_OMP(SparseMatrix& R, MatData& W, MatData& H, TestData& T, parameter& param) {
     float lambda = param.lambda;
 
     int num_threads_old = omp_get_num_threads();
     omp_set_num_threads(param.threads);
 
     // Create transpose view of R
-    smat_t Rt;
-    Rt = R.transpose();
+    SparseMatrix Rt;
+    Rt = R.get_shallow_transpose();
 
     // H is a zero matrix now.
     for (unsigned t = 0; t < param.k; ++t) {
@@ -59,8 +59,8 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
         }
     }
 
-    vec_t u(R.rows), oldWt(R.rows);
-    vec_t v(R.cols), oldHt(R.cols);
+    VecData u(R.rows), oldWt(R.rows);
+    VecData v(R.cols), oldHt(R.cols);
 
     double update_time_acc = 0;
     double rank_time_acc = 0;
@@ -77,8 +77,8 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
 
             double start = omp_get_wtime();
 
-            vec_t& Wt = W[t];
-            vec_t& Ht = H[t];
+            VecData& Wt = W[t];
+            VecData& Ht = H[t];
 
 #pragma omp parallel for
             for (int i = 0; i < R.rows; ++i) {
@@ -109,7 +109,7 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
                 start = omp_get_wtime();
 #pragma omp parallel for schedule(kind) shared(u, v)
                 for (long c = 0; c < R.cols; ++c) {
-                    v[c] = RankOneUpdate_Original_float(R, c, u, lambda * (R.col_ptr[c + 1] - R.col_ptr[c]));
+                    v[c] = RankOneUpdate_Original_float(R, c, u, lambda * (R.get_csc_col_ptr()[c + 1] - R.get_csc_col_ptr()[c]));
                 }
                 Htime += omp_get_wtime() - start;
 
@@ -117,7 +117,7 @@ void ccdr1_OMP(smat_t& R, mat_t& W, mat_t& H, testset_t& T, parameter& param) {
                 start = omp_get_wtime();
 #pragma omp parallel for schedule(kind) shared(u, v)
                 for (long c = 0; c < Rt.cols; ++c) {
-                    u[c] = RankOneUpdate_Original_float(Rt, c, v, lambda * (Rt.col_ptr[c + 1] - Rt.col_ptr[c]));
+                    u[c] = RankOneUpdate_Original_float(Rt, c, v, lambda * (Rt.get_csc_col_ptr()[c + 1] - Rt.get_csc_col_ptr()[c]));
                 }
                 Wtime += omp_get_wtime() - start;
             }

@@ -1,8 +1,8 @@
 #include "CCD_CUDA.h"
 
-__global__ void RankOneUpdate_v_kernel(const long Rcols,
-                                       const long* Rcol_ptr,
-                                       const long* Rrow_idx,
+__global__ void RankOneUpdate_v_kernel(const unsigned Rcols,
+                                       const unsigned* Rcol_ptr,
+                                       const unsigned* Rrow_idx,
                                        const float* Rval,
 
                                        float* u,
@@ -20,9 +20,9 @@ __global__ void RankOneUpdate_v_kernel(const long Rcols,
 
 }
 
-__global__ void RankOneUpdate_u_kernel(const long Rcols_t,
-                                       const long* Rcol_ptr_t,
-                                       const long* Rrow_idx_t,
+__global__ void RankOneUpdate_u_kernel(const unsigned Rcols_t,
+                                       const unsigned* Rcol_ptr_t,
+                                       const unsigned* Rrow_idx_t,
                                        const float* Rval_t,
 
                                        float* u,
@@ -40,11 +40,11 @@ __global__ void RankOneUpdate_u_kernel(const long Rcols_t,
 
 }
 
-__device__ float RankOneUpdate_dev(const long* Rcol_ptr,
-                                   const long* Rrow_idx,
+__device__ float RankOneUpdate_dev(const unsigned* Rcol_ptr,
+                                   const unsigned* Rrow_idx,
                                    const float* Rval,
 
-                                   const long j,
+                                   const unsigned j,
                                    const float* u_vec_t,
 
                                    const float lambda,
@@ -53,8 +53,8 @@ __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
     float g = 0, h = lambda;
     if (Rcol_ptr[j + 1] == Rcol_ptr[j]) { return 0; }
 
-    for (long idx = Rcol_ptr[j]; idx < Rcol_ptr[j + 1]; ++idx) {
-        long i = Rrow_idx[idx];
+    for (unsigned idx = Rcol_ptr[j]; idx < Rcol_ptr[j + 1]; ++idx) {
+        unsigned i = Rrow_idx[idx];
         g += u_vec_t[i] * Rval[idx];
         h += u_vec_t[i] * u_vec_t[i];
     }
@@ -66,17 +66,17 @@ __device__ float RankOneUpdate_dev(const long* Rcol_ptr,
     return newvj;
 }
 
-__global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols,
-                                                const long* Rcol_ptr,
-                                                const long* Rrow_idx,
+__global__ void UpdateRating_DUAL_kernel_NoLoss(const unsigned Rcols,
+                                                const unsigned* Rcol_ptr,
+                                                const unsigned* Rrow_idx,
                                                 float* Rval,
                                                 const float* Wt_vec_t,
                                                 const float* Ht_vec_t,
                                                 const bool add,
 
-                                                const long Rcols_t,
-                                                const long* Rcol_ptr_t,
-                                                const long* Rrow_idx_t,
+                                                const unsigned Rcols_t,
+                                                const unsigned* Rcol_ptr_t,
+                                                const unsigned* Rrow_idx_t,
                                                 float* Rval_t,
                                                 const bool add_t
 ) {
@@ -86,12 +86,12 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols,
     for (long i = thread_id; i < Rcols; i += total_threads) {
         if (add) {
             float Htc = Ht_vec_t[i];
-            for (long idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx) {
+            for (unsigned idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx) {
                 Rval[idx] += Wt_vec_t[Rrow_idx[idx]] * Htc; //change R.val
             }
         } else {
             float Htc = Ht_vec_t[i];
-            for (long idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx) {
+            for (unsigned idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx) {
                 Rval[idx] -= Wt_vec_t[Rrow_idx[idx]] * Htc; //change R.val
             }
         }
@@ -100,21 +100,21 @@ __global__ void UpdateRating_DUAL_kernel_NoLoss(const long Rcols,
     for (long i = thread_id; i < Rcols_t; i += total_threads) {
         if (add_t) {
             float Htc = Wt_vec_t[i];
-            for (long idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx) {
+            for (unsigned idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx) {
                 Rval_t[idx] += Ht_vec_t[Rrow_idx_t[idx]] * Htc; //change R.val
             }
         } else {
             float Htc = Wt_vec_t[i];
-            for (long idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx) {
+            for (unsigned idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx) {
                 Rval_t[idx] -= Ht_vec_t[Rrow_idx_t[idx]] * Htc; //change R.val
             }
         }
     }
 }
 
-__global__ void UpdateRating_W_kernel(const long Rcols,
-                                      const long* Rcol_ptr,
-                                      const long* Rrow_idx,
+__global__ void UpdateRating_W_kernel(const unsigned Rcols,
+                                      const unsigned* Rcol_ptr,
+                                      const unsigned* Rrow_idx,
                                       float* Rval,
 
                                       const float* Wt_vec_t,
@@ -129,12 +129,12 @@ __global__ void UpdateRating_W_kernel(const long Rcols,
     for (long i = thread_id; i < Rcols; i += total_threads) {
         if (add) {
             float Htc = Ht_vec_t[i];
-            for (long idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx) {
+            for (unsigned idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx) {
                 Rval[idx] += Wt_vec_t[Rrow_idx[idx]] * Htc; //change R.val
             }
         } else {
             float Htc = Ht_vec_t[i];
-            for (long idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx) {
+            for (unsigned idx = Rcol_ptr[i]; idx < Rcol_ptr[i + 1]; ++idx) {
                 Rval[idx] -= Wt_vec_t[Rrow_idx[idx]] * Htc; //change R.val
             }
         }
@@ -142,9 +142,9 @@ __global__ void UpdateRating_W_kernel(const long Rcols,
 
 }
 
-__global__ void UpdateRating_H_kernel(const long Rcols_t,
-                                      const long* Rcol_ptr_t,
-                                      const long* Rrow_idx_t,
+__global__ void UpdateRating_H_kernel(const unsigned Rcols_t,
+                                      const unsigned* Rcol_ptr_t,
+                                      const unsigned* Rrow_idx_t,
                                       float* Rval_t,
 
                                       const float* Wt_vec_t,
@@ -158,19 +158,19 @@ __global__ void UpdateRating_H_kernel(const long Rcols_t,
     for (long i = thread_id; i < Rcols_t; i += total_threads) {
         if (add_t) {
             float Htc = Wt_vec_t[i];
-            for (long idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx) {
+            for (unsigned idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx) {
                 Rval_t[idx] += Ht_vec_t[Rrow_idx_t[idx]] * Htc; //change R.val
             }
         } else {
             float Htc = Wt_vec_t[i];
-            for (long idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx) {
+            for (unsigned idx = Rcol_ptr_t[i]; idx < Rcol_ptr_t[i + 1]; ++idx) {
                 Rval_t[idx] -= Ht_vec_t[Rrow_idx_t[idx]] * Htc; //change R.val
             }
         }
     }
 }
 
-void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
+void kernel_wrapper_ccdpp_NV(SparseMatrix& R, TestData& T, MatData& W, MatData& H, parameter& parameters) {
     cudaError_t cudaStatus;
     // Reset GPU.
     cudaStatus = cudaDeviceReset();
@@ -188,8 +188,8 @@ void kernel_wrapper_ccdpp_NV(smat_t& R, testset_t& T, mat_t& W, mat_t& H, parame
 }
 
 inline cudaError_t
-updateRating(unsigned int nThreadsPerBlock, unsigned int nBlocks, const smat_t& R_C, const smat_t& Rt,
-             const long* dev_Rcol_ptr, const long* dev_Rrow_idx, const long* dev_Rcol_ptr_T, const long* dev_Rrow_idx_T,
+updateRating(unsigned int nThreadsPerBlock, unsigned int nBlocks, const SparseMatrix& R_C, const SparseMatrix& Rt,
+             const unsigned* dev_Rcol_ptr, const unsigned* dev_Rrow_idx, const unsigned* dev_Rcol_ptr_T, const unsigned* dev_Rrow_idx_T,
              float* dev_Rval, float* dev_Rval_t, const float* dev_Wt_vec_t, const float* dev_Ht_vec_t, const bool add,
              cudaError_t& cudaStatus) {
 
@@ -212,8 +212,8 @@ updateRating(unsigned int nThreadsPerBlock, unsigned int nBlocks, const smat_t& 
 
 inline cudaError_t
 RankOneUpdate(const parameter& parameters, unsigned int nThreadsPerBlock, unsigned int nBlocks, float lambda,
-              const smat_t& R_C, const smat_t& Rt, const long* dev_Rcol_ptr, const long* dev_Rrow_idx,
-              const long* dev_Rcol_ptr_T, const long* dev_Rrow_idx_T, const float* dev_Rval,
+              const SparseMatrix& R_C, const SparseMatrix& Rt, const unsigned* dev_Rcol_ptr, const unsigned* dev_Rrow_idx,
+              const unsigned* dev_Rcol_ptr_T, const unsigned* dev_Rrow_idx_T, const float* dev_Rval,
               const float* dev_Rval_t, float* dev_Wt_vec_t,float* dev_Ht_vec_t, cudaError_t& cudaStatus) {
 
     RankOneUpdate_v_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
@@ -230,7 +230,7 @@ RankOneUpdate(const parameter& parameters, unsigned int nThreadsPerBlock, unsign
 }
 
 
-cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& parameters) {
+cudaError_t ccdpp_NV(SparseMatrix& R_C, TestData& T, MatData& W, MatData& H, parameter& parameters) {
     unsigned nThreadsPerBlock = parameters.nThreadsPerBlock;
     unsigned nBlocks = parameters.nBlocks;
 
@@ -240,13 +240,13 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     float lambda = parameters.lambda;
 
     // Create transpose view of R
-    smat_t Rt;
-    Rt = R_C.transpose();
+    SparseMatrix Rt;
+    Rt = R_C.get_shallow_transpose();
 
-    long* dev_Rcol_ptr = nullptr;
-    long* dev_Rrow_idx = nullptr;
-    long* dev_Rcol_ptr_T = nullptr;
-    long* dev_Rrow_idx_T = nullptr;
+    unsigned* dev_Rcol_ptr = nullptr;
+    unsigned* dev_Rrow_idx = nullptr;
+    unsigned* dev_Rcol_ptr_T = nullptr;
+    unsigned* dev_Rrow_idx_T = nullptr;
     float* dev_Rval = nullptr;
     float* dev_Rval_t = nullptr;
 
@@ -277,6 +277,15 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
 //        }
 //    }
 
+
+    size_t nbits_col_ptr = (R_C.cols + 1) * sizeof(unsigned);
+    size_t nbits_row_ptr = (R_C.rows + 1) * sizeof(unsigned);
+
+    size_t nbits_idx = R_C.nnz * sizeof(unsigned);
+
+    size_t nbits_val = R_C.nnz * sizeof(DTYPE);
+
+
     cudaStatus = cudaMalloc((void**) &dev_W_, nbits_W_);
     gpuErrchk(cudaStatus);
     cudaStatus = cudaMalloc((void**) &dev_H_, nbits_H_);
@@ -289,49 +298,49 @@ cudaError_t ccdpp_NV(smat_t& R_C, testset_t& T, mat_t& W, mat_t& H, parameter& p
     gpuErrchk(cudaStatus);
 
 
-    cudaStatus = cudaMalloc((void**) &dev_Rcol_ptr, R_C.nbits_col_ptr);
+    cudaStatus = cudaMalloc((void**) &dev_Rcol_ptr, nbits_col_ptr);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_Rrow_idx, R_C.nbits_row_idx);
+    cudaStatus = cudaMalloc((void**) &dev_Rrow_idx, nbits_idx);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_Rcol_ptr_T, Rt.nbits_col_ptr);
+    cudaStatus = cudaMalloc((void**) &dev_Rcol_ptr_T, nbits_row_ptr);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_Rrow_idx_T, Rt.nbits_row_idx);
+    cudaStatus = cudaMalloc((void**) &dev_Rrow_idx_T, nbits_idx);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_Rval, R_C.nbits_val);
+    cudaStatus = cudaMalloc((void**) &dev_Rval, nbits_val);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMalloc((void**) &dev_Rval_t, Rt.nbits_val);
+    cudaStatus = cudaMalloc((void**) &dev_Rval_t, nbits_val);
     gpuErrchk(cudaStatus);
 
-    cudaStatus = cudaMemcpy(dev_Rcol_ptr, R_C.col_ptr, R_C.nbits_col_ptr, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_Rcol_ptr, R_C.get_csc_col_ptr(), nbits_col_ptr, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_Rrow_idx, R_C.row_idx, R_C.nbits_row_idx, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_Rrow_idx, R_C.get_csc_row_indx(), nbits_idx, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_Rcol_ptr_T, Rt.col_ptr, Rt.nbits_col_ptr, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_Rcol_ptr_T, Rt.get_csc_col_ptr(), nbits_row_ptr, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_Rrow_idx_T, Rt.row_idx, Rt.nbits_row_idx, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_Rrow_idx_T, Rt.get_csc_row_indx(), nbits_idx, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_Rval, R_C.val, R_C.nbits_val, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_Rval, R_C.get_csc_val(), nbits_val, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
-    cudaStatus = cudaMemcpy(dev_Rval_t, Rt.val, Rt.nbits_val, cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_Rval_t, Rt.get_csc_val(), nbits_val, cudaMemcpyHostToDevice);
     gpuErrchk(cudaStatus);
 
     float* rmse = (float*) malloc((T.nnz + 1) * sizeof(float));
 
-    long* d_test_row;
-    long* d_test_col;
+    unsigned* d_test_row;
+    unsigned* d_test_col;
     float* d_test_val;
     float* d_pred_v;
     float* d_rmse;
 
-    gpuErrchk(cudaMalloc((void**) &d_test_row, (T.nnz + 1) * sizeof(long)));
-    gpuErrchk(cudaMalloc((void**) &d_test_col, (T.nnz + 1) * sizeof(long)));
+    gpuErrchk(cudaMalloc((void**) &d_test_row, (T.nnz + 1) * sizeof(unsigned)));
+    gpuErrchk(cudaMalloc((void**) &d_test_col, (T.nnz + 1) * sizeof(unsigned)));
     gpuErrchk(cudaMalloc((void**) &d_test_val, (T.nnz + 1) * sizeof(float)));
     gpuErrchk(cudaMalloc((void**) &d_pred_v, (T.nnz + 1) * sizeof(float)));
     gpuErrchk(cudaMalloc((void**) &d_rmse, (T.nnz + 1) * sizeof(float)));
 
-    gpuErrchk(cudaMemcpy(d_test_row, T.test_row, (T.nnz + 1) * sizeof(long), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(d_test_col, T.test_col, (T.nnz + 1) * sizeof(long), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(d_test_val, T.test_val, (T.nnz + 1) * sizeof(float), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_test_row, T.getTestRow(), (T.nnz + 1) * sizeof(unsigned), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_test_col, T.getTestCol(), (T.nnz + 1) * sizeof(unsigned), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_test_val, T.getTestVal(), (T.nnz + 1) * sizeof(float), cudaMemcpyHostToDevice));
 
     float update_time_acc = 0;
     float rank_time_acc = 0;

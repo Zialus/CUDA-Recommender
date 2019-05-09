@@ -3,20 +3,19 @@
 
 #include "pmf_util.h"
 
-void load(const char* srcdir, smat_t& R, testset_t& T);
-void save_mat_t(mat_t A, FILE* fp, bool row_major = true);
-mat_t load_mat_t(FILE* fp, bool row_major = true);
-void initial(mat_t& X, long n, long k);
-void initial_col(mat_t& X, long k, long n);
-float dot(const vec_t& a, const vec_t& b);
-double dot(const mat_t& W, long i, const mat_t& H, long j, bool ifALS);
-float dot(const mat_t& W, int i, const vec_t& H_j);
-float norm(const vec_t& a);
-float norm(const mat_t& M);
-float calloss(const smat_t& R, const mat_t& W, const mat_t& H);
-float calobj(const smat_t& R, const mat_t& W, const mat_t& H, float lambda, bool iscol = false);
-double calrmse(testset_t& T, const mat_t& W, const mat_t& H, bool ifALS, bool iscol = false);
-double calrmse_r1(testset_t& T, vec_t& Wt, vec_t& H_t);
-double calrmse_r1(testset_t& T, vec_t& Wt, vec_t& Ht, vec_t& oldWt, vec_t& oldHt);
+void load(const char* srcdir, SparseMatrix& R, TestData& T);
+void save_mat_t(MatData A, FILE* fp, bool row_major = true);
+MatData load_mat_t(FILE* fp, bool row_major = true);
+void initial(MatData& X, long n, long k);
+void initial_col(MatData& X, long k, long n);
+float dot(const VecData& a, const VecData& b);
+double dot(const MatData& W, long i, const MatData& H, long j, bool ifALS);
+float dot(const MatData& W, int i, const VecData& H_j);
+float norm(const VecData& a);
+float norm(const MatData& M);
+float calloss(const SparseMatrix& R, const MatData& W, const MatData& H);
+double calrmse(TestData& T, const MatData& W, const MatData& H, bool ifALS, bool iscol = false);
+double calrmse_r1(TestData& T, VecData& Wt, VecData& H_t);
+double calrmse_r1(TestData& T, VecData& Wt, VecData& Ht, VecData& oldWt, VecData& oldHt);
 
 #endif //TOOLS_H
