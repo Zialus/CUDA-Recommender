@@ -1,5 +1,4 @@
 .idea/
-cmake-*
 exec/
-build/
-sftp-config.json
+cmake-*
+build-*
