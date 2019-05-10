@@ -80,17 +80,10 @@ __device__ void Mt_byM_multiply_k(long i, long j, float* H, float** Result, cons
 }
 
 __global__ void updateW_overH_kernel(const long rows, const unsigned* row_ptr, const unsigned* col_idx, const float* val_t, const float* val, const float lambda, const unsigned k, float* W, float* H) {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
-
-//    int tid = blockIdx.x * blockDim.x + threadIdx.x;
-
-
-
-    //optimize W over H
-    int ii = threadIdx.x + blockIdx.x * blockDim.x;
-    for (int Rw = ii; Rw < rows; Rw += blockDim.x * gridDim.x) {
+    for (int Rw = tid; Rw < rows; Rw += blockDim.x * gridDim.x) {
         //int offset_W = Rw*k;
-        //int offset_H = Rw*cols;
 
         float* Wr = &W[Rw * k];
         unsigned omegaSize = row_ptr[Rw + 1] - row_ptr[Rw];
@@ -101,16 +94,10 @@ __global__ void updateW_overH_kernel(const long rows, const unsigned* row_ptr, c
             subVector = (float*) malloc(k * sizeof(float));
             subMatrix = (float**) malloc(k * sizeof(float*));
 
-
-            assert(subVector);
-            assert(subMatrix);
             for (unsigned i = 0; i < k; ++i) {
                 subMatrix[i] = (float*) malloc(k * sizeof(float));
-
                 assert(subMatrix[i]);
             }
-
-
 
             Mt_byM_multiply_k(omegaSize, k, H, subMatrix, row_ptr[Rw], col_idx);
 
@@ -154,20 +141,23 @@ __global__ void updateW_overH_kernel(const long rows, const unsigned* row_ptr, c
 }
 
 __global__ void updateH_overW_kernel(const long cols, const unsigned* col_ptr, const unsigned* row_idx, const float* val, const float lambda, const unsigned k, float* W, float* H) {
-    //optimize H over W
-    int ii = threadIdx.x + blockIdx.x * blockDim.x;
-    for (int Rh = ii; Rh < cols; Rh += blockDim.x * gridDim.x) {
-        float* Hr = &H[Rh * k];
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    for (int Rh = tid; Rh < cols; Rh += blockDim.x * gridDim.x) {
         //int offset_H = Rh*k;
+
+        float* Hr = &H[Rh * k];
         unsigned omegaSize = col_ptr[Rh + 1] - col_ptr[Rh];
-        float** subMatrix;// ** W_Omega;
+        float** subMatrix;
         float* subVector;
 
         if (omegaSize > 0) {
             subVector = (float*) malloc(k * sizeof(float));
             subMatrix = (float**) malloc(k * sizeof(float*));
+
             for (unsigned i = 0; i < k; ++i) {
                 subMatrix[i] = (float*) malloc(k * sizeof(float));
+                assert(subMatrix[i]);
             }
 
             Mt_byM_multiply_k(omegaSize, k, W, subMatrix, col_ptr[Rh], row_idx);
