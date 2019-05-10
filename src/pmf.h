@@ -28,7 +28,7 @@ public:
         k = 10;
         threads = 4;
         maxiter = 5;
-        maxinneriter = 5;
+        maxinneriter = 1;
         lambda = 0.1f;
         eps = 1e-3f;  // for the fundec stop-cond in ccdr1
         do_predict = 0;

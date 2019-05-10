@@ -97,8 +97,8 @@ int main(int argc, char* argv[]) {
         initial_col(H_ref, param.k, R.cols);
     }
 
-    printf("[info] ThreadsPerBlock = %u | Blocks = %u | K = %u | Learning Rate = %.3f\n",
-            param.nThreadsPerBlock, param.nBlocks,param.k, param.lambda);
+    printf("[info] ThreadsPerBlock = %u | Blocks = %u | K = %u | InnerIter = %d | OuterIter = %d | Threads = %d | L = %.3f\n",
+            param.nThreadsPerBlock, param.nBlocks,param.k, param.maxinneriter, param.maxiter, param.threads, param.lambda);
 //    printf("Rating Matrix global mean: %f\n", get_global_mean(R));
 
     std::chrono::duration<double> deltaT56{};
