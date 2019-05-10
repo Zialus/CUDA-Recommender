@@ -1,11 +1,11 @@
 #include "ALS_CUDA.h"
 
-__device__ void choldc1_k(int n, float** a, float* p) {
+__device__ void choldc1_k(int n, float* a, float* p) {
     for (int i = 0; i < n; ++i) {
         for (int j = i; j < n; ++j) {
-            float sum = a[i][j];
+            float sum = a[i * n + j];
             for (int k = i - 1; k >= 0; --k) {
-                sum -= a[i][k] * a[j][k];
+                sum -= a[i * n + k] * a[j * n + k];
             }
             if (i == j) {
                 if (sum <= 0) {
@@ -13,56 +13,56 @@ __device__ void choldc1_k(int n, float** a, float* p) {
                 }
                 p[i] = sqrtf(sum);
             } else {
-                a[j][i] = sum / p[i];
+                a[j * n + i] = sum / p[i];
             }
         }
     }
 }
 
-__device__ void choldcsl_k(int n, float** A) {
+__device__ void choldcsl_k(int n, float* A) {
     float* p = (float*) malloc(n * sizeof(float));
     choldc1_k(n, A, p);
     for (int i = 0; i < n; ++i) {
-        A[i][i] = 1 / p[i];
+        A[i * n + i] = 1 / p[i];
         for (int j = i + 1; j < n; ++j) {
             float sum = 0;
             for (int k = i; k < j; ++k) {
-                sum -= A[j][k] * A[k][i];
+                sum -= A[j * n + k] * A[k * n + i];
             }
-            A[j][i] = sum / p[j];
+            A[j * n + i] = sum / p[j];
         }
     }
     free(p);
 }
 
-__device__ void inverseMatrix_CholeskyMethod_k(int n, float** A) {
+__device__ void inverseMatrix_CholeskyMethod_k(int n, float* A) {
     int i, j, k;
     choldcsl_k(n, A);
     for (i = 0; i < n; ++i) {
         for (j = i + 1; j < n; ++j) {
-            A[i][j] = 0.0;
+            A[i * n + j] = 0.0;
         }
     }
     for (i = 0; i < n; i++) {
-        A[i][i] *= A[i][i];
+        A[i * n + i] *= A[i * n + i];
         for (k = i + 1; k < n; ++k) {
-            A[i][i] += A[k][i] * A[k][i];
+            A[i * n + i] += A[k * n + i] * A[k * n + i];
         }
         for (j = i + 1; j < n; ++j) {
             for (k = j; k < n; ++k) {
-                A[i][j] += A[k][i] * A[k][j];
+                A[i * n + j] += A[k * n + i] * A[k * n + j];
             }
         }
     }
     for (i = 0; i < n; ++i) {
         for (j = 0; j < i; ++j) {
-            A[i][j] = A[j][i];
+            A[i * n + j] = A[j * n + i];
         }
     }
 }
 
 //Multiply matrix M transpose by M 
-__device__ void Mt_byM_multiply_k(long i, long j, float* H, float** Result, const long ptr, const unsigned* idx) {
+__device__ void Mt_byM_multiply_k(long i, long j, float* H, float* Result, const long ptr, const unsigned* idx) {
     float SUM;
     for (int I = 0; I < j; ++I) {
         for (int J = I; J < j; ++J) {
@@ -73,8 +73,8 @@ __device__ void Mt_byM_multiply_k(long i, long j, float* H, float** Result, cons
                 //printf("%.3f %.3f\n", H[( offset) + I], H[( offset) + J]);
                 SUM += H[offset + I] * H[offset + J];
             }
-            Result[J][I] = SUM;
-            Result[I][J] = SUM;
+            Result[J * j + I] = SUM;
+            Result[I * j + J] = SUM;
         }
     }
 }
@@ -87,23 +87,18 @@ __global__ void updateW_overH_kernel(const long rows, const unsigned* row_ptr, c
 
         float* Wr = &W[Rw * k];
         unsigned omegaSize = row_ptr[Rw + 1] - row_ptr[Rw];
-        float** subMatrix;
+        float* subMatrix;
         float* subVector;
 
         if (omegaSize > 0) {
             subVector = (float*) malloc(k * sizeof(float));
-            subMatrix = (float**) malloc(k * sizeof(float*));
-
-            for (unsigned i = 0; i < k; ++i) {
-                subMatrix[i] = (float*) malloc(k * sizeof(float));
-                assert(subMatrix[i]);
-            }
+            subMatrix = (float*) malloc(k * k * sizeof(float));
 
             Mt_byM_multiply_k(omegaSize, k, H, subMatrix, row_ptr[Rw], col_idx);
 
             //add lambda to diag of sub-matrix
             for (unsigned c = 0; c < k; c++) {
-                subMatrix[c][c] = subMatrix[c][c] + lambda;
+                subMatrix[c * k + c] += lambda;
             }
 
             //invert sub-matrix
@@ -122,14 +117,10 @@ __global__ void updateW_overH_kernel(const long rows, const unsigned* row_ptr, c
             for (unsigned c = 0; c < k; ++c) {
                 Wr[c] = 0;
                 for (unsigned subVid = 0; subVid < k; ++subVid) {
-                    Wr[c] += subVector[subVid] * subMatrix[c][subVid];
+                    Wr[c] += subVector[subVid] * subMatrix[c * k + subVid];
                 }
             }
 
-
-            for (unsigned i = 0; i < k; ++i) {
-                free(subMatrix[i]);
-            }
             free(subMatrix);
             free(subVector);
         } else {
@@ -148,23 +139,18 @@ __global__ void updateH_overW_kernel(const long cols, const unsigned* col_ptr, c
 
         float* Hr = &H[Rh * k];
         unsigned omegaSize = col_ptr[Rh + 1] - col_ptr[Rh];
-        float** subMatrix;
+        float* subMatrix;
         float* subVector;
 
         if (omegaSize > 0) {
             subVector = (float*) malloc(k * sizeof(float));
-            subMatrix = (float**) malloc(k * sizeof(float*));
-
-            for (unsigned i = 0; i < k; ++i) {
-                subMatrix[i] = (float*) malloc(k * sizeof(float));
-                assert(subMatrix[i]);
-            }
+            subMatrix = (float*) malloc(k * k * sizeof(float));
 
             Mt_byM_multiply_k(omegaSize, k, W, subMatrix, col_ptr[Rh], row_idx);
 
             //add lambda to diag of sub-matrix
             for (unsigned c = 0; c < k; c++) {
-                subMatrix[c][c] = subMatrix[c][c] + lambda;
+                subMatrix[c*k+c] += lambda;
             }
 
             //invert sub-matrix
@@ -183,14 +169,10 @@ __global__ void updateH_overW_kernel(const long cols, const unsigned* col_ptr, c
             for (unsigned c = 0; c < k; ++c) {
                 Hr[c] = 0;
                 for (unsigned subVid = 0; subVid < k; ++subVid) {
-                    Hr[c] += subVector[subVid] * subMatrix[c][subVid];
+                    Hr[c] += subVector[subVid] * subMatrix[c*k+subVid];
                 }
             }
 
-
-            for (unsigned i = 0; i < k; ++i) {
-                free(subMatrix[i]);
-            }
             free(subMatrix);
             free(subVector);
         } else {
