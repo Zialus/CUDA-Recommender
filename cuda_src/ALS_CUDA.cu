@@ -69,8 +69,7 @@ __device__ void Mt_byM_multiply_k(long i, long j, float* H, float* Result, const
             SUM = 0.0f;
             for (int K = 0; K < i; ++K) {
                 unsigned offset = idx[ptr + K] * j;
-                //printf("%.3f %.3f\n", M[K][I], M[K][J]);
-                //printf("%.3f %.3f\n", H[( offset) + I], H[( offset) + J]);
+//                printf("%.3f %.3f\n", H[offset + I], H[offset + J]);
                 SUM += H[offset + I] * H[offset + J];
             }
             Result[J * j + I] = SUM;

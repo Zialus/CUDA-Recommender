@@ -1,5 +1,26 @@
 #include "CCD_CUDA.h"
 
+__device__ float RankOneUpdate_dev(const unsigned* Rcol_ptr,
+                                   const unsigned* Rrow_idx,
+                                   const float* Rval,
+
+                                   const unsigned j,
+                                   const float* u_vec_t,
+                                   const float lambda
+) {
+    float g = 0, h = lambda;
+    if (Rcol_ptr[j + 1] == Rcol_ptr[j]) { return 0; }
+
+    for (unsigned idx = Rcol_ptr[j]; idx < Rcol_ptr[j + 1]; ++idx) {
+        unsigned i = Rrow_idx[idx];
+        g += u_vec_t[i] * Rval[idx];
+        h += u_vec_t[i] * u_vec_t[i];
+    }
+
+    float newvj = g / h;
+    return newvj;
+}
+
 __global__ void RankOneUpdate_v_kernel(const unsigned Rcols,
                                        const unsigned* Rcol_ptr,
                                        const unsigned* Rrow_idx,
@@ -34,27 +55,6 @@ __global__ void RankOneUpdate_u_kernel(const unsigned Rcols_t,
         u[c] = RankOneUpdate_dev(Rcol_ptr_t, Rrow_idx_t, Rval_t, c, v, lambda * (Rcol_ptr_t[c + 1] - Rcol_ptr_t[c]));
     }
 
-}
-
-__device__ float RankOneUpdate_dev(const unsigned* Rcol_ptr,
-                                   const unsigned* Rrow_idx,
-                                   const float* Rval,
-
-                                   const unsigned j,
-                                   const float* u_vec_t,
-                                   const float lambda
-) {
-    float g = 0, h = lambda;
-    if (Rcol_ptr[j + 1] == Rcol_ptr[j]) { return 0; }
-
-    for (unsigned idx = Rcol_ptr[j]; idx < Rcol_ptr[j + 1]; ++idx) {
-        unsigned i = Rrow_idx[idx];
-        g += u_vec_t[i] * Rval[idx];
-        h += u_vec_t[i] * u_vec_t[i];
-    }
-
-    float newvj = g / h;
-    return newvj;
 }
 
 __global__ void UpdateRating_DUAL_kernel_NoLoss(const unsigned Rcols,
