@@ -7,15 +7,13 @@ __global__ void RankOneUpdate_v_kernel(const unsigned Rcols,
 
                                        float* u,
                                        float* v,
-                                       const float lambda,
-                                       const int do_nmf
+                                       const float lambda
 ) {
     long thread_id = threadIdx.x + blockIdx.x * blockDim.x;
     long total_threads = blockDim.x * gridDim.x;
 
     for (long c = thread_id; c < Rcols; c += total_threads) {
-        v[c] = RankOneUpdate_dev(Rcol_ptr, Rrow_idx, Rval, c, u,
-                                 lambda * (Rcol_ptr[c + 1] - Rcol_ptr[c]), do_nmf);
+        v[c] = RankOneUpdate_dev(Rcol_ptr, Rrow_idx, Rval, c, u, lambda * (Rcol_ptr[c + 1] - Rcol_ptr[c]));
     }
 
 }
@@ -27,15 +25,13 @@ __global__ void RankOneUpdate_u_kernel(const unsigned Rcols_t,
 
                                        float* u,
                                        float* v,
-                                       const float lambda,
-                                       const int do_nmf
+                                       const float lambda
 ) {
     long thread_id = threadIdx.x + blockIdx.x * blockDim.x;
     long total_threads = blockDim.x * gridDim.x;
 
     for (long c = thread_id; c < Rcols_t; c += total_threads) {
-        u[c] = RankOneUpdate_dev(Rcol_ptr_t, Rrow_idx_t, Rval_t, c, v,
-                                 lambda * (Rcol_ptr_t[c + 1] - Rcol_ptr_t[c]), do_nmf);
+        u[c] = RankOneUpdate_dev(Rcol_ptr_t, Rrow_idx_t, Rval_t, c, v, lambda * (Rcol_ptr_t[c + 1] - Rcol_ptr_t[c]));
     }
 
 }
@@ -46,9 +42,7 @@ __device__ float RankOneUpdate_dev(const unsigned* Rcol_ptr,
 
                                    const unsigned j,
                                    const float* u_vec_t,
-
-                                   const float lambda,
-                                   const int do_nmf
+                                   const float lambda
 ) {
     float g = 0, h = lambda;
     if (Rcol_ptr[j + 1] == Rcol_ptr[j]) { return 0; }
@@ -60,9 +54,6 @@ __device__ float RankOneUpdate_dev(const unsigned* Rcol_ptr,
     }
 
     float newvj = g / h;
-    if (do_nmf > 0 & newvj < 0) {
-        newvj = 0;
-    }
     return newvj;
 }
 
@@ -211,15 +202,15 @@ updateRating(unsigned int nThreadsPerBlock, unsigned int nBlocks, const SparseMa
 }
 
 inline cudaError_t
-RankOneUpdate(const parameter& parameters, unsigned int nThreadsPerBlock, unsigned int nBlocks, float lambda,
+RankOneUpdate(unsigned int nThreadsPerBlock, unsigned int nBlocks, float lambda,
               const SparseMatrix& R_C, const SparseMatrix& Rt, const unsigned* dev_Rcol_ptr, const unsigned* dev_Rrow_idx,
               const unsigned* dev_Rcol_ptr_T, const unsigned* dev_Rrow_idx_T, const float* dev_Rval,
               const float* dev_Rval_t, float* dev_Wt_vec_t,float* dev_Ht_vec_t, cudaError_t& cudaStatus) {
 
     RankOneUpdate_v_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.cols, dev_Rcol_ptr, dev_Rrow_idx,
-            dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda, parameters.do_nmf);
+            dev_Rval, dev_Wt_vec_t, dev_Ht_vec_t, lambda);
     RankOneUpdate_u_kernel<<<nBlocks, nThreadsPerBlock>>>(Rt.cols, dev_Rcol_ptr_T, dev_Rrow_idx_T,
-            dev_Rval_t, dev_Wt_vec_t, dev_Ht_vec_t, lambda, parameters.do_nmf);
+            dev_Rval_t, dev_Wt_vec_t, dev_Ht_vec_t, lambda);
 
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
@@ -370,7 +361,7 @@ cudaError_t ccdpp_NV(SparseMatrix& R_C, TestData& T, MatData& W, MatData& H, par
 
             rank_timer.Start();
             for (int iter = 1; iter <= parameters.maxinneriter; ++iter) {
-                cudaStatus = RankOneUpdate(parameters, nThreadsPerBlock, nBlocks, lambda, R_C, Rt, dev_Rcol_ptr,
+                cudaStatus = RankOneUpdate(nThreadsPerBlock, nBlocks, lambda, R_C, Rt, dev_Rcol_ptr,
                                            dev_Rrow_idx, dev_Rcol_ptr_T, dev_Rrow_idx_T, dev_Rval,
                                            dev_Rval_t, dev_Wt_vec_t, dev_Ht_vec_t, cudaStatus);
             }

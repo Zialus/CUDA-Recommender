@@ -79,20 +79,20 @@ __device__ void Mt_byM_multiply_k(long i, long j, float* H, float* Result, const
     }
 }
 
-__global__ void updateW_overH_kernel(const long rows, const unsigned* row_ptr, const unsigned* col_idx, const float* val_t, const float* val, const float lambda, const unsigned k, float* W, float* H) {
+__global__ void updateW_overH_kernel(const long rows, const unsigned* row_ptr, const unsigned* col_idx,
+                                     const float* val_t, const float lambda, const unsigned k,
+                                     float* W, float* H) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
     for (int Rw = tid; Rw < rows; Rw += blockDim.x * gridDim.x) {
-        //int offset_W = Rw*k;
+        int offset_W = Rw * k;
 
-        float* Wr = &W[Rw * k];
+        float* Wr = &W[offset_W];
         unsigned omegaSize = row_ptr[Rw + 1] - row_ptr[Rw];
-        float* subMatrix;
-        float* subVector;
 
         if (omegaSize > 0) {
-            subVector = (float*) malloc(k * sizeof(float));
-            subMatrix = (float*) malloc(k * k * sizeof(float));
+            float* subVector = (float*) malloc(k * sizeof(float));
+            float* subMatrix = (float*) malloc(k * k * sizeof(float));
 
             Mt_byM_multiply_k(omegaSize, k, H, subMatrix, row_ptr[Rw], col_idx);
 
@@ -103,7 +103,6 @@ __global__ void updateW_overH_kernel(const long rows, const unsigned* row_ptr, c
 
             //invert sub-matrix
             inverseMatrix_CholeskyMethod_k(k, subMatrix);
-
 
             //sparse multiplication
             for (unsigned c = 0; c < k; ++c) {
@@ -131,31 +130,30 @@ __global__ void updateW_overH_kernel(const long rows, const unsigned* row_ptr, c
     }
 }
 
-__global__ void updateH_overW_kernel(const long cols, const unsigned* col_ptr, const unsigned* row_idx, const float* val, const float lambda, const unsigned k, float* W, float* H) {
+__global__ void updateH_overW_kernel(const long cols, const unsigned* col_ptr, const unsigned* row_idx,
+                                     const float* val, const float lambda, const unsigned k,
+                                     float* W, float* H) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
     for (int Rh = tid; Rh < cols; Rh += blockDim.x * gridDim.x) {
-        //int offset_H = Rh*k;
+        int offset_H = Rh * k;
 
-        float* Hr = &H[Rh * k];
+        float* Hr = &H[offset_H];
         unsigned omegaSize = col_ptr[Rh + 1] - col_ptr[Rh];
-        float* subMatrix;
-        float* subVector;
 
         if (omegaSize > 0) {
-            subVector = (float*) malloc(k * sizeof(float));
-            subMatrix = (float*) malloc(k * k * sizeof(float));
+            float* subVector = (float*) malloc(k * sizeof(float));
+            float* subMatrix = (float*) malloc(k * k * sizeof(float));
 
             Mt_byM_multiply_k(omegaSize, k, W, subMatrix, col_ptr[Rh], row_idx);
 
             //add lambda to diag of sub-matrix
             for (unsigned c = 0; c < k; c++) {
-                subMatrix[c*k+c] += lambda;
+                subMatrix[c * k + c] += lambda;
             }
 
             //invert sub-matrix
             inverseMatrix_CholeskyMethod_k(k, subMatrix);
-
 
             //sparse multiplication
             for (unsigned c = 0; c < k; ++c) {
@@ -169,7 +167,7 @@ __global__ void updateH_overW_kernel(const long cols, const unsigned* col_ptr, c
             for (unsigned c = 0; c < k; ++c) {
                 Hr[c] = 0;
                 for (unsigned subVid = 0; subVid < k; ++subVid) {
-                    Hr[c] += subVector[subVid] * subMatrix[c*k+subVid];
+                    Hr[c] += subVector[subVid] * subMatrix[c * k + subVid];
                 }
             }
 
@@ -319,7 +317,7 @@ cudaError_t als_NV(SparseMatrix& R_C, TestData& T, MatData& W, MatData& H, param
         update_timer.Start();
         /********************optimize W over H***************/
         updateW_overH_kernel<<<nBlocks, nThreadsPerBlock>>>(R_C.rows, dev_row_ptr, dev_col_idx,
-                dev_val_t, dev_val, lambda, k, dev_W_, dev_H_);
+                dev_val_t, lambda, k, dev_W_, dev_H_);
         // Check for any errors launching the kernel
         cudaStatus = cudaGetLastError();
         gpuErrchk(cudaStatus);

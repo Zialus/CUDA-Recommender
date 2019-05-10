@@ -27,15 +27,34 @@ __global__ void RankOneUpdate_DUAL_kernel(unsigned Rcols,
                                           const float* Rval_t
 );
 
+__global__ void RankOneUpdate_v_kernel(unsigned Rcols,
+                                       const unsigned* Rcol_ptr,
+                                       const unsigned* Rrow_idx,
+                                       const float* Rval,
+
+                                       float* u,
+                                       float* v,
+                                       float lambda
+);
+
+__global__ void RankOneUpdate_u_kernel(unsigned Rcols_t,
+                                       const unsigned* Rcol_ptr_t,
+                                       const unsigned* Rrow_idx_t,
+                                       const float* Rval_t,
+
+                                       float* u,
+                                       float* v,
+                                       float lambda
+);
+
 __device__ float RankOneUpdate_dev(const unsigned* Rcol_ptr,
                                    const unsigned* Rrow_idx,
                                    const float* Rval,
 
                                    unsigned j,
                                    const float* u_vec_t,
-
-                                   float lambda,
-                                   int do_nmf);
+                                   float lambda
+);
 
 __global__ void UpdateRating_DUAL_kernel_NoLoss(unsigned Rcols,
                                                 const unsigned* Rcol_ptr,
