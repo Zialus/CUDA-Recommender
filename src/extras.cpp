@@ -25,7 +25,7 @@ void open_files(const char* test_file_name, const char* model_file_name, const c
 void generate_file_pointers(const parameter& param, char* test_file_name, char* train_file_name, char* model_file_name,
                             char* output_file_name) {
     char meta_filename[1024];
-    snprintf(meta_filename, sizeof(meta_filename), "%s/meta", param.src_dir);
+    CHECK_SNPRINTF(snprintf(meta_filename, sizeof(meta_filename), "%s/meta", param.src_dir));
     FILE* fp = fopen(meta_filename, "r");
     if (fp == nullptr) {
         fprintf(stderr, "Can't open meta input file %s\n", meta_filename);
