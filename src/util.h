@@ -12,6 +12,11 @@
     abort(); \
 }
 
+#define CHECK_SNPRINTF(num)    if(num < 0){ \
+    fprintf(stderr,"SNPRINTF returned %d, in file %s on line %d\n", num,__FILE__,__LINE__); \
+    abort(); \
+}
+
 #define MALLOC(type, size) (type*)malloc(sizeof(type)*(size))
 #define SIZEBITS(type, size) sizeof(type)*(size)
 

@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
             break;
         }
         default: {
-            fprintf(stderr, "Error: wrong solver type (%d)!\n", param.solver_type);
+            fprintf(stderr, "Error: wrong solver type (%d)!\n", static_cast<int>(param.solver_type));
             exit(EXIT_FAILURE);
         }
     }

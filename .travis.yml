@@ -76,6 +76,11 @@ matrix:
     - os: linux
       dist: xenial
       addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
         sonarcloud:
           organization: "zialus-github"
           token:
@@ -83,7 +88,7 @@ matrix:
       script:
         - git fetch --unshallow
         - mkdir build && cd build
-        - cmake -DCMAKE_BUILD_TYPE=Release ..
+        - CC=gcc-8 && CXX=g++-8 cmake -DCMAKE_BUILD_TYPE=Release ..
         - build-wrapper-linux-x86-64 --out-dir bw-output make clean all
         - ctest -V -C Release
         - cd ..
