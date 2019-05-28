@@ -73,7 +73,8 @@ matrix:
       before_install: *cuda_install
 
     # SONARCLOUD
-    - os: linux
+    - name: "SonarCloud"
+      os: linux
       dist: xenial
       addons:
         apt:
@@ -94,11 +95,11 @@ matrix:
         - cd ..
         - sonar-scanner
       env:
-        - SONAR_CLOUD="YUP"
         - CUDA=10.1.168-1
 
     # COVERITY_SCAN
-    - os: linux
+    - name: "Coverity Scan"
+      os: linux
       dist: xenial
       addons:
         apt:
@@ -115,6 +116,7 @@ matrix:
           branch_pattern: master
       script:
         - echo "Coverity Scan"
+        - cat build/cov-int/build-log.txt
       env:
         - secure: "XKa5FwxqL1PgW2/AKyJuhRQ3AP7LxeGjPyaBnktmgnvSouTZ5gEmWYV+ToPCw4g1+aNXOH71QMpOxUyUMh7vgeDtKzkSx/BGhrnxPxkzfB8zZr7Mfy3h1++2LTJ47VO4SfLVbYgkIKoGldi9JxTks4ri+BmLiNhB9zO0XbW8vdmqgBfxxzm0rCrs6uIbWJDk8MByU8ZNz0spcV4aYEx+dWPg05xC1RQUng+lZhZfHt+E3Klt0pXB9uOVima5fo70+n82uAXLuAdd+cJpHVbkMMcABKYYnF9TikOrAgoZwkPnloF3KDNGZDqYOi2xMf1gAoI8T3bDL+oFk1jAW5qVQsqDiATdPwazzlaaOLr3KuYP5R7ZNeRMtO9b7b8DeZZqUPEUeJe+/3Z96OKkwYaNorb5lbe+PfPze26nZrbfz3R1Ij35A/zyMQnlHYX/LD1UTEnpPLKWE7R1bzbAjqj4QL8oc1HWUmI5/gTEc6fuNQNX3mrakVvldlJiiyIU1ItMZEiG2QntRzv+CHy6lbowkfKpUyOgVQOpeX2y+7U57x8voZ5WGOP0XGNOGTP2O5/mgMsJ1peKWYsySwla9YpFZi1T2duvg46AxruFMbfA5geJYLQUIEO7+25jI2cjwot//8LFz3hHz0xEkgbF1FuLPQMire/Ruy+9SLmIClHADQw="
         - CUDA=10.1.168-1

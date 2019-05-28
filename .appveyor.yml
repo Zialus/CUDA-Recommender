@@ -4,7 +4,7 @@ environment:
   - CUDA_VERSION: '10.1'
     APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1604
   - CUDA_VERSION: '10.1'
-    GENERATOR: Visual Studio 16 2019 Win64
+    GENERATOR: Visual Studio 16 2019
     TOOLSET: v142
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   - CUDA_VERSION: '10.0'

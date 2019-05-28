@@ -3,19 +3,18 @@
 void open_files(const char* test_file_name, const char* model_file_name, const char* output_file_name, FILE*& test_fp,
                 FILE*& output_fp, FILE*& model_fp) {
     test_fp = fopen(test_file_name, "r");
-    output_fp = fopen(output_file_name, "w+b");
-    model_fp = fopen(model_file_name, "w+b");
-
     if (test_fp == nullptr) {
         fprintf(stderr, "can't open test file %s\n", test_file_name);
         exit(EXIT_FAILURE);
     }
 
+    output_fp = fopen(output_file_name, "w+b");
     if (output_fp == nullptr) {
         fprintf(stderr, "can't open output file %s\n", output_file_name);
         exit(EXIT_FAILURE);
     }
 
+    model_fp = fopen(model_file_name, "w+b");
     if (model_fp == nullptr) {
         fprintf(stderr, "can't open model file %s\n", model_file_name);
         exit(EXIT_FAILURE);
