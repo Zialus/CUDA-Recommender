@@ -1,4 +1,5 @@
 .idea/
-exec/
 cmake-*
 build-*
+exec/
+results/
