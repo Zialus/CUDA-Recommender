@@ -23,19 +23,19 @@ matrix:
       env: CUDA=7.5-18
     - os: linux
       dist: xenial
-      env: CUDA=8.0.61-1
+      env: CUDA=8.0.61
     - os: linux
       dist: xenial
-      env: CUDA=9.0.176-1
+      env: CUDA=9.0.176
     - os: linux
       dist: xenial
-      env: CUDA=9.1.85-1
+      env: CUDA=9.1.85
     - os: linux
       dist: xenial
-      env: CUDA=9.2.148-1
+      env: CUDA=9.2.148
     - os: linux
       dist: xenial
-      env: CUDA=10.0.130-1
+      env: CUDA=10.0.130
     - os: linux
       dist: xenial
       env: CUDA=10.1.243

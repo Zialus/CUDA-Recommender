@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -x
 
 case ${CUDA%.*} in
@@ -12,7 +13,7 @@ case ${CUDA%.*} in
 
 esac
 
-wget -O cuda.dmg "$installer"
+travis_retry wget -O cuda.dmg "$installer"
 
 
 hdiutil attach cuda.dmg
